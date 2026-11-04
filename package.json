@@ -1,0 +1,32 @@
+{
+  "name": "restaurante-origenes-sv-web2026",
+  "description": "Sistema desacoplado full-stack con arquitectura monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "setup": "yarn setup:fe && yarn setup:be",
+    "setup:fe": "cd apps/frontend && yarn install && cd .. && cd ..",
+    "setup:be": "cd apps/backend && yarn install && cd .. && cd ..",
+    "dev:fe": "cd apps/frontend && yarn dev",
+    "dev:be": "cd apps/backend && yarn dev",
+    "db:init": "node scripts/db-init.mjs",
+    "db:seed": "node scripts/db-seed.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build:fe": "yarn build --prefix apps/frontend",
+    "build:be": "yarn build --prefix apps/backend",
+    "start:be": "yarn start --prefix apps/backend",
+    "audit": "yarn audit --prefix apps/backend && yarn audit --prefix apps/frontend"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/susan-castillo/restaurante-origenes-sv-web2026.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/susan-castillo/restaurante-origenes-sv-web2026/issues"
+  },
+  "homepage": "https://github.com/susan-castillo/restaurante-origenes-sv-web2026#readme"
+}
