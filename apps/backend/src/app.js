@@ -1,7 +1,7 @@
 import express from "express";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
-import healthRouter from "./routes/health.js";
+import testRouter from "./routes/test.js";
 
 const app = express();
 
@@ -17,7 +17,7 @@ app.use(
     legacyHeaders: false,
   }),
 );
-app.use("/api", healthRouter);
+app.use("/api", testRouter);
 
 app.use((request, response) => {
   response.status(404).json({ error: "Not found" });
