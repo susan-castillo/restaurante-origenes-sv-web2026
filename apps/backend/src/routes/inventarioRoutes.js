@@ -1,11 +1,18 @@
 import { Router } from 'express';
 import { verifyToken } from '../middlewares/authMiddleware.js';
-import { listarInsumos, crearInsumo } from '../controllers/inventarioController.js';
+import {
+    listarInsumos,
+    crearInsumo,
+    actualizarInsumo,
+    eliminarInsumo,
+} from '../controllers/inventarioController.js';
 
 const router = Router();
 
-// Catálogo de insumos (requiere sesión iniciada)
+// CRUD de insumos (requiere sesión iniciada)
 router.get('/insumos', verifyToken, listarInsumos);
 router.post('/insumos', verifyToken, crearInsumo);
+router.put('/insumos/:id', verifyToken, actualizarInsumo);
+router.delete('/insumos/:id', verifyToken, eliminarInsumo);
 
 export default router;
