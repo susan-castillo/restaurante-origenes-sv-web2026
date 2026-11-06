@@ -1,43 +1,63 @@
-// Guarda los datos del usuario logueado y el token JWT
-import { createContext, useContext, useMemo, useState } from "react";
-import { authService } from "../services/authService.js";
+import { createContext, useContext, useState, useEffect } from 'react';
+import { apiFetch } from '../services/api.js';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
-  const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
+export const AuthProvider = ({ children }) => {
+  const [usuario, setUsuario] = useState(null);
+  const [cargando, setCargando] = useState(true);
 
-  async function login(credentials) {
-    setLoading(true);
-    try {
-      const session = await authService.login(credentials);
-      setToken(session.token);
-      setUser(session.user);
-      return session.user;
-    } finally {
-      setLoading(false);
+  // 1. Verificar sesión persistente al recargar la página (GET /api/auth/me)
+  useEffect(() => {
+    const verificarSesion = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const user = await apiFetch('/api/auth/me');
+          setUsuario(user);
+        } catch {
+          // Si el token expiró o es inválido, limpiar el almacenamiento local
+          localStorage.removeItem('token');
+          localStorage.removeItem('usuario');
+          setUsuario(null);
+        }
+      }
+      setCargando(false);
+    };
+
+    verificarSesion();
+  }, []);
+
+  // 2. Iniciar sesión y retornar la respuesta completa o el objeto de usuario
+  const login = async (email, password) => {
+    const res = await apiFetch('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+
+    // Validar que la respuesta contenga el token y la información del usuario
+    if (res?.token && res?.usuario) {
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('usuario', JSON.stringify(res.usuario));
+      setUsuario(res.usuario);
+      return res; // Retornamos la respuesta completa { token, usuario }
     }
-  }
 
-  function logout() {
-    setToken(null);
-    setUser(null);
-  }
+    throw new Error('Respuesta del servidor no válida.');
+  };
 
-  const value = useMemo(
-    () => ({ token, user, loading, login, logout }),
-    [token, user, loading],
+  // 3. Cerrar sesión y limpiar estados
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+    setUsuario(null);
+  };
+
+  return (
+      <AuthContext.Provider value={{ usuario, login, logout, cargando }}>
+        {children}
+      </AuthContext.Provider>
   );
+};
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider");
-  }
-  return context;
-}
+export const useAuth = () => useContext(AuthContext);
