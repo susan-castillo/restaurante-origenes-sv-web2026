@@ -1,22 +1,21 @@
-const baseUrl = (import.meta.env.VITE_API_URL || "/api").replace(/\/+$/, "");
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:3000';
 
-export async function apiRequest(path, { token, ...options } = {}) {
-  const headers = new Headers(options.headers);
-  if (options.body && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
-  }
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
+export const apiFetch = async (endpoint, options = {}) => {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
 
-  const response = await fetch(`${baseUrl}${path}`, {
+  const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
   });
-  const payload = await response.json().catch(() => null);
 
+  const data = await response.json();
   if (!response.ok) {
-    throw new Error(payload?.error || `La solicitud fallo (${response.status})`);
+    throw new Error(data.error || 'Error en la petición HTTP');
   }
-  return payload;
-}
+  return data;
+};

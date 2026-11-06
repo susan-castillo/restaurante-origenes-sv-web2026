@@ -1,70 +1,84 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Button, Card, CardBody, Container, Form, FormGroup, Input, Label } from "reactstrap";
-import Feedback from "../components/Common/Feedback.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Container, Card, CardBody, Form, FormGroup, Label, Input, Button, Alert } from 'reactstrap';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Login() {
-  const { login, loading } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(false);
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-    setError("");
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setCargando(true);
 
     try {
-      await login({ email, password });
-      const destination = location.state?.from?.pathname || "/";
-      navigate(destination, { replace: true });
-    } catch (requestError) {
-      setError(requestError.message);
+      const response = await login(email, password);
+
+      // Programación defensiva: verificar que la respuesta devuelta por login() exista
+      const user = response?.usuario || response;
+
+      if (!user) {
+        throw new Error('No se obtuvo respuesta del usuario.');
+      }
+
+      // Redirección por Rol / Cargo
+      if (user.rol === 'ADMIN' || user.cargo === 'GERENTE') {
+        navigate('/admin/caja');
+      } else {
+        navigate('/pos');
+      }
+    } catch (err) {
+      setError(err.message || 'Error al iniciar sesión.');
+    } finally {
+      setCargando(false);
     }
-  }
+  };
 
   return (
-    <main className="login-shell d-flex align-items-center py-5">
-      <Container>
-        <Card className="login-card mx-auto border-0 shadow-sm">
-          <CardBody className="p-4 p-md-5">
-            <p className="eyebrow mb-2">RESTAURANTE ORIGENES</p>
-            <h1 className="h3 mb-2">Iniciar sesion</h1>
-            <p className="text-secondary mb-4">Ingresa con tu cuenta de trabajo.</p>
-            <Feedback>{error}</Feedback>
+      <Container className="d-flex justify-content-center align-items-center vh-100">
+        <Card style={{ width: '400px' }} className="shadow">
+          <CardBody className="p-4">
+            <h3 className="text-center mb-4">Restaurante Orígenes</h3>
+
+            {error && <Alert color="danger">{error}</Alert>}
+
             <Form onSubmit={handleSubmit}>
               <FormGroup>
-                <Label for="email">Correo electronico</Label>
+                <Label for="email">Correo Electrónico</Label>
                 <Input
-                  autoComplete="username"
-                  id="email"
-                  maxLength={254}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                  type="email"
-                  value={email}
+                    type="email"
+                    id="email"
+                    placeholder="usuario@origenes.sv"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                 />
               </FormGroup>
-              <FormGroup>
-                <Label for="password">Contrasena</Label>
+
+              <FormGroup className="mt-3">
+                <Label for="password">Contraseña</Label>
                 <Input
-                  autoComplete="current-password"
-                  id="password"
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                  type="password"
-                  value={password}
+                    type="password"
+                    id="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
                 />
               </FormGroup>
-              <Button block color="dark" disabled={loading} type="submit">
-                {loading ? "Validando..." : "Entrar"}
+
+              <Button color="primary" block className="w-100 mt-4" disabled={cargando}>
+                {cargando ? 'Iniciando sesión...' : 'Ingresar'}
               </Button>
             </Form>
           </CardBody>
         </Card>
       </Container>
-    </main>
   );
 }

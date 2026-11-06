@@ -39,7 +39,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route element={<Login />} path="/" />
-      {/* <Route element={<NotFound />} path="*" /> */}
+      <Route element={<NotFound />} path="*" />
     </Routes>
   );
 }
