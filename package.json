@@ -30,5 +30,8 @@
   "bugs": {
     "url": "https://github.com/susan-castillo/restaurante-origenes-sv-web2026/issues"
   },
-  "homepage": "https://github.com/susan-castillo/restaurante-origenes-sv-web2026#readme"
+  "homepage": "https://github.com/susan-castillo/restaurante-origenes-sv-web2026#readme",
+  "devDependencies": {
+    "sass-embedded": "^1.108.1"
+  }
 }
