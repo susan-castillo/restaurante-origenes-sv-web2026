@@ -98,6 +98,72 @@
   }
 }
 
+
+/* ==========================================
+   ACCIONES DE LA TABLA DE EXISTENCIAS
+   ========================================== */
+
+.inventario-tabla td:last-child,
+.inventario-tabla th:last-child {
+  text-align: center;
+}
+
+.inventario-acciones {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.inventario-icono {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 36px;
+  height: 36px;
+
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+
+  transition: background-color 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #82bcc7;
+    outline-offset: 2px;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &--editar {
+    color: #DE8332;
+
+    &:hover {
+      background-color: #FAEADB;
+    }
+  }
+
+  &--eliminar {
+    color: #e83f56;
+
+    &:hover {
+      background-color: #fde8e7;
+    }
+  }
+}
+
+
 // =====================================
 // RESPONSIVE
 // =====================================

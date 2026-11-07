@@ -5,8 +5,11 @@ import { useEffect, useState } from "react";
 // SERVICIOS
 // ==========================================
 
-import { obtenerInventario } from "../services/insumosService";
 import {
+  obtenerInventario,
+  crearInsumo,
+  actualizarInsumo,
+} from "../services/insumosService";import {
   obtenerProductos,
   obtenerReceta,
 } from "../services/recetasService";
@@ -19,7 +22,8 @@ import Button from "../components/Common/Button.jsx";
 import Card from "../components/Common/Card.jsx";
 import Tabs from "../components/Common/Tabs.jsx";
 import StatusBadge from "../components/Common/StatusBadge.jsx";
-
+import { Pencil, Trash2 } from "lucide-react";
+import Modal from "../components/Common/Modal.jsx";
 // ==========================================
 // OPCIONES DE NAVEGACIÓN
 // ==========================================
@@ -107,6 +111,22 @@ export default function InventarioPage() {
   const [recetas, setRecetas] = useState({});
   const [cargandoReceta, setCargandoReceta] = useState(null);
   const [erroresRecetas, setErroresRecetas] = useState({});
+
+  // ========================================
+// MODALES DE INSUMOS
+// ========================================
+
+const [modalEditar, setModalEditar] = useState(false);
+const [modalEliminar, setModalEliminar] = useState(false);
+const [modalAgregar, setModalAgregar] = useState(false);
+
+const [insumoSeleccionado, setInsumoSeleccionado] = useState(null);
+
+const [nombreInsumo, setNombreInsumo] = useState("");
+const [unidadInsumo, setUnidadInsumo] = useState("g");
+
+const [guardandoInsumo, setGuardandoInsumo] = useState(false);
+const [errorModal, setErrorModal] = useState("");
 
   // ========================================
   // CARGAR INVENTARIO DEL BACKEND
@@ -277,6 +297,106 @@ export default function InventarioPage() {
     }
   }
 
+  
+function abrirEditar(item) {
+  setInsumoSeleccionado(item);
+  setNombreInsumo(item.nombre);
+  setUnidadInsumo(item.unidad);
+  setErrorModal("");
+  setModalEditar(true);
+}
+
+function abrirEliminar(item) {
+  setInsumoSeleccionado(item);
+  setModalEliminar(true);
+}
+
+async function guardarCambiosInsumo() {
+  if (!insumoSeleccionado) return;
+
+  try {
+    setGuardandoInsumo(true);
+    setErrorModal("");
+
+    await actualizarInsumo(insumoSeleccionado.insumo_id, {
+      nombre: nombreInsumo.trim(),
+      unidad: unidadInsumo,
+    });
+
+    // Recargamos las existencias desde el backend.
+    const datos = await obtenerInventario();
+    setInventario(datos);
+
+    setModalEditar(false);
+    setInsumoSeleccionado(null);
+
+  } catch (err) {
+    setErrorModal(
+      err.message || "No se pudo actualizar el insumo."
+    );
+  } finally {
+    setGuardandoInsumo(false);
+  }
+}
+
+
+ // ========================================
+ // AGREGAR INSUMO
+ // ========================================
+
+function abrirAgregar() {
+  // Limpiar el formulario
+  setNombreInsumo("");
+  setUnidadInsumo("g");
+  setErrorModal("");
+
+  // Abrir el modal
+  setModalAgregar(true);
+}
+
+async function guardarNuevoInsumo() {
+  const nombre = nombreInsumo.trim();
+
+  if (!nombre) {
+    setErrorModal("El nombre del insumo es obligatorio.");
+    return;
+  }
+
+  try {
+    setGuardandoInsumo(true);
+    setErrorModal("");
+
+    // Registrar el insumo en PostgreSQL
+    await crearInsumo({
+      nombre,
+      unidad: unidadInsumo,
+    });
+
+    // Volver a consultar las existencias
+    const datos = await obtenerInventario();
+
+    if (!Array.isArray(datos)) {
+      throw new Error("No se pudo actualizar la tabla de existencias.");
+    }
+
+    setInventario(datos);
+
+    // Cerrar y limpiar el formulario
+    setModalAgregar(false);
+    setNombreInsumo("");
+    setUnidadInsumo("g");
+
+  } catch (err) {
+    setErrorModal(
+      err.message || "No se pudo registrar el insumo."
+    );
+  } finally {
+    setGuardandoInsumo(false);
+  }
+}
+
+
+
   // ========================================
   // RENDERIZADO PRINCIPAL
   // ========================================
@@ -300,15 +420,14 @@ export default function InventarioPage() {
           </p>
         </div>
 
-        {vista === "existencias" && (
-          <Button
-            text="Agregar insumo"
-            variant="secondary"
-            className="text-white"
-            disabled
-            title="Formulario pendiente de implementar"
-          />
-        )}
+{vista === "existencias" && (
+  <Button
+    text="Agregar insumo"
+    variant="secondary"
+    className="text-white"
+    onClick={abrirAgregar}
+  />
+)}
 
       </header>
 
@@ -442,13 +561,39 @@ export default function InventarioPage() {
                               />
                             </td>
 
-                            {/* ACCIÓN */}
 
-                            <td>
-                              <span className="inventario-accion">
-                                Ver insumo
-                              </span>
-                            </td>
+{/* ACCIONES */}
+
+<td>
+  <div className="inventario-acciones">
+
+    {/* EDITAR */}
+
+    <button
+      type="button"
+      className="inventario-icono inventario-icono--editar"
+      title="Editar insumo"
+      aria-label={`Editar ${item.nombre}`}
+      onClick={() => abrirEditar(item)}
+    >
+      <Pencil size={18} />
+    </button>
+
+    {/* ELIMINAR */}
+
+    <button
+      type="button"
+      className="inventario-icono inventario-icono--eliminar"
+      title="Eliminar insumo"
+      aria-label={`Eliminar ${item.nombre}`}
+      onClick={() => abrirEliminar(item)}
+    >
+      <Trash2 size={18} />
+    </button>
+
+  </div>
+</td>
+
 
                           </tr>
                         );
@@ -666,6 +811,186 @@ export default function InventarioPage() {
         )}
 
       </main>
+      
+{/* ========================================
+    MODAL EDITAR INSUMO
+    ======================================== */}
+
+<Modal
+  show={modalEditar}
+  title="Editar insumo"
+  onClose={() => {
+    if (!guardandoInsumo) setModalEditar(false);
+  }}
+  footer={
+    <>
+      <Button
+        text="Cancelar"
+        variant="outline-secondary"
+        disabled={guardandoInsumo}
+        onClick={() => setModalEditar(false)}
+      />
+
+      <Button
+        text={guardandoInsumo ? "Guardando..." : "Guardar cambios"}
+        variant="secondary"
+        disabled={guardandoInsumo || !nombreInsumo.trim()}
+        onClick={guardarCambiosInsumo}
+      />
+    </>
+  }
+>
+  <div className="mb-3">
+    <label className="form-label">
+      Nombre del insumo
+    </label>
+
+    <input
+      type="text"
+      className="form-control"
+      value={nombreInsumo}
+      maxLength={100}
+      onChange={(e) => setNombreInsumo(e.target.value)}
+    />
+  </div>
+
+  <div className="mb-3">
+    <label className="form-label">
+      Unidad de medida
+    </label>
+
+    <select
+      className="form-select"
+      value={unidadInsumo}
+      onChange={(e) => setUnidadInsumo(e.target.value)}
+    >
+      <option value="g">Gramos (g)</option>
+      <option value="ml">Mililitros (ml)</option>
+      <option value="unidad">Unidad</option>
+    </select>
+  </div>
+
+  {errorModal && (
+    <div className="alert alert-danger" role="alert">
+      {errorModal}
+    </div>
+  )}
+</Modal>
+
+{/* ========================================
+    MODAL ELIMINAR INSUMO
+    ======================================== */}
+
+<Modal
+  show={modalEliminar}
+  title="Eliminar insumo"
+  onClose={() => setModalEliminar(false)}
+  footer={
+    <>
+      <Button
+        text="Cancelar"
+        variant="outline-secondary"
+        onClick={() => setModalEliminar(false)}
+      />
+
+      <Button
+        text="Eliminar"
+        variant="danger"
+        disabled
+        title="La eliminación todavía no está disponible en el backend"
+      />
+    </>
+  }
+>
+  <p>
+    ¿Estás segura de que deseas eliminar el insumo{" "}
+    <strong>{insumoSeleccionado?.nombre}</strong>?
+  </p>
+
+  <div className="alert alert-warning mb-0">
+    La eliminación todavía no está habilitada en el backend.
+    Por ahora este formulario es solamente visual.
+  </div>
+</Modal>
+
+
+{/* ========================================
+    MODAL AGREGAR INSUMO
+    ======================================== */}
+
+<Modal
+  show={modalAgregar}
+  title="Agregar insumo"
+  onClose={() => {
+    if (!guardandoInsumo) {
+      setModalAgregar(false);
+    }
+  }}
+  footer={
+    <>
+      <Button
+        text="Cancelar"
+        variant="outline-secondary"
+        disabled={guardandoInsumo}
+        onClick={() => setModalAgregar(false)}
+      />
+
+      <Button
+        text={guardandoInsumo ? "Guardando..." : "Agregar insumo"}
+        variant="secondary"
+        disabled={guardandoInsumo || !nombreInsumo.trim()}
+        onClick={guardarNuevoInsumo}
+      />
+    </>
+  }
+>
+  {/* NOMBRE DEL INSUMO */}
+
+  <div className="mb-3">
+    <label className="form-label" htmlFor="nuevo-insumo-nombre">
+      Nombre del insumo
+    </label>
+
+    <input
+      id="nuevo-insumo-nombre"
+      type="text"
+      className="form-control"
+      placeholder="Ej. Café en grano"
+      value={nombreInsumo}
+      maxLength={100}
+      onChange={(e) => setNombreInsumo(e.target.value)}
+    />
+  </div>
+
+  {/* UNIDAD DE MEDIDA */}
+
+  <div className="mb-3">
+    <label className="form-label" htmlFor="nuevo-insumo-unidad">
+      Unidad de medida
+    </label>
+
+    <select
+      id="nuevo-insumo-unidad"
+      className="form-select"
+      value={unidadInsumo}
+      onChange={(e) => setUnidadInsumo(e.target.value)}
+    >
+      <option value="g">Gramos (g)</option>
+      <option value="ml">Mililitros (ml)</option>
+      <option value="unidad">Unidad</option>
+    </select>
+  </div>
+
+  {/* MENSAJE DE ERROR */}
+
+  {errorModal && (
+    <div className="alert alert-danger" role="alert">
+      {errorModal}
+    </div>
+  )}
+</Modal>
+
+
 
     </div>
   );
