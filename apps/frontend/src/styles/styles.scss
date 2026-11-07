@@ -2,10 +2,14 @@
 @import "./custom";
 
 // Componentes generales del proyecto
-@import "./componentes";
+@import "components/componentes";
 
 // Estilos específicos del inventario
 @import "./inventario";
-@import "login";
+// Estilos para el login
+@import "./login";
 // Futuro módulo de recetas
  @import "./recetas";
+// Estilos para el menu
+@import "./components/sideBar";
+@import "./components/navBar";

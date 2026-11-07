@@ -1,21 +1,29 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function ProtectedRoute({ roles }) {
-  const { token, user, loading } = useAuth();
-  const location = useLocation();
+  const { usuario, cargando } = useAuth();
+  const ubicacion = useLocation();
 
-  if (loading) {
-    return <p className="p-4 text-secondary">Comprobando sesion...</p>;
+  // 1) Todavía verificando el token guardado: ni dejamos pasar ni expulsamos.
+  if (cargando) {
+    return (
+        <div className="d-flex justify-content-center align-items-center min-vh-100">
+          <p className="text-secondary font-poppins">Cargando sesión...</p>
+        </div>
+    );
   }
 
-  if (!token || !user) {
-    return <Navigate replace state={{ from: location }} to="/login" />;
+  // 2) Sin sesión -> al login. Guardamos desde dónde venía para volver ahí después de entrar.
+  if (!usuario) {
+    return <Navigate replace to="/login" state={{ desde: ubicacion }} />;
   }
 
-  if (roles && !roles.includes(user.role)) {
-    return <Navigate replace to="/" />;
+  // 3) Con sesión pero sin el rol necesario -> pantalla de "sin permiso".
+  if (roles && !roles.includes(usuario.rol)) {
+    return <Navigate replace to="/no-autorizado" />;
   }
 
+  // 4) Todo bien: se muestran las rutas hijas.
   return <Outlet />;
 }
