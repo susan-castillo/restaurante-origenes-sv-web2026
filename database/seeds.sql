@@ -37,7 +37,7 @@ SELECT (SELECT s.id FROM sucursales s WHERE s.nombre = v.sucursal),
        v.rol, v.cargo, v.salario, v.activo,
        now() - interval '9 months'
 FROM (VALUES
-    ('Administrador General', 'admin@origenes.sv',               'ADMIN',    'ADMINISTRADOR', 1500.00, 'Sucursal Central',     true),
+    ('Administrador General', 'admin@origenes.sv',               'ADMIN',    'GERENTE', 1500.00, 'Sucursal Central',     true),
     ('Laura Martínez',        'rrhh@origenes.sv',                'RRHH',     'RRHH',           900.00, 'Sucursal Central',     true),
     ('Roberto Hernández',     'gerente.central@origenes.sv',     'ADMIN',    'GERENTE',       1100.00, 'Sucursal Central',     true),
     ('Patricia Villalta',     'gerente.escalon@origenes.sv',     'ADMIN',    'GERENTE',       1100.00, 'Sucursal Escalón',     true),
@@ -386,7 +386,6 @@ SELECT t.id AS turno_id, t.sucursal_id, t.usuario_id, g.n AS orden,
        CASE
            WHEN m.r < 55 THEN 'EFECTIVO'
            WHEN m.r < 85 THEN 'TARJETA'
-           WHEN m.r < 95 THEN 'CHIVO'
            ELSE 'BITCOIN'
        END AS metodo_pago
 FROM turnos_caja t
