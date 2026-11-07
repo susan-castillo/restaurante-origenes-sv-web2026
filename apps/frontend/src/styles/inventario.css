@@ -1,0 +1,139 @@
+
+.inventario-page {
+  padding: 28px;
+  background: #faf7f4;
+  min-height: 100vh;
+  color: #442719;
+  font-family: Arial, sans-serif;
+}
+
+.inventario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 36px;
+}
+
+.inventario-header h1 {
+  font-family: Georgia, serif;
+  font-size: 38px;
+  margin: 0 0 12px;
+}
+
+.inventario-header p {
+  color: #8d6655;
+  font-size: 16px;
+  margin: 0;
+}
+
+.inventario-tabs {
+  display: inline-flex;
+  gap: 5px;
+  padding: 6px;
+  border-radius: 16px;
+  background: #eee6df;
+  margin-bottom: 32px;
+}
+
+.inventario-tabs button {
+  border: none;
+  background: transparent;
+  color: #775a4d;
+  padding: 15px 25px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.inventario-tabs .tab-activo {
+  background: white;
+  color: #442719;
+  box-shadow: 0 2px 5px #00000016;
+}
+
+.inventario-tabs button:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.inventario-tabla-contenedor {
+  width: 100%;
+  overflow-x: auto;
+  background: white;
+  border: 1px solid #ebddd3;
+  border-radius: 18px;
+}
+
+.inventario-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  min-width: 700px;
+}
+
+.inventario-tabla th {
+  padding: 20px 25px;
+  background: #f7f2ed;
+  color: #956e5b;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.inventario-tabla td {
+  padding: 25px;
+  border-top: 1px solid #eee2d9;
+  font-size: 16px;
+}
+
+.nombre-insumo {
+  font-weight: 700;
+}
+
+.estado-disponible,
+.estado-bajo {
+  display: inline-block;
+  padding: 8px 15px;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.estado-disponible {
+  background: #e2f2e9;
+  color: #176449;
+}
+
+.estado-bajo {
+  background: #fce6e3;
+  color: #ac3528;
+}
+
+.accion-pendiente {
+  color: #bf681d;
+  font-weight: 600;
+}
+
+.mensaje-inventario,
+.tabla-vacia {
+  padding: 30px;
+  text-align: center;
+  color: #8d6655;
+}
+
+.inventario-error {
+  padding: 18px;
+  background: #fff0ed;
+  color: #a53329;
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  .inventario-page {
+    padding: 16px;
+  }
+
+  .inventario-header h1 {
+    font-size: 30px;
+  }
+}

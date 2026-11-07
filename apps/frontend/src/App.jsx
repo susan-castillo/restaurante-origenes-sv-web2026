@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 import Login from "./pages/Login.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import InventarioPage from "./pages/InventarioPage.jsx";
 
 const moduleRoles = {
   pos: ["ADMIN", "EMPLEADO"],
@@ -40,6 +41,10 @@ function AppRoutes() {
     <Routes>
       <Route element={<Login />} path="/" />
       <Route element={<NotFound />} path="*" />
+      <Route
+        path="/admin/inventario"
+        element={<InventarioPage />}
+      />
     </Routes>
   );
 }
