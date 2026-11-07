@@ -1,12 +1,15 @@
 // Lógica de negocio del catálogo de insumos (comunicación con Prisma).
 import { prisma } from '../models/db.js';
+import { coincideNombre } from '../utils/validaciones.js';
 
-// Lista el catálogo ordenado por nombre. activo: true/false filtra; undefined devuelve todos.
-export const listarInsumos = async ({ activo } = {}) => {
-    return prisma.insumos.findMany({
+// Lista el catálogo ordenado por nombre.
+// activo: true/false filtra por estado (undefined = todos). buscar: texto dentro del nombre.
+export const listarInsumos = async ({ activo, buscar } = {}) => {
+    const insumos = await prisma.insumos.findMany({
         where: activo !== undefined ? { activo } : {},
         orderBy: { nombre: 'asc' },
     });
+    return buscar ? insumos.filter((insumo) => coincideNombre(insumo.nombre, buscar)) : insumos;
 };
 
 // Crea un insumo nuevo. El nombre es único en la base de datos.

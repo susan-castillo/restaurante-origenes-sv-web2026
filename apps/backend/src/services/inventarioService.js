@@ -1,30 +1,33 @@
 // Lógica de negocio del inventario por sucursal (comunicación con Prisma).
 import { prisma } from '../models/db.js';
-import { idValido } from '../utils/validaciones.js';
+import { idValido, coincideNombre } from '../utils/validaciones.js';
 
-// Stock de una sucursal: todos los insumos del catálogo, con 0 si aún no tienen fila de inventario.
-export const listarInventario = async (sucursalId) => {
-        const insumos = await prisma.insumos.findMany({
+// Stock de una sucursal: todos los insumos activos, con 0 si aún no tienen fila de inventario.
+// buscar: texto dentro del nombre del insumo.
+export const listarInventario = async (sucursalId, { buscar } = {}) => {
+    const insumos = await prisma.insumos.findMany({
         where: { activo: true },
         orderBy: { nombre: 'asc' },
         include: { inventario_sucursal: { where: { sucursal_id: sucursalId } } },
     });
 
-    return insumos.map((insumo) => {
-        const fila = insumo.inventario_sucursal[0];
-        return {
-            insumo_id: insumo.id,
-            nombre: insumo.nombre,
-            unidad: insumo.unidad,
-            stock_actual: fila ? fila.stock_actual : '0',
-            stock_minimo: fila ? fila.stock_minimo : '0',
-        };
-    });
+    return insumos
+        .filter((insumo) => !buscar || coincideNombre(insumo.nombre, buscar))
+        .map((insumo) => {
+            const fila = insumo.inventario_sucursal[0];
+            return {
+                insumo_id: insumo.id,
+                nombre: insumo.nombre,
+                unidad: insumo.unidad,
+                stock_actual: fila ? fila.stock_actual : '0',
+                stock_minimo: fila ? fila.stock_minimo : '0',
+            };
+        });
 };
 
-// Insumos cuyo stock actual está por debajo del mínimo en una sucursal.
+// Insumos activos cuyo stock actual está por debajo del mínimo en una sucursal.
 // Prisma no compara dos columnas entre sí en un where, así que se filtra aquí con Decimal.
-export const listarAlertas = async (sucursalId) => {
+export const listarAlertas = async (sucursalId, { buscar } = {}) => {
     const filas = await prisma.inventario_sucursal.findMany({
         where: { sucursal_id: sucursalId, insumos: { activo: true } },
         include: { insumos: true },
@@ -33,6 +36,7 @@ export const listarAlertas = async (sucursalId) => {
 
     return filas
         .filter((fila) => fila.stock_actual.lt(fila.stock_minimo))
+        .filter((fila) => !buscar || coincideNombre(fila.insumos.nombre, buscar))
         .map((fila) => ({
             insumo_id: fila.insumo_id,
             nombre: fila.insumos.nombre,

@@ -1,6 +1,6 @@
 // Valida las entradas HTTP del inventario por sucursal y responde con el código adecuado.
 import * as inventarioService from '../services/inventarioService.js';
-import { idValido, aNumero } from '../utils/validaciones.js';
+import { idValido, aNumero, filtroBuscar } from '../utils/validaciones.js';
 
 const MENSAJE_SIN_SUCURSAL =
     'Sucursal no válida o no asignada a tu usuario. Si eres ADMIN puedes enviar ?sucursal_id=.';
@@ -19,7 +19,11 @@ export const listarInventario = async (req, res) => {
         if (!sucursalId) {
             return res.status(400).json({ error: MENSAJE_SIN_SUCURSAL });
         }
-        const inventario = await inventarioService.listarInventario(sucursalId);
+        const { valor: buscar, error: errorBuscar } = filtroBuscar(req.query.buscar);
+        if (errorBuscar) {
+            return res.status(400).json({ error: errorBuscar });
+        }
+        const inventario = await inventarioService.listarInventario(sucursalId, { buscar });
         return res.status(200).json(inventario);
     } catch (error) {
         console.error('Error al listar inventario:', error);
@@ -33,7 +37,11 @@ export const listarAlertas = async (req, res) => {
         if (!sucursalId) {
             return res.status(400).json({ error: MENSAJE_SIN_SUCURSAL });
         }
-        const alertas = await inventarioService.listarAlertas(sucursalId);
+        const { valor: buscar, error: errorBuscar } = filtroBuscar(req.query.buscar);
+        if (errorBuscar) {
+            return res.status(400).json({ error: errorBuscar });
+        }
+        const alertas = await inventarioService.listarAlertas(sucursalId, { buscar });
         return res.status(200).json(alertas);
     } catch (error) {
         console.error('Error al listar alertas de stock:', error);

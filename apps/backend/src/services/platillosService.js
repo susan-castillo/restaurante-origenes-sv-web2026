@@ -1,15 +1,18 @@
 // Lógica de negocio del menú de platillos (comunicación con Prisma).
 import { prisma } from '../models/db.js';
+import { coincideNombre } from '../utils/validaciones.js';
 
-// Lista platillos. activo: true/false filtra; undefined devuelve todos.
-export const listarPlatillos = async ({ tipo, activo } = {}) => {
-    return prisma.platillos.findMany({
+// Lista platillos. activo: true/false filtra por estado (undefined = todos).
+// buscar: texto dentro del nombre.
+export const listarPlatillos = async ({ tipo, activo, buscar } = {}) => {
+    const platillos = await prisma.platillos.findMany({
         where: {
             ...(activo !== undefined ? { activo } : {}),
             ...(tipo ? { tipo } : {}),
         },
         orderBy: [{ categoria: 'asc' }, { nombre: 'asc' }],
     });
+    return buscar ? platillos.filter((platillo) => coincideNombre(platillo.nombre, buscar)) : platillos;
 };
 
 // Devuelve un platillo con su receta.

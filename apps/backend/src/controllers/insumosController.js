@@ -1,14 +1,18 @@
 // Valida las entradas HTTP del catálogo de insumos y responde con el código adecuado.
 import * as insumosService from '../services/insumosService.js';
-import { idValido, filtroActivo } from '../utils/validaciones.js';
+import { idValido, filtroActivo, filtroBuscar } from '../utils/validaciones.js';
 
 export const listarInsumos = async (req, res) => {
     try {
-        const { valor: activo, error: errorFiltro } = filtroActivo(req.query.activo);
-        if (errorFiltro) {
-            return res.status(400).json({ error: errorFiltro });
+        const { valor: activo, error: errorActivo } = filtroActivo(req.query.activo);
+        if (errorActivo) {
+            return res.status(400).json({ error: errorActivo });
         }
-        const insumos = await insumosService.listarInsumos({ activo });
+        const { valor: buscar, error: errorBuscar } = filtroBuscar(req.query.buscar);
+        if (errorBuscar) {
+            return res.status(400).json({ error: errorBuscar });
+        }
+        const insumos = await insumosService.listarInsumos({ activo, buscar });
         return res.status(200).json(insumos);
     } catch (error) {
         console.error('Error al listar insumos:', error);

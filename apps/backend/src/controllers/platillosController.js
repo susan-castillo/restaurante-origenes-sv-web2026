@@ -1,7 +1,6 @@
 // Valida las entradas HTTP del menú de platillos y responde con el código adecuado.
 import * as platillosService from '../services/platillosService.js';
-import { idValido, aNumero } from '../utils/validaciones.js';
-
+import { idValido, aNumero, filtroActivo, filtroBuscar } from '../utils/validaciones.js';
 const TIPOS_PLATILLO = ['ELABORADO', 'REVENTA'];
 
 // Valida y normaliza el cuerpo de un platillo.
@@ -69,7 +68,7 @@ const validarPlatillo = (body, { parcial = false } = {}) => {
 
 export const listarPlatillos = async (req, res) => {
     try {
-        const { tipo, activo } = req.query;
+        const { tipo } = req.query;
 
         let tipoFiltro;
         if (tipo !== undefined) {
@@ -79,17 +78,20 @@ export const listarPlatillos = async (req, res) => {
             }
         }
 
-        let activoFiltro;
-        if (activo !== undefined) {
-            if (activo !== 'true' && activo !== 'false') {
-                return res.status(400).json({ error: 'El filtro activo debe ser true o false.' });
-            }
-            activoFiltro = activo === 'true';
+        const { valor: activo, error: errorActivo } = filtroActivo(req.query.activo);
+        if (errorActivo) {
+            return res.status(400).json({ error: errorActivo });
+        }
+
+        const { valor: buscar, error: errorBuscar } = filtroBuscar(req.query.buscar);
+        if (errorBuscar) {
+            return res.status(400).json({ error: errorBuscar });
         }
 
         const platillos = await platillosService.listarPlatillos({
             tipo: tipoFiltro,
-            activo: activoFiltro,
+            activo,
+            buscar,
         });
         return res.status(200).json(platillos);
     } catch (error) {
