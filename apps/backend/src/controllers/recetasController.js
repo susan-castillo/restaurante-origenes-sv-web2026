@@ -72,6 +72,9 @@ export const reemplazarReceta = async (req, res) => {
         if (error.message === 'INSUMO_NO_ENCONTRADO') {
             return res.status(400).json({ error: 'Uno o más insumos de la receta no existen.' });
         }
+        if (error.message === 'INSUMO_INACTIVO') {
+            return res.status(409).json({ error: 'Uno o más insumos de la receta están desactivados.' });
+        }
         console.error('Error al reemplazar receta:', error);
         return res.status(500).json({ error: 'Error al guardar la receta.' });
     }

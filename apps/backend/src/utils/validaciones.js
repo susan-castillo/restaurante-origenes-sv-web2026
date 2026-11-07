@@ -13,3 +13,12 @@ export const aNumero = (valor) => {
     if (typeof valor === 'string' && valor.trim() !== '') return Number(valor);
     return NaN;
 };
+
+// Interpreta el filtro ?activo=true|false.
+// Devuelve { valor } (undefined si no se envió) o { error } si el texto no es válido.
+export const filtroActivo = (valor) => {
+    if (valor === undefined) return { valor: undefined };
+    if (valor === 'true') return { valor: true };
+    if (valor === 'false') return { valor: false };
+    return { error: 'El filtro activo debe ser true o false.' };
+};

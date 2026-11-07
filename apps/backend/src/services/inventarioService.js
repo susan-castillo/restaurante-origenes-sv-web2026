@@ -4,7 +4,8 @@ import { idValido } from '../utils/validaciones.js';
 
 // Stock de una sucursal: todos los insumos del catálogo, con 0 si aún no tienen fila de inventario.
 export const listarInventario = async (sucursalId) => {
-    const insumos = await prisma.insumos.findMany({
+        const insumos = await prisma.insumos.findMany({
+        where: { activo: true },
         orderBy: { nombre: 'asc' },
         include: { inventario_sucursal: { where: { sucursal_id: sucursalId } } },
     });
@@ -25,7 +26,7 @@ export const listarInventario = async (sucursalId) => {
 // Prisma no compara dos columnas entre sí en un where, así que se filtra aquí con Decimal.
 export const listarAlertas = async (sucursalId) => {
     const filas = await prisma.inventario_sucursal.findMany({
-        where: { sucursal_id: sucursalId },
+        where: { sucursal_id: sucursalId, insumos: { activo: true } },
         include: { insumos: true },
         orderBy: { insumo_id: 'asc' },
     });

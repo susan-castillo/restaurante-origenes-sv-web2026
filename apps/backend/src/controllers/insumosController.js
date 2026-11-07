@@ -1,10 +1,14 @@
 // Valida las entradas HTTP del catálogo de insumos y responde con el código adecuado.
 import * as insumosService from '../services/insumosService.js';
-import { idValido } from '../utils/validaciones.js';
+import { idValido, filtroActivo } from '../utils/validaciones.js';
 
 export const listarInsumos = async (req, res) => {
     try {
-        const insumos = await insumosService.listarInsumos();
+        const { valor: activo, error: errorFiltro } = filtroActivo(req.query.activo);
+        if (errorFiltro) {
+            return res.status(400).json({ error: errorFiltro });
+        }
+        const insumos = await insumosService.listarInsumos({ activo });
         return res.status(200).json(insumos);
     } catch (error) {
         console.error('Error al listar insumos:', error);
@@ -76,24 +80,23 @@ export const actualizarInsumo = async (req, res) => {
     }
 };
 
-// Sin ruta por ahora: pendiente de decidir con el equipo si se conserva.
-export const eliminarInsumo = async (req, res) => {
+// PATCH /insumos/:id/estado  con cuerpo { "activo": true|false }
+export const cambiarEstadoInsumo = async (req, res) => {
     try {
         const id = idValido(req.params.id);
         if (!id) {
             return res.status(400).json({ error: 'El id del insumo no es válido.' });
         }
-
-        await insumosService.eliminarInsumo(id);
-        return res.status(204).send();
+        if (typeof req.body?.activo !== 'boolean') {
+            return res.status(400).json({ error: 'El campo activo debe ser true o false.' });
+        }
+        const insumo = await insumosService.cambiarEstadoInsumo(id, req.body.activo);
+        return res.status(200).json(insumo);
     } catch (error) {
         if (error.message === 'INSUMO_NO_ENCONTRADO') {
             return res.status(404).json({ error: 'Insumo no encontrado.' });
         }
-        if (error.message === 'INSUMO_EN_USO') {
-            return res.status(409).json({ error: 'No se puede eliminar: el insumo está en uso en recetas, compras o inventario.' });
-        }
-        console.error('Error al eliminar insumo:', error);
-        return res.status(500).json({ error: 'Error al eliminar el insumo.' });
+        console.error('Error al cambiar el estado del insumo:', error);
+        return res.status(500).json({ error: 'Error al cambiar el estado del insumo.' });
     }
 };

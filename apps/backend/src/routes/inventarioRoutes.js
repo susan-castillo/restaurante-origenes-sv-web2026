@@ -3,6 +3,7 @@ import {
     listarInsumos,
     crearInsumo,
     actualizarInsumo,
+    cambiarEstadoInsumo,
 } from '../controllers/insumosController.js';
 import {
     listarPlatillos,
@@ -36,17 +37,18 @@ router.put('/platillos/:id', verifyToken, soloAdmin, actualizarPlatillo);
 router.patch('/platillos/:id/estado', verifyToken, soloAdmin, cambiarEstadoPlatillo);
 
 // Receta de un platillo
-router.get('/platillos/:id/receta', verifyToken, empleadoOAdmin, obtenerReceta);
-router.put('/platillos/:id/receta', verifyToken, empleadoOAdmin, reemplazarReceta);
+router.get('/platillos/:id/receta', verifyToken, soloAdmin, obtenerReceta);
+router.put('/platillos/:id/receta', verifyToken, soloAdmin, reemplazarReceta);
 
-// Insumos (catálogo)
-router.get('/insumos', verifyToken, empleadoOAdmin, listarInsumos);
-router.post('/insumos', verifyToken, empleadoOAdmin, crearInsumo);
-router.put('/insumos/:id', verifyToken, empleadoOAdmin, actualizarInsumo);
+// Insumos (catálogo); "eliminar" = desactivar
+router.get('/insumos', verifyToken, soloAdmin, listarInsumos);
+router.post('/insumos', verifyToken, soloAdmin, crearInsumo);
+router.put('/insumos/:id', verifyToken, soloAdmin, actualizarInsumo);
+router.patch('/insumos/:id/estado', verifyToken, soloAdmin, cambiarEstadoInsumo);
 
 // Inventario por sucursal
-router.get('/inventario', verifyToken, empleadoOAdmin, listarInventario);
+router.get('/inventario', verifyToken, soloAdmin, listarInventario);
 router.get('/inventario/alertas', verifyToken, empleadoOAdmin, listarAlertas);
-router.put('/inventario/:insumoId', verifyToken, empleadoOAdmin, ajustarInventario);
+router.put('/inventario/:insumoId', verifyToken, soloAdmin, ajustarInventario);
 
 export default router;

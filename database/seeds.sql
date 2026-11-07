@@ -85,6 +85,8 @@ INSERT INTO insumos (nombre, unidad) VALUES
     ('Galletas de avena', 'unidad'),
     ('Barra de chocolate', 'unidad'),
     ('Café molido 250g', 'unidad');
+-- Insumo desactivado, para ver el filtro de activos en la demo
+INSERT INTO insumos (nombre, unidad, activo) VALUES ('Jarabe de vainilla', 'ml', false);
 
 -- ---------------------------------------------------------------
 -- 4. Menú: 12 elaborados activos, 6 de reventa y 1 elaborado desactivado
@@ -109,6 +111,31 @@ INSERT INTO platillos (nombre, categoria, precio, tipo, activo) VALUES
     ('Barra de chocolate',         'Empacados',         1.25, 'REVENTA',   true),
     ('Café molido 250g',           'Empacados',         8.50, 'REVENTA',   true),
     ('Pumpkin Spice Latte',        'Bebidas calientes', 4.50, 'ELABORADO', false);
+
+-- Imágenes de los platillos (los archivos van en apps/frontend/public/img/platillos/)
+UPDATE platillos p
+SET imagen = '/img/platillos/' || v.archivo
+FROM (VALUES
+    ('Espresso',                   'espresso.jpg'),
+    ('Americano',                  'americano.jpg'),
+    ('Cappuccino',                 'cappuccino.jpg'),
+    ('Latte Grande',               'latte-grande.jpg'),
+    ('Mocha',                      'mocha.jpg'),
+    ('Chocolate caliente',         'chocolate-caliente.jpg'),
+    ('Latte frío',                 'latte-frio.jpg'),
+    ('Frappé de caramelo',         'frappe-de-caramelo.jpg'),
+    ('Té chai latte',              'te-chai-latte.jpg'),
+    ('Croissant de jamón y queso', 'croissant-jamon-queso.jpg'),
+    ('Sándwich de jamón y queso',  'sandwich-jamon-queso.jpg'),
+    ('Pancakes',                   'pancakes.jpg'),
+    ('Botella de agua',            'botella-de-agua.jpg'),
+    ('Gaseosa en lata',            'gaseosa-en-lata.jpg'),
+    ('Jugo de naranja',            'jugo-de-naranja.jpg'),
+    ('Galletas de avena',          'galletas-de-avena.jpg'),
+    ('Barra de chocolate',         'barra-de-chocolate.jpg'),
+    ('Café molido 250g',           'cafe-molido-250g.jpg')
+) AS v(nombre, archivo)
+WHERE p.nombre = v.nombre;
 
 -- ---------------------------------------------------------------
 -- 5. Recetas. Los de reventa llevan una receta de un solo insumo con

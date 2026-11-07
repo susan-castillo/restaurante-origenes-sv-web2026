@@ -25,6 +25,14 @@ const validarPlatillo = (body, { parcial = false } = {}) => {
         datos.categoria = categoria || null;
     }
 
+    if (body.imagen !== undefined) {
+        const imagen = body.imagen === null ? '' : String(body.imagen).trim();
+        if (imagen.length > 255) {
+            return { error: 'La imagen no puede superar 255 caracteres.' };
+        }
+        datos.imagen = imagen || null;
+    }
+
     if (body.precio !== undefined) {
         const precio = aNumero(body.precio);
         if (!Number.isFinite(precio) || precio < 0 || precio > 999999.99) {

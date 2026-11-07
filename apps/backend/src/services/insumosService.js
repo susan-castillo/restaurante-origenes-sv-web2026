@@ -1,9 +1,12 @@
 // Lógica de negocio del catálogo de insumos (comunicación con Prisma).
 import { prisma } from '../models/db.js';
 
-// Devuelve el catálogo de insumos ordenado por nombre.
-export const listarInsumos = async () => {
-    return prisma.insumos.findMany({ orderBy: { nombre: 'asc' } });
+// Lista el catálogo ordenado por nombre. activo: true/false filtra; undefined devuelve todos.
+export const listarInsumos = async ({ activo } = {}) => {
+    return prisma.insumos.findMany({
+        where: activo !== undefined ? { activo } : {},
+        orderBy: { nombre: 'asc' },
+    });
 };
 
 // Crea un insumo nuevo. El nombre es único en la base de datos.
@@ -31,15 +34,12 @@ export const actualizarInsumo = async (id, datos) => {
     }
 };
 
-// Elimina un insumo. Falla si está en recetas, compras o inventario.
-// (Sin ruta por ahora: pendiente de decidir con el equipo.)
-export const eliminarInsumo = async (id) => {
+// Activa o desactiva un insumo. No se borra: solo deja de mostrarse en el sistema.
+export const cambiarEstadoInsumo = async (id, activo) => {
     try {
-        return await prisma.insumos.delete({ where: { id } });
+        return await prisma.insumos.update({ where: { id }, data: { activo } });
     } catch (error) {
-        // P2003: otra tabla todavía hace referencia a este insumo.
         if (error.code === 'P2025') throw new Error('INSUMO_NO_ENCONTRADO');
-        if (error.code === 'P2003') throw new Error('INSUMO_EN_USO');
         throw error;
     }
 };

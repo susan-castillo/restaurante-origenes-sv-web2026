@@ -28,10 +28,11 @@ export const reemplazarReceta = async (platilloId, items) => {
         const platillo = await tx.platillos.findUnique({ where: { id: platilloId } });
         if (!platillo) throw new Error('PLATILLO_NO_ENCONTRADO');
 
-        // Todos los insumos enviados deben existir
+        // Todos los insumos enviados deben existir y estar activos
         const ids = items.map((item) => item.insumo_id);
-        const existentes = await tx.insumos.count({ where: { id: { in: ids } } });
-        if (existentes !== ids.length) throw new Error('INSUMO_NO_ENCONTRADO');
+        const insumos = await tx.insumos.findMany({ where: { id: { in: ids } } });
+        if (insumos.length !== ids.length) throw new Error('INSUMO_NO_ENCONTRADO');
+        if (insumos.some((insumo) => !insumo.activo)) throw new Error('INSUMO_INACTIVO');
 
         await tx.recetas.deleteMany({ where: { platillo_id: platilloId } });
         if (items.length > 0) {
