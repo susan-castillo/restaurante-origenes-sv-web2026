@@ -39,12 +39,12 @@ async function peticion(endpoint, opciones = {}) {
 
 // GET /api/insumos
 export async function obtenerInsumos() {
-  return peticion("/api/insumos");
+  return peticion("/insumos");
 }
 
 // POST /api/insumos
 export async function crearInsumo(datos) {
-  return peticion("/api/insumos", {
+  return peticion("/insumos", {
     method: "POST",
     body: JSON.stringify(datos),
   });
@@ -52,7 +52,7 @@ export async function crearInsumo(datos) {
 
 // PUT /api/insumos/:id
 export async function actualizarInsumo(id, datos) {
-  return peticion(`/api/insumos/${id}`, {
+  return peticion(`/insumos/${id}`, {
     method: "PUT",
     body: JSON.stringify(datos),
   });
@@ -63,19 +63,27 @@ export async function actualizarInsumo(id, datos) {
 // ==========================================
 
 // GET /api/inventario
-export async function obtenerInventario() {
-  return peticion("/api/inventario");
+export async function obtenerInventario(sucursalId = null) {
+  const endpoint = sucursalId != null
+    ? `/inventario?sucursal_id=${encodeURIComponent(sucursalId)}`
+    : "/inventario";
+
+  return peticion(endpoint);
 }
 
 // PUT /api/inventario/:insumoId
 export async function actualizarInventario(insumoId, datos) {
-  return peticion(`/api/inventario/${insumoId}`, {
+  return peticion(`/inventario/${insumoId}`, {
     method: "PUT",
     body: JSON.stringify(datos),
   });
 }
 
 // GET /api/inventario/alertas
-export async function obtenerAlertas() {
-  return peticion("/api/inventario/alertas");
+export async function obtenerAlertas(sucursalId = null) {
+  const endpoint = sucursalId != null
+    ? `/inventario/alertas?sucursal_id=${encodeURIComponent(sucursalId)}`
+    : "/inventario/alertas";
+
+  return peticion(endpoint);
 }
