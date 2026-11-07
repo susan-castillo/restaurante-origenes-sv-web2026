@@ -36,17 +36,17 @@ router.put('/platillos/:id', verifyToken, soloAdmin, actualizarPlatillo);
 router.patch('/platillos/:id/estado', verifyToken, soloAdmin, cambiarEstadoPlatillo);
 
 // Receta de un platillo
-router.get('/platillos/:id/receta', verifyToken, soloAdmin, obtenerReceta);
-router.put('/platillos/:id/receta', verifyToken, soloAdmin, reemplazarReceta);
+router.get('/platillos/:id/receta', verifyToken, empleadoOAdmin, obtenerReceta);
+router.put('/platillos/:id/receta', verifyToken, empleadoOAdmin, reemplazarReceta);
 
 // Insumos (catálogo)
-router.get('/insumos', verifyToken, soloAdmin, listarInsumos);
-router.post('/insumos', verifyToken, soloAdmin, crearInsumo);
-router.put('/insumos/:id', verifyToken, soloAdmin, actualizarInsumo);
+router.get('/insumos', verifyToken, empleadoOAdmin, listarInsumos);
+router.post('/insumos', verifyToken, empleadoOAdmin, crearInsumo);
+router.put('/insumos/:id', verifyToken, empleadoOAdmin, actualizarInsumo);
 
 // Inventario por sucursal
-router.get('/inventario', verifyToken, soloAdmin, listarInventario);
+router.get('/inventario', verifyToken, empleadoOAdmin, listarInventario);
 router.get('/inventario/alertas', verifyToken, empleadoOAdmin, listarAlertas);
-router.put('/inventario/:insumoId', verifyToken, soloAdmin, ajustarInventario);
+router.put('/inventario/:insumoId', verifyToken, empleadoOAdmin, ajustarInventario);
 
 export default router;
