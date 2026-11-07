@@ -42,3 +42,48 @@ export const eliminarInsumo = async (id) => {
         throw error;
     }
 };
+
+// Lista platillos. Por defecto solo los activos (menú del POS).
+export const listarPlatillos = async ({ tipo, incluirInactivos = false } = {}) => {
+    return prisma.platillos.findMany({
+        where: {
+            ...(incluirInactivos ? {} : { activo: true }),
+            ...(tipo ? { tipo } : {}),
+        },
+        orderBy: [{ categoria: 'asc' }, { nombre: 'asc' }],
+    });
+};
+
+// Devuelve un platillo con su receta (cuando existan filas en recetas).
+export const obtenerPlatillo = async (id) => {
+    const platillo = await prisma.platillos.findUnique({
+        where: { id },
+        include: { recetas: { include: { insumos: true } } },
+    });
+    if (!platillo) throw new Error('PLATILLO_NO_ENCONTRADO');
+    return platillo;
+};
+
+export const crearPlatillo = async (datos) => {
+    return prisma.platillos.create({ data: datos });
+};
+
+export const actualizarPlatillo = async (id, datos) => {
+    try {
+        return await prisma.platillos.update({ where: { id }, data: datos });
+    } catch (error) {
+        // P2025: el registro no existe
+        if (error.code === 'P2025') throw new Error('PLATILLO_NO_ENCONTRADO');
+        throw error;
+    }
+};
+
+// No se borra: se desactiva para conservar el historial de ventas.
+export const desactivarPlatillo = async (id) => {
+    try {
+        return await prisma.platillos.update({ where: { id }, data: { activo: false } });
+    } catch (error) {
+        if (error.code === 'P2025') throw new Error('PLATILLO_NO_ENCONTRADO');
+        throw error;
+    }
+};
