@@ -8,6 +8,8 @@ import {
     crearPlatillo,
     actualizarPlatillo,
     cambiarEstadoPlatillo,
+    obtenerReceta,
+    reemplazarReceta,
 } from '../controllers/inventarioController.js';
 import { verifyToken } from '../middlewares/authMiddleware.js';
 import { requireRole } from '../middlewares/roleMiddleware.js';
@@ -23,6 +25,10 @@ router.get('/platillos/:id', verifyToken, empleadoOAdmin, obtenerPlatillo);
 router.post('/platillos', verifyToken, soloAdmin, crearPlatillo);
 router.put('/platillos/:id', verifyToken, soloAdmin, actualizarPlatillo);
 router.patch('/platillos/:id/estado', verifyToken, soloAdmin, cambiarEstadoPlatillo);
+
+// Receta de un platillo
+router.get('/platillos/:id/receta', verifyToken, soloAdmin, obtenerReceta);
+router.put('/platillos/:id/receta', verifyToken, soloAdmin, reemplazarReceta);
 
 // Insumos (catálogo)
 router.get('/insumos', verifyToken, soloAdmin, listarInsumos);
