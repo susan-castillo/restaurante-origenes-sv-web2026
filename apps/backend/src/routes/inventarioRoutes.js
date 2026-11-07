@@ -3,14 +3,18 @@ import {
     listarInsumos,
     crearInsumo,
     actualizarInsumo,
+} from '../controllers/insumosController.js';
+import {
     listarPlatillos,
     obtenerPlatillo,
     crearPlatillo,
     actualizarPlatillo,
     cambiarEstadoPlatillo,
+} from '../controllers/platillosController.js';
+import {
     obtenerReceta,
     reemplazarReceta,
-} from '../controllers/inventarioController.js';
+} from '../controllers/recetasController.js';
 import { verifyToken } from '../middlewares/authMiddleware.js';
 import { requireRole } from '../middlewares/roleMiddleware.js';
 
