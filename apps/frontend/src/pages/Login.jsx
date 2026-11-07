@@ -73,7 +73,7 @@ export default function Login() {
                 />
               </FormGroup>
 
-              <Button color="primary" block className="w-100 mt-4" disabled={cargando}>
+              <Button color="secondary" block className="w-100 mt-4" disabled={cargando}>
                 {cargando ? 'Iniciando sesión...' : 'Ingresar'}
               </Button>
             </Form>

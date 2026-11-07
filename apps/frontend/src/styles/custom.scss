@@ -1,0 +1,20 @@
+// 1. Sobrescribir / añadir tus colores personalizados
+$primary: #CCA679;     // Ejemplo: Rojo artesanal/terracota
+$secondary: #DE8332;   // Ejemplo: Naranja cálido
+$dark: #261C14;        // Ejemplo: Marrón oscuro
+$light: #FDFBF7;       // Ejemplo: Crema suave
+
+// 2. Extender o definir tu propia paleta personalizada en la mapa $theme-colors
+$custom-colors: (
+        "sky-blue": #82BCC7,
+        "pinky": #FA8597,
+        "cream": #FAEADB
+);
+
+// 3. Opcional: Modificar tipografías o bordes por defecto
+$body-bg: $light;
+$body-color: $dark;
+$font-family-base: 'Poppins', system-ui, -apple-system, sans-serif;
+
+// 4. Importar Bootstrap DESPUÉS de definir tus variables
+@import "bootstrap/scss/bootstrap";
