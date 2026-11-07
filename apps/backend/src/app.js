@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
 import authRoutes from './routes/authRoutes.js';
+import posRoutes from './routes/posRoutes.js';
 import inventarioRoutes from './routes/inventarioRoutes.js';
 
 const app = express();
@@ -52,6 +53,8 @@ app.use(
 
 // Rutas del módulo de autenticación (/api/auth/login, /api/auth/me)
 app.use('/api/auth', authRoutes);
+
+app.use('/api/pos', posRoutes);
 
 // Rutas del módulo de Inventario/Recetas
 app.use('/api', inventarioRoutes);
