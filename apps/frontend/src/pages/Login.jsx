@@ -46,8 +46,8 @@ export default function Login() {
             <CardBody className="p-4 p-md-5">
               {/* Logo o Icono Decorativo */}
               <div className="text-center mb-4">
-                <h2 className="text-cream fw-serif mb-2">Bienvenido a Orígenes</h2>
-                <p className={"text-light fw-light"}>Inicia sesión para abrir caja, tomar pedidos, o administrar tu sucursal</p>
+                <h2 className="text-dark fw-serif mb-2">Bienvenido a Orígenes</h2>
+                <p className={"text-dark fw-light"}>Inicia sesión para abrir caja, tomar pedidos, o administrar tu sucursal</p>
               </div>
 
               {error && (
@@ -58,7 +58,7 @@ export default function Login() {
 
               <Form onSubmit={handleSubmit}>
                 <FormGroup className="mb-3">
-                  <Label for="email" className="text-cream small letter-spacing-1">
+                  <Label for="email" className="text-dark small letter-spacing-1">
                     Correo eléctronico
                   </Label>
                   <Input
@@ -74,7 +74,7 @@ export default function Login() {
 
                 <FormGroup className="mb-3">
                   <div className="d-flex justify-content-between align-items-center">
-                    <Label for="password" className="text-cream small letter-spacing-1">
+                    <Label for="password" className="text-dark small letter-spacing-1">
                       Contraseña
                     </Label>
                   </div>
@@ -89,7 +89,7 @@ export default function Login() {
                   />
                 </FormGroup>
                 <div className={"text-end"}>
-                  <a href="#reset" className="text-secondary text-decoration-none small opacity-75">
+                  <a href="#reset" className="fw-bold text-secondary text-decoration-none small opacity-75">
                     ¿Olvidaste la clave?
                   </a>
                 </div>
@@ -98,7 +98,7 @@ export default function Login() {
                 <Button
                     color="pinky"
                     block
-                    className="w-100 py-2 mt-4 text-cream fw-bold text-uppercase shadow-md"
+                    className="w-100 py-2 mt-4 text-light fw-bold text-uppercase shadow-md"
                     disabled={cargando}
                 >
                   {cargando ? 'Accediendo al Salón...' : 'Iniciar sesión'}
