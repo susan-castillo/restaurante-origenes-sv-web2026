@@ -10,6 +10,26 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+
+
+
+    // =====================================
+    // CONFIGURACIÓN DE SASS
+    // =====================================
+    css: {
+      preprocessorOptions: {
+        scss: {
+          quietDeps: true,
+          silenceDeprecations: [
+            "import",
+            "global-builtin",
+            "color-functions",
+            "if-function",
+          ],
+        },
+      },
+    },
+    
     server: {
       proxy: {
         "/api": {
