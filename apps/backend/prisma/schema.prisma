@@ -49,6 +49,7 @@ model insumos {
   id                  Int                   @id @default(autoincrement())
   nombre              String                @unique @db.VarChar(100)
   unidad              String                @db.VarChar(10)
+  activo              Boolean               @default(true)
   detalle_compra      detalle_compra[]
   inventario_sucursal inventario_sucursal[]
   recetas             recetas[]

@@ -59,7 +59,8 @@ CREATE TABLE platillos (
 CREATE TABLE insumos (
     id SERIAL PRIMARY KEY,                     -- Identificador único del insumo
     nombre VARCHAR(100) NOT NULL UNIQUE,       -- Nombre del insumo (Ej: 'Café en Grano', 'Leche Entera')
-    unidad VARCHAR(10) NOT NULL CHECK (unidad IN ('g', 'ml', 'unidad')) -- Unidad de medida estándar
+    unidad VARCHAR(10) NOT NULL CHECK (unidad IN ('g', 'ml', 'unidad')), -- Unidad de medida estándar
+    activo BOOLEAN NOT NULL DEFAULT true,       -- Controla la visibilidad del insumo en el sistema
 );
 
 -- Tabla 5: RECETAS (Matriz de Deducción por Platillo)
