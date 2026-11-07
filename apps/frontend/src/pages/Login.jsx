@@ -1,17 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Card, CardBody, Form, FormGroup, Label, Input, Button, Alert, Row, Col } from 'reactstrap';
+import {
+  Container,
+  Card,
+  CardBody,
+  Form,
+  FormGroup,
+  Label,
+  Input,
+  Button,
+  Alert,
+  InputGroupText,
+  InputGroup
+} from 'reactstrap';
 import { useAuth } from '../context/AuthContext.jsx';
+import logoOrigenes from '../assets/cake.png';
+import logoOrigenes02 from '../assets/granos-cafe.png';
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+
+// Arreglo de imágenes para el fondo con temática de cafetería/repostería
+const IMAGENES_FONDO = [
+  'https://cdn.shopify.com/s/files/1/2964/0212/files/42_b0706929-b3f8-4f6c-bfe9-53a36b1df554_480x480.png?v=1720472518',
+  'https://st2.depositphotos.com/1008041/8030/i/450/depositphotos_80304176-stock-photo-fresh-pastel-colored-macarons.jpg',
+  'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&q=80&w=1200',
+  'https://cdn-pro.elsalvador.com/wp-content/uploads/2018/12/postre5.jpg'
+];
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
+  const [indexImagen, setIndexImagen] = useState(0);
 
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  // Transición suave de imágenes cada 5 segundos
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      setIndexImagen((prevIndex) => (prevIndex + 1) % IMAGENES_FONDO.length);
+    }, 5000);
+
+    return () => clearInterval(intervalo);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,61 +72,107 @@ export default function Login() {
   };
 
   return (
-      <div className="login-bg d-flex flex-column justify-content-between align-items-center py-4">
-        {/* Tarjeta Central del Formulario */}
-        <Container className="d-flex justify-content-center align-items-center flex-grow-1">
-          <Card style={{ maxWidth: '440px', width: '100%' }} className="card-patisserie shadow-lg">
+      <div className="login-container position-relative min-vh-100 overflow-hidden d-flex flex-column justify-content-between align-items-center py-4">
+        {/* 1. Capas superpuestas para la transición de imágenes */}
+        {IMAGENES_FONDO.map((imgUrl, i) => (
+            <div
+                key={imgUrl}
+                className={`bg-slide ${i === indexImagen ? 'active' : ''}`}
+                style={{ backgroundImage: `url(${imgUrl})` }}
+            />
+        ))}
+
+        {/* 2. Capa oscura/filtro para contraste con la paleta de la marca */}
+        <div className="bg-overlay" />
+
+        {/* 3. Contenido de la interfaz */}
+        <Container className="login-content d-flex justify-content-center align-items-center flex-grow-1">
+          <Card style={{ maxWidth: '480px', width: '100%' }} className="card-patisserie shadow-lg">
             <CardBody className="p-4 p-md-5">
-              {/* Logo o Icono Decorativo */}
+              <div className="d-flex gap-3 justify-content-center mb-4">
+                <img
+                    src={logoOrigenes}
+                    alt="Postre Orígenes"
+                    style={{ width: '60px', height: '60px' }}
+                    className="bg-primary p-2 rounded-circle img-fluid "
+                />
+                <img
+                    src={logoOrigenes02}
+                    alt="Postre Orígenes"
+                    style={{ width: '60px', height: '60px' }}
+                    className="bg-primary p-2 rounded-circle img-fluid "
+                />
+              </div>
+
               <div className="text-center mb-4">
-                <h2 className="text-dark fw-serif mb-2">Bienvenido a Orígenes</h2>
-                <p className={"text-dark fw-light"}>Inicia sesión para abrir caja, tomar pedidos, o administrar tu sucursal</p>
+                <h2 className="text-brown fw-bold mb-2 font-origenes">Bienvenido a Orígenes</h2>
+                <p className="text-dark">
+                  Inicia sesión para abrir caja, tomar pedidos, o administrar tu sucursal
+                </p>
               </div>
 
               {error && (
-                  <Alert color="danger" className="bg-dark text-pinky border-pinky opacity-90 py-2 small">
+                  <Alert className="bg-red text-light border-pinky opacity-90 py-2 small">
                     {error}
                   </Alert>
               )}
 
               <Form onSubmit={handleSubmit}>
+                {/* Correo Electrónico */}
                 <FormGroup className="mb-3">
-                  <Label for="email" className="text-dark small letter-spacing-1">
-                    Correo eléctronico
+                  <Label for="email" className="text-brown fw-semibold small letter-spacing-1">
+                    Correo electrónico
                   </Label>
-                  <Input
-                      type="email"
-                      id="email"
-                      className="input-patisserie py-2"
-                      placeholder="admin@origenes.sv"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                  />
+                  <InputGroup>
+                    <Input
+                        type="email"
+                        id="email"
+                        className="input-patisserie py-2"
+                        placeholder="admin@origenes.sv"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                    <InputGroupText className="bg-transparent border-light">
+                      <FaEnvelope color="#FFF" size={18} />
+                    </InputGroupText>
+                  </InputGroup>
                 </FormGroup>
 
+                {/* Contraseña con toggle de ver/ocultar */}
                 <FormGroup className="mb-3">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <Label for="password" className="text-dark small letter-spacing-1">
-                      Contraseña
-                    </Label>
-                  </div>
-                  <Input
-                      type="password"
-                      id="password"
-                      className="input-patisserie py-2"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                  />
+                  <Label for="password" className="text-brown fw-semibold small letter-spacing-1">
+                    Contraseña
+                  </Label>
+                  <InputGroup>
+                    <Input
+                        type={mostrarPassword ? 'text' : 'password'}
+                        id="password"
+                        className="input-patisserie py-2"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+                    <InputGroupText
+                        className="bg-transparent border-light"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setMostrarPassword(!mostrarPassword)}
+                    >
+                      {mostrarPassword ? (
+                          <FaEyeSlash color="#FFF" size={18} />
+                      ) : (
+                          <FaEye color="#FFF" size={18} />
+                      )}
+                    </InputGroupText>
+                  </InputGroup>
                 </FormGroup>
 
-                {/* Botón Principal (Dorado/Terracota) */}
+                {/* Botón Principal */}
                 <Button
-                    color="pinky"
                     block
-                    className="w-100 py-2 mt-5 text-light fw-bold text-uppercase shadow-md"
+                    type="submit"
+                    className="w-100 py-3 mt-5 text-light rounded-4 fw-bold shadow-md bg-pinky-degrade"
                     disabled={cargando}
                 >
                   {cargando ? 'Accediendo al Salón...' : 'Iniciar sesión'}
@@ -102,11 +181,6 @@ export default function Login() {
             </CardBody>
           </Card>
         </Container>
-
-        {/* Pie de página */}
-        <footer className="text-center text-cream opacity-50 small mt-4">
-          <p className="mb-0">© 2026 Restaurante Orígenes SV — Arte en Cafetería & Postres</p>
-        </footer>
       </div>
   );
 }

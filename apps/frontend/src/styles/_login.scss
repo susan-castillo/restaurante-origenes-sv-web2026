@@ -1,34 +1,81 @@
 /* Estilos de inspiración Haute Pâtisserie / Café */
-.login-bg {
-  background: linear-gradient(135deg, rgba(250, 133, 151, 0.85) 0%, rgba(250, 234, 219, 0.65) 100%),
-  url('https://st2.depositphotos.com/1008041/8030/i/450/depositphotos_80304176-stock-photo-fresh-pastel-colored-macarons.jpg') center/cover no-repeat;
-  min-height: 100vh;
-}
 
 .card-patisserie {
-  background: rgba(250, 234, 219, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(204, 166, 121, 0.3) !important;
+  border: 1px solid rgba(253, 253, 253, 0.51) !important;
   border-radius: 15px;
 }
 
 .input-patisserie {
-  background-color: rgba(250, 234, 219, 0.08) !important;
-  border: 1px solid rgba(204, 166, 121, 0.4) !important;
-  color: #FAEADB !important;
+  background-color: rgb(255, 220, 195) !important;
+  border: 1px solid rgb(255, 255, 255) !important;
+  color: #050505 !important;
   border-radius: 15px;
 
   &:focus {
-    background-color: rgba(250, 234, 219, 0.15) !important;
+    background-color: rgb(237, 186, 143) !important;
     border-color: #DE8332 !important;
     box-shadow: 0 0 0 0.25rem rgba(222, 131, 50, 0.25) !important;
   }
 
-  &::placeholder {
-    color: rgba(250, 234, 219, 0.4) !important;
+  /* 2. Anula el fondo amarillo/azul del autofill del navegador */
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
+  &:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px rgb(246, 227, 203) inset !important;
+    -webkit-text-fill-color: #200303 !important;
+    font-size: 0.95rem !important;
+    font-family: 'Poppins', sans-serif !important;
+    transition: background-color 5000s ease-in-out 0s;
   }
 }
 
-.letter-spacing-2 {
-  letter-spacing: 2px;
+.bg-pinky-degrade {
+  background: linear-gradient(135deg, #8e0365 0%, #c84959 100%) !important;
+  border: none !important;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+/* Estilos para activar las capas de imagen de fondo */
+.login-container {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.bg-slide {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 3.0s ease-in-out;
+  z-index: 0;
+
+  &.active {
+    opacity: 1;
+  }
+}
+
+/* Restaurado con tu degradado rosa-café y opacidad original */
+.bg-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, rgba(225, 78, 103, 0.85) 0%, rgba(0, 0, 0, 0.84) 100%);
+  z-index: 1;
+}
+
+.login-content {
+  position: relative;
+  z-index: 2;
 }
