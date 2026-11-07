@@ -1,0 +1,114 @@
+
+// =====================================
+// PÁGINA DE INVENTARIO
+// =====================================
+
+.inventario-page {
+  padding: 28px;
+  color: $dark;
+
+  // ENCABEZADO
+  .inventario-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 26px;
+  }
+
+  .inventario-titulo {
+    font-family: "DM Serif Display", serif;
+    font-size: 30px;
+    margin-bottom: 6px;
+  }
+
+  .inventario-subtitulo {
+    font-size: 13px;
+    color: #88685a;
+    margin-bottom: 0;
+  }
+
+  // CONTENIDO
+  .inventario-contenido {
+    margin-top: 24px;
+  }
+
+  .inventario-filtros {
+    margin-bottom: 20px;
+  }
+
+  // TABLA
+  .inventario-tabla-contenedor {
+    width: 100%;
+    overflow-x: auto;
+    background-color: white;
+    border-radius: 12px;
+  }
+
+  .inventario-tabla {
+    width: 100%;
+    border-collapse: collapse;
+
+    th {
+      background-color: #faf4ef;
+      padding: 16px;
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #88685a;
+      letter-spacing: 0.4px;
+    }
+
+    td {
+      padding: 16px;
+      font-size: 13px;
+      border-bottom: 1px solid #f0e7e0;
+    }
+
+    tbody tr:hover {
+      background-color: #fffaf6;
+    }
+  }
+
+  .inventario-nombre {
+    font-weight: 600;
+  }
+
+  .inventario-accion {
+    color: $secondary;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .inventario-mensaje {
+    padding: 30px;
+    text-align: center;
+    color: #88685a;
+  }
+
+  // RECETAS (TEMPORAL)
+  .inventario-recetas-pendiente {
+    padding: 24px;
+    background: white;
+    border-radius: 12px;
+  }
+}
+
+// =====================================
+// RESPONSIVE
+// =====================================
+
+@media (max-width: 768px) {
+  .inventario-page {
+    padding: 16px;
+
+    .inventario-titulo {
+      font-size: 24px;
+    }
+
+    .inventario-tabla {
+      min-width: 650px;
+    }
+  }
+}

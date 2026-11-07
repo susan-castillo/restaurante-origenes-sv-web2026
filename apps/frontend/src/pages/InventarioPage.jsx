@@ -1,137 +1,266 @@
 
 import { useEffect, useState } from "react";
-import { obtenerInventario } from "../services/insumosService";
-import "../styles/inventario.css";
 
-function InventarioPage() {
+import { obtenerInventario } from "../services/insumosService";
+
+// COMPONENTES GENERALES
+import Button from "../components/Common/Button.jsx";
+import Tabs from "../components/Common/Tabs.jsx";
+import StatusBadge from "../components/Common/StatusBadge.jsx";
+
+export default function InventarioPage() {
+
+  // =====================================
+  // ESTADOS
+  // =====================================
+
   const [inventario, setInventario] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
+  const [vista, setVista] = useState("existencias");
+  const [filtro, setFiltro] = useState("todos");
+
+  // =====================================
+  // OBTENER DATOS DEL BACKEND
+  // =====================================
+
   useEffect(() => {
+    let activo = true;
+
     async function cargarInventario() {
       try {
         setCargando(true);
         setError("");
 
         const datos = await obtenerInventario();
+
+        if (!activo) return;
+
+        if (!Array.isArray(datos)) {
+          throw new Error(
+            "El servicio no devolvió una lista de existencias."
+          );
+        }
+
         setInventario(datos);
       } catch (err) {
-        setError(err.message);
+        if (activo) {
+          setError(err.message || "Error al cargar inventario");
+        }
       } finally {
-        setCargando(false);
+        if (activo) {
+          setCargando(false);
+        }
       }
     }
 
     cargarInventario();
+
+    return () => {
+      activo = false;
+    };
   }, []);
+
+  // =====================================
+  // ESTADOS DE STOCK
+  // =====================================
+
+  function obtenerEstado(item) {
+    const stock = Number(item.existencia);
+    const minimo = Number(item.stock_minimo);
+
+    if (stock <= 0) {
+      return {
+        texto: "Agotado",
+        variant: "danger",
+        codigo: "agotados",
+      };
+    }
+
+    if (stock < minimo) {
+      return {
+        texto: "Bajo mínimo",
+        variant: "warning",
+        codigo: "bajo",
+      };
+    }
+
+    return {
+      texto: "Disponible",
+      variant: "success",
+      codigo: "disponible",
+    };
+  }
+
+  // =====================================
+  // FILTROS
+  // =====================================
+
+  const inventarioFiltrado = inventario.filter((item) => {
+    if (filtro === "todos") return true;
+
+    const estado = obtenerEstado(item);
+
+    return estado.codigo === filtro;
+  });
+
+  // =====================================
+  // RENDERIZADO
+  // =====================================
 
   return (
     <div className="inventario-page">
+
+      {/* ENCABEZADO */}
       <header className="inventario-header">
         <div>
-          <h1>Inventario y recetas</h1>
-          <p>Existencias de la sucursal</p>
+          <h1 className="inventario-titulo">
+            Inventario y recetas
+          </h1>
+
+          <p className="inventario-subtitulo">
+            Existencias de la sucursal
+          </p>
         </div>
+
+        <Button
+          text="Agregar insumo"
+          variant="secondary"
+          disabled
+          title="Formulario pendiente de implementar"
+        />
       </header>
 
-      <div className="inventario-tabs">
-        <button className="tab-activo">
-          Existencias
-        </button>
-        <button disabled>
-          Productos y recetas
-        </button>
-      </div>
+      {/* PESTAÑAS PRINCIPALES */}
+      <Tabs
+        options={[
+          {
+            value: "existencias",
+            label: "Existencias",
+          },
+          {
+            value: "recetas",
+            label: "Productos y recetas",
+          },
+        ]}
+        value={vista}
+        onChange={setVista}
+      />
 
-      <section className="inventario-contenido">
-        {cargando && (
-          <p className="mensaje-inventario">
-            Cargando existencias...
-          </p>
-        )}
+      {/* CONTENIDO */}
+      <main className="inventario-contenido">
 
-        {error && (
-          <div className="inventario-error">
-            {error}
-          </div>
-        )}
+        {vista === "existencias" ? (
+          <section>
 
-        {!cargando && !error && (
-          <div className="inventario-tabla-contenedor">
-            <table className="inventario-tabla">
-              <thead>
-                <tr>
-                  <th>INSUMO</th>
-                  <th>EXISTENCIA</th>
-                  <th>MÍNIMO</th>
-                  <th>ESTADO</th>
-                  <th>ACCIÓN</th>
-                </tr>
-              </thead>
+            {/* FILTROS */}
+            <div className="inventario-filtros">
+              <Tabs
+                variant="pills"
+                options={[
+                  { value: "todos", label: "Todos" },
+                  { value: "bajo", label: "Bajo mínimo" },
+                  { value: "agotados", label: "Agotados" },
+                ]}
+                value={filtro}
+                onChange={setFiltro}
+              />
+            </div>
 
-              <tbody>
-                {inventario.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="tabla-vacia">
-                      No hay existencias registradas.
-                    </td>
-                  </tr>
-                ) : (
-                  inventario.map((item) => {
-                    const stock = Number(item.existencia);
-                    const minimo = Number(item.stock_minimo);
-                    const stockBajo = stock < minimo;
-                    const agotado = stock <= 0;
+            {/* CARGANDO */}
+            {cargando && (
+              <p className="inventario-mensaje">
+                Cargando existencias...
+              </p>
+            )}
 
-                    return (
-                      <tr key={item.id}>
-                        <td className="nombre-insumo">
-                          {item.nombre}
-                        </td>
+            {/* ERROR */}
+            {!cargando && error && (
+              <div className="alert alert-danger" role="alert">
+                {error}
+              </div>
+            )}
 
-                        <td>
-                          {stock.toLocaleString("es-SV")}{" "}
-                          {item.unidad}
-                        </td>
+            {/* TABLA */}
+            {!cargando && !error && (
+              <div className="inventario-tabla-contenedor">
+                <table className="inventario-tabla">
+                  <thead>
+                    <tr>
+                      <th>Insumo</th>
+                      <th>Existencia</th>
+                      <th>Mínimo</th>
+                      <th>Estado</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
 
-                        <td>
-                          {minimo.toLocaleString("es-SV")}{" "}
-                          {item.unidad}
-                        </td>
-
-                        <td>
-                          <span
-                            className={
-                              agotado || stockBajo
-                                ? "estado-bajo"
-                                : "estado-disponible"
-                            }
-                          >
-                            {agotado
-                              ? "Agotado"
-                              : stockBajo
-                                ? "Stock bajo"
-                                : "Disponible"}
-                          </span>
-                        </td>
-
-                        <td>
-                          <span className="accion-pendiente">
-                            Ver insumo
-                          </span>
+                  <tbody>
+                    {inventarioFiltrado.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="inventario-mensaje"
+                        >
+                          No hay existencias para mostrar.
                         </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                    ) : (
+                      inventarioFiltrado.map((item) => {
+                        const stock = Number(item.existencia);
+                        const minimo = Number(item.stock_minimo);
+                        const estado = obtenerEstado(item);
+
+                        return (
+                          <tr key={item.id}>
+                            <td className="inventario-nombre">
+                              {item.nombre}
+                            </td>
+
+                            <td>
+                              {stock.toLocaleString("es-SV")}{" "}
+                              {item.unidad}
+                            </td>
+
+                            <td>
+                              {minimo.toLocaleString("es-SV")}{" "}
+                              {item.unidad}
+                            </td>
+
+                            <td>
+                              <StatusBadge
+                                text={estado.texto}
+                                variant={estado.variant}
+                              />
+                            </td>
+
+                            <td>
+                              <span className="inventario-accion">
+                                Ver insumo
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+          </section>
+        ) : (
+          <section className="inventario-recetas-pendiente">
+            <h2>Productos y recetas</h2>
+            <p>
+              Este módulo se implementará después
+              de finalizar las existencias.
+            </p>
+          </section>
         )}
-      </section>
+
+      </main>
     </div>
   );
 }
-
-export default InventarioPage;
