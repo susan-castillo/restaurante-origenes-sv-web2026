@@ -14,8 +14,7 @@ import {
   InputGroup
 } from 'reactstrap';
 import { useAuth } from '../context/AuthContext.jsx';
-import logoOrigenes from '../assets/cake.png';
-import logoOrigenes02 from '../assets/granos-cafe.png';
+import logoOrigenes from '../assets/panacota-sinbg.png';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 // Arreglo de imágenes para el fondo con temática de cafetería/repostería
@@ -89,30 +88,24 @@ export default function Login() {
         <Container className="login-content d-flex justify-content-center align-items-center flex-grow-1">
           <Card style={{ maxWidth: '480px', width: '100%' }} className="card-patisserie shadow-lg">
             <CardBody className="p-4 p-md-5">
-              <div className="d-flex gap-3 justify-content-center mb-4">
+              <div className="text-center mb-0">
                 <img
                     src={logoOrigenes}
                     alt="Postre Orígenes"
-                    style={{ width: '60px', height: '60px' }}
-                    className="bg-primary p-2 rounded-circle img-fluid "
-                />
-                <img
-                    src={logoOrigenes02}
-                    alt="Postre Orígenes"
-                    style={{ width: '60px', height: '60px' }}
-                    className="bg-primary p-2 rounded-circle img-fluid "
+                    style={{ width: '200px', height: '130px' }}
+                    className="img-fluid logo-glow"
                 />
               </div>
 
               <div className="text-center mb-4">
-                <h2 className="text-brown fw-bold mb-2 font-origenes">Bienvenido a Orígenes</h2>
-                <p className="text-dark">
+                <h2 className="text-cream fw-bold mb-2 font-origenes">Bienvenido a Orígenes</h2>
+                <p className="text-cream font-origenes fw-lighter">
                   Inicia sesión para abrir caja, tomar pedidos, o administrar tu sucursal
                 </p>
               </div>
 
               {error && (
-                  <Alert className="bg-red text-light border-pinky opacity-90 py-2 small">
+                  <Alert className="bg-red text-light border-pinky opacity-90 py-2 small text-center">
                     {error}
                   </Alert>
               )}
@@ -120,7 +113,7 @@ export default function Login() {
               <Form onSubmit={handleSubmit}>
                 {/* Correo Electrónico */}
                 <FormGroup className="mb-3">
-                  <Label for="email" className="text-brown fw-semibold small letter-spacing-1">
+                  <Label for="email" className="text-cream fw-semibold small letter-spacing-1">
                     Correo electrónico
                   </Label>
                   <InputGroup>
@@ -141,7 +134,7 @@ export default function Login() {
 
                 {/* Contraseña con toggle de ver/ocultar */}
                 <FormGroup className="mb-3">
-                  <Label for="password" className="text-brown fw-semibold small letter-spacing-1">
+                  <Label for="password" className="text-cream fw-semibold small letter-spacing-1">
                     Contraseña
                   </Label>
                   <InputGroup>

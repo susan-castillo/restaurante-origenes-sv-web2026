@@ -1,7 +1,5 @@
-// 1. Importaciones de Google Fonts (Siempre al inicio del archivo)
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Poppins:wght@400;600&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@600;700&display=swap');
-
+// 1. Importaciones limpias de Google Fonts (Solo Marcellus y Poppins con sus pesos)
+@import url('https://fonts.googleapis.com/css2?family=Marcellus&family=Poppins:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&display=swap');
 
 // 2. Sobrescribir y definir variables base de la marca
 $primary: #CCA679;     // Terracota / Dorado artesanal
@@ -18,7 +16,7 @@ $custom-colors: (
         "brown": #613001
 );
 
-// 4. Modificar tipografía base por defecto
+// 4. Modificar tipografía base por defecto (Poppins para toda la app)
 $body-bg: $light;
 $body-color: $dark;
 $font-family-base: 'Poppins', system-ui, -apple-system, sans-serif;
@@ -36,10 +34,13 @@ $theme-colors: map-merge($theme-colors, $custom-colors);
 // ============================================================================
 // Tipografías de marca
 // ============================================================================
+
+// Títulos estilo Marcellus (recuerda que Marcellus por diseño es siempre peso 400)
 .font-origenes {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Marcellus', serif;
 }
 
+// Textos en Poppins (aquí SÍ funcionan fw-light, fw-bold, fw-semibold, etc.)
 .font-poppins {
-  font-family: 'Poppins', sans-serif !important;
+  font-family: 'Poppins', sans-serif;
 }
