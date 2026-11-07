@@ -16,5 +16,11 @@ $body-bg: $light;
 $body-color: $dark;
 $font-family-base: 'Poppins', system-ui, -apple-system, sans-serif;
 
+// 2. Fusionar con la paleta de Bootstrap
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+
+$theme-colors: map-merge($theme-colors, $custom-colors);
+
 // 4. Importar Bootstrap DESPUÉS de definir tus variables
 @import "bootstrap/scss/bootstrap";
