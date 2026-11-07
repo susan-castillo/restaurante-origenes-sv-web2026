@@ -88,17 +88,12 @@ export default function Login() {
                       required
                   />
                 </FormGroup>
-                <div className={"text-end"}>
-                  <a href="#reset" className="fw-bold text-secondary text-decoration-none small opacity-75">
-                    ¿Olvidaste la clave?
-                  </a>
-                </div>
 
                 {/* Botón Principal (Dorado/Terracota) */}
                 <Button
                     color="pinky"
                     block
-                    className="w-100 py-2 mt-4 text-light fw-bold text-uppercase shadow-md"
+                    className="w-100 py-2 mt-5 text-light fw-bold text-uppercase shadow-md"
                     disabled={cargando}
                 >
                   {cargando ? 'Accediendo al Salón...' : 'Iniciar sesión'}
