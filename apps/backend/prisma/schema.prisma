@@ -92,6 +92,7 @@ model platillos {
   precio        Decimal         @db.Decimal(8, 2)
   activo        Boolean         @default(true)
   tipo          String          @default("ELABORADO") @db.VarChar(10)
+  imagen        String?         @db.VarChar(255)
   detalle_venta detalle_venta[]
   recetas       recetas[]
 }

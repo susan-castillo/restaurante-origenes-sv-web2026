@@ -50,7 +50,8 @@ CREATE TABLE platillos (
     precio NUMERIC(8, 2) NOT NULL CHECK (precio >= 0), -- Precio de venta al público (IVA incluido)
     activo BOOLEAN NOT NULL DEFAULT true,       -- Controla la visibilidad del plato en la caja POS
     tipo VARCHAR(10) NOT NULL DEFAULT 'ELABORADO'
-    	CHECK (tipo IN ('ELABORADO', 'REVENTA'))
+    	CHECK (tipo IN ('ELABORADO', 'REVENTA')),
+    imagen VARCHAR(255) DEFAULT NULL              -- URL de la imagen del platillo
 );
 
 -- Tabla 4: INSUMOS (Catálogo Global de Materia Prima / Ingredientes)
