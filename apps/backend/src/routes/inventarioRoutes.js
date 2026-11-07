@@ -3,28 +3,30 @@ import {
     listarInsumos,
     crearInsumo,
     actualizarInsumo,
-    eliminarInsumo,
     listarPlatillos,
     obtenerPlatillo,
     crearPlatillo,
     actualizarPlatillo,
-    desactivarPlatillo,
+    cambiarEstadoPlatillo,
 } from '../controllers/inventarioController.js';
 import { verifyToken } from '../middlewares/authMiddleware.js';
+import { requireRole } from '../middlewares/roleMiddleware.js';
 
 const router = Router();
 
-// CRUD de insumos (requiere sesión iniciada)
-router.get('/insumos', verifyToken, listarInsumos);
-router.post('/insumos', verifyToken, crearInsumo);
-router.put('/insumos/:id', verifyToken, actualizarInsumo);
-router.delete('/insumos/:id', verifyToken, eliminarInsumo);
+const soloAdmin = requireRole('ADMIN');
+const empleadoOAdmin = requireRole('ADMIN', 'EMPLEADO');
 
-// CRUD de platillos (el menú); DELETE desactiva
-router.get('/platillos', verifyToken, listarPlatillos);
-router.get('/platillos/:id', verifyToken, obtenerPlatillo);
-router.post('/platillos', verifyToken, crearPlatillo);
-router.put('/platillos/:id', verifyToken, actualizarPlatillo);
-router.delete('/platillos/:id', verifyToken, desactivarPlatillo);
+// Platillos (el menú)
+router.get('/platillos', verifyToken, empleadoOAdmin, listarPlatillos);
+router.get('/platillos/:id', verifyToken, empleadoOAdmin, obtenerPlatillo);
+router.post('/platillos', verifyToken, soloAdmin, crearPlatillo);
+router.put('/platillos/:id', verifyToken, soloAdmin, actualizarPlatillo);
+router.patch('/platillos/:id/estado', verifyToken, soloAdmin, cambiarEstadoPlatillo);
+
+// Insumos (catálogo)
+router.get('/insumos', verifyToken, soloAdmin, listarInsumos);
+router.post('/insumos', verifyToken, soloAdmin, crearInsumo);
+router.put('/insumos/:id', verifyToken, soloAdmin, actualizarInsumo);
 
 export default router;

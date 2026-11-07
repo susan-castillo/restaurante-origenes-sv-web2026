@@ -43,11 +43,11 @@ export const eliminarInsumo = async (id) => {
     }
 };
 
-// Lista platillos. Por defecto solo los activos (menú del POS).
-export const listarPlatillos = async ({ tipo, incluirInactivos = false } = {}) => {
+// Lista platillos. activo: true/false filtra; undefined devuelve todos.
+export const listarPlatillos = async ({ tipo, activo } = {}) => {
     return prisma.platillos.findMany({
         where: {
-            ...(incluirInactivos ? {} : { activo: true }),
+            ...(activo !== undefined ? { activo } : {}),
             ...(tipo ? { tipo } : {}),
         },
         orderBy: [{ categoria: 'asc' }, { nombre: 'asc' }],
@@ -78,10 +78,10 @@ export const actualizarPlatillo = async (id, datos) => {
     }
 };
 
-// No se borra: se desactiva para conservar el historial de ventas.
-export const desactivarPlatillo = async (id) => {
+// Activa o desactiva un platillo. No se borra, para conservar el historial de ventas.
+export const cambiarEstadoPlatillo = async (id, activo) => {
     try {
-        return await prisma.platillos.update({ where: { id }, data: { activo: false } });
+        return await prisma.platillos.update({ where: { id }, data: { activo } });
     } catch (error) {
         if (error.code === 'P2025') throw new Error('PLATILLO_NO_ENCONTRADO');
         throw error;

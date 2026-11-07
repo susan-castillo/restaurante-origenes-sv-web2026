@@ -158,7 +158,7 @@ const validarPlatillo = (body, { parcial = false } = {}) => {
 
 export const listarPlatillos = async (req, res) => {
     try {
-        const { tipo, todos } = req.query;
+        const { tipo, activo } = req.query;
 
         let tipoFiltro;
         if (tipo !== undefined) {
@@ -168,9 +168,17 @@ export const listarPlatillos = async (req, res) => {
             }
         }
 
+        let activoFiltro;
+        if (activo !== undefined) {
+            if (activo !== 'true' && activo !== 'false') {
+                return res.status(400).json({ error: 'El filtro activo debe ser true o false.' });
+            }
+            activoFiltro = activo === 'true';
+        }
+
         const platillos = await inventarioService.listarPlatillos({
             tipo: tipoFiltro,
-            incluirInactivos: todos === 'true',
+            activo: activoFiltro,
         });
         return res.status(200).json(platillos);
     } catch (error) {
@@ -178,6 +186,8 @@ export const listarPlatillos = async (req, res) => {
         return res.status(500).json({ error: 'Error al obtener los platillos.' });
     }
 };
+
+
 
 export const obtenerPlatillo = async (req, res) => {
     try {
@@ -231,20 +241,23 @@ export const actualizarPlatillo = async (req, res) => {
     }
 };
 
-// DELETE desactiva el platillo (activo = false); no lo borra de la base.
-export const desactivarPlatillo = async (req, res) => {
+// PATCH /platillos/:id/estado  con cuerpo { "activo": true|false }
+export const cambiarEstadoPlatillo = async (req, res) => {
     try {
         const id = idValido(req.params.id);
         if (!id) {
             return res.status(400).json({ error: 'El id del platillo no es válido.' });
         }
-        const platillo = await inventarioService.desactivarPlatillo(id);
+        if (typeof req.body.activo !== 'boolean') {
+            return res.status(400).json({ error: 'El campo activo debe ser true o false.' });
+        }
+        const platillo = await inventarioService.cambiarEstadoPlatillo(id, req.body.activo);
         return res.status(200).json(platillo);
     } catch (error) {
         if (error.message === 'PLATILLO_NO_ENCONTRADO') {
             return res.status(404).json({ error: 'Platillo no encontrado.' });
         }
-        console.error('Error al desactivar platillo:', error);
-        return res.status(500).json({ error: 'Error al desactivar el platillo.' });
+        console.error('Error al cambiar el estado del platillo:', error);
+        return res.status(500).json({ error: 'Error al cambiar el estado del platillo.' });
     }
 };
