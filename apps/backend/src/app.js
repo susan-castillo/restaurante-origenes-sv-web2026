@@ -10,13 +10,24 @@ const app = express();
 // Deshabilitar el encabezado 'x-powered-by' por motivos de seguridad
 app.disable('x-powered-by');
 
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    process.env.CORS_ORIGIN
+].filter(Boolean);
+
 // Configuración de CORS para permitir peticiones desde el origen del Frontend (Vite)
-app.use(
-    cors({
-        origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
-        credentials: true,
-    })
-);
+app.use(cors({
+    origin: function (origin, callback) {
+        // Permitir peticiones sin origen (como Postman o del mismo servidor)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Bloqueado por política de CORS'));
+        }
+    },
+    credentials: true
+}));
 
 // Middleware de seguridad Helmet para configurar cabeceras HTTP seguras
 app.use(helmet());

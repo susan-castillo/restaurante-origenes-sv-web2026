@@ -50,7 +50,8 @@ CREATE TABLE platillos (
     precio NUMERIC(8, 2) NOT NULL CHECK (precio >= 0), -- Precio de venta al público (IVA incluido)
     activo BOOLEAN NOT NULL DEFAULT true,       -- Controla la visibilidad del plato en la caja POS
     tipo VARCHAR(10) NOT NULL DEFAULT 'ELABORADO'
-    	CHECK (tipo IN ('ELABORADO', 'REVENTA'))
+    	CHECK (tipo IN ('ELABORADO', 'REVENTA')),
+    imagen VARCHAR(255) DEFAULT NULL              -- URL de la imagen del platillo
 );
 
 -- Tabla 4: INSUMOS (Catálogo Global de Materia Prima / Ingredientes)
@@ -58,7 +59,8 @@ CREATE TABLE platillos (
 CREATE TABLE insumos (
     id SERIAL PRIMARY KEY,                     -- Identificador único del insumo
     nombre VARCHAR(100) NOT NULL UNIQUE,       -- Nombre del insumo (Ej: 'Café en Grano', 'Leche Entera')
-    unidad VARCHAR(10) NOT NULL CHECK (unidad IN ('g', 'ml', 'unidad')) -- Unidad de medida estándar
+    unidad VARCHAR(10) NOT NULL CHECK (unidad IN ('g', 'ml', 'unidad')), -- Unidad de medida estándar
+    activo BOOLEAN NOT NULL DEFAULT true,       -- Controla la visibilidad del insumo en el sistema
 );
 
 -- Tabla 5: RECETAS (Matriz de Deducción por Platillo)

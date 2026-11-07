@@ -1,0 +1,11 @@
+// Bootstrap y configuración del tema
+@import "./custom";
+
+// Componentes generales del proyecto
+@import "./componentes";
+
+// Estilos específicos del inventario
+@import "./inventario";
+@import "login";
+// Futuro módulo de recetas
+// @import "./recetas";
