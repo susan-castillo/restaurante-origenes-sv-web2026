@@ -15,6 +15,11 @@ import {
     obtenerReceta,
     reemplazarReceta,
 } from '../controllers/recetasController.js';
+import {
+    listarInventario,
+    listarAlertas,
+    ajustarInventario,
+} from '../controllers/inventarioController.js';
 import { verifyToken } from '../middlewares/authMiddleware.js';
 import { requireRole } from '../middlewares/roleMiddleware.js';
 
@@ -38,5 +43,10 @@ router.put('/platillos/:id/receta', verifyToken, soloAdmin, reemplazarReceta);
 router.get('/insumos', verifyToken, soloAdmin, listarInsumos);
 router.post('/insumos', verifyToken, soloAdmin, crearInsumo);
 router.put('/insumos/:id', verifyToken, soloAdmin, actualizarInsumo);
+
+// Inventario por sucursal
+router.get('/inventario', verifyToken, soloAdmin, listarInventario);
+router.get('/inventario/alertas', verifyToken, empleadoOAdmin, listarAlertas);
+router.put('/inventario/:insumoId', verifyToken, soloAdmin, ajustarInventario);
 
 export default router;
