@@ -1,0 +1,69 @@
+
+.recetas-seccion {
+  margin-top: 20px;
+}
+
+.recetas-filtros {
+  margin-bottom: 22px;
+}
+
+.receta-card {
+  border-radius: 14px;
+  border: 1px solid #f0e7df;
+  background: #fff;
+}
+
+.receta-card-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.receta-precio {
+  color: #b95b13;
+  font-weight: 700;
+}
+
+.receta-nombre {
+  font-family: "DM Serif Display", serif;
+  font-size: 21px;
+  color: #261c14;
+  margin-bottom: 4px;
+}
+
+.receta-descripcion {
+  font-family: "Poppins", sans-serif;
+  font-size: 12px;
+  color: #9c8273;
+}
+
+.receta-detalle {
+  border-top: 1px solid #f0e7df;
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+.receta-ingredientes {
+  margin-top: 15px;
+
+  h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+}
+
+.receta-ingrediente {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  padding: 5px 0;
+
+  strong {
+    color: #261c14;
+    white-space: nowrap;
+  }
+}
