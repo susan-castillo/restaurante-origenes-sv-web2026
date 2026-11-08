@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import PlatilloCard from "../components/pos/PlatilloCard.jsx";
 import CobroModal from "../components/pos/CobroModal.jsx";
 import VentaCompletadaModal from "../components/pos/VentaCompletadaModal.jsx";
+import { generarComprobantePDF } from "../utils/generarComprobantePDF.js";
 import "../styles/pos.scss";
 
 const moneda = (valor) => `$${Number(valor ?? 0).toFixed(2)}`;
@@ -478,6 +479,7 @@ export default function PosPage() {
       <VentaCompletadaModal
         venta={ventaCompletada}
         onNuevaVenta={() => setVentaCompletada(null)}
+        onImprimir={generarComprobantePDF}
       />
     </main>
   );
