@@ -1,46 +1,36 @@
-
 import { useEffect, useMemo, useState } from "react";
-import { obtenerPlatillosPOS } from "../services/posService.js";
+import { obtenerPlatillosPOS, crearVentaPOS } from "../services/posService.js";
 import { getEstadoCaja } from "../services/cajasService.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import PlatilloCard from "../components/pos/PlatilloCard.jsx";
+import CobroModal from "../components/pos/CobroModal.jsx";
+import VentaCompletadaModal from "../components/pos/VentaCompletadaModal.jsx";
 import "../styles/pos.scss";
 
-//* ==========================================
-//* FORMATO DE MONEDA
-//* ==========================================
-
-const moneda = (valor) =>
-  `$${Number(valor ?? 0).toFixed(2)}`;
+const moneda = (valor) => `$${Number(valor ?? 0).toFixed(2)}`;
 
 export default function PosPage() {
-  //* ==========================================
-  //* AUTENTICACIÓN
-  //* ==========================================
-
   const { usuario, cargando: cargandoAuth } = useAuth();
   const sucursalId = usuario?.sucursal_id;
 
-  //* ==========================================
-  //* ESTADOS
-  //* ==========================================
-
+  // Estados del catálogo
   const [platillos, setPlatillos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
-
   const [busqueda, setBusqueda] = useState("");
   const [categoria, setCategoria] = useState("Todos");
-  const [carrito, setCarrito] = useState([]);
 
+  // Estados del carrito y cobro
+  const [carrito, setCarrito] = useState([]);
+  const [modalCobroAbierto, setModalCobroAbierto] = useState(false);
+  const [ventaCompletada, setVentaCompletada] = useState(null);
+
+  // Estados de caja
   const [cajaAbierta, setCajaAbierta] = useState(false);
   const [cargandoCaja, setCargandoCaja] = useState(true);
   const [errorCaja, setErrorCaja] = useState("");
 
-  //* ==========================================
-  //* OBTENER PLATILLOS DEL BACKEND
-  //* ==========================================
-
+  // Cargar catálogo
   useEffect(() => {
     let activo = true;
 
@@ -52,25 +42,16 @@ export default function PosPage() {
         const datos = await obtenerPlatillosPOS();
 
         if (!Array.isArray(datos)) {
-          throw new Error(
-            "La API no devolvió una lista de platillos."
-          );
+          throw new Error("La API no devolvió una lista de platillos.");
         }
 
-        if (activo) {
-          setPlatillos(datos);
-        }
+        if (activo) setPlatillos(datos);
       } catch (err) {
         if (activo) {
-          setError(
-            err.message ||
-              "No se pudieron cargar los platillos."
-          );
+          setError(err.message || "No se pudieron cargar los platillos.");
         }
       } finally {
-        if (activo) {
-          setCargando(false);
-        }
+        if (activo) setCargando(false);
       }
     }
 
@@ -81,10 +62,7 @@ export default function PosPage() {
     };
   }, []);
 
-  //* ==========================================
-  //* VERIFICAR ESTADO DE CAJA
-  //* ==========================================
-
+  // Verificar estado de caja
   useEffect(() => {
     let activo = true;
 
@@ -94,9 +72,7 @@ export default function PosPage() {
       if (!sucursalId) {
         setCajaAbierta(false);
         setCargandoCaja(false);
-        setErrorCaja(
-          "El usuario no tiene una sucursal asignada."
-        );
+        setErrorCaja("El usuario no tiene una sucursal asignada.");
         return;
       }
 
@@ -107,21 +83,16 @@ export default function PosPage() {
 
         const estado = await getEstadoCaja(sucursalId);
 
-        if (activo) {
-          setCajaAbierta(estado.abierta === true);
-        }
+        if (activo) setCajaAbierta(estado.abierta === true);
       } catch (err) {
         if (activo) {
           setCajaAbierta(false);
           setErrorCaja(
-            err.message ||
-              "No se pudo consultar el estado de caja."
+            err.message || "No se pudo consultar el estado de caja."
           );
         }
       } finally {
-        if (activo) {
-          setCargandoCaja(false);
-        }
+        if (activo) setCargandoCaja(false);
       }
     }
 
@@ -132,75 +103,51 @@ export default function PosPage() {
     };
   }, [sucursalId, cargandoAuth]);
 
-  //* ==========================================
-  //* CATEGORÍAS
-  //* ==========================================
+  // Categorías disponibles
+  const categorias = useMemo(
+    () => [
+      "Todos",
+      ...new Set(platillos.map((p) => p.categoria).filter(Boolean)),
+    ],
+    [platillos]
+  );
 
-  const categorias = useMemo(() => {
-    const valores = platillos
-      .map((platillo) => platillo.categoria)
-      .filter(Boolean);
-
-    return ["Todos", ...new Set(valores)];
-  }, [platillos]);
-
-  //* ==========================================
-  //* BUSCADOR Y FILTRO POR CATEGORÍA
-  //* ==========================================
-
+  // Buscar y filtrar platillos
   const platillosFiltrados = useMemo(() => {
-    return platillos.filter((platillo) => {
-      const nombre = String(
-        platillo.nombre || ""
-      ).toLowerCase();
+    const texto = busqueda.trim().toLowerCase();
 
-      const coincideBusqueda = nombre.includes(
-        busqueda.trim().toLowerCase()
-      );
+    return platillos.filter((platillo) => {
+      const coincideNombre = String(platillo.nombre ?? "")
+        .toLowerCase()
+        .includes(texto);
 
       const coincideCategoria =
-        categoria === "Todos" ||
-        platillo.categoria === categoria;
+        categoria === "Todos" || platillo.categoria === categoria;
 
-      return coincideBusqueda && coincideCategoria;
+      return coincideNombre && coincideCategoria;
     });
   }, [platillos, busqueda, categoria]);
 
-  //* ==========================================
-  //* HABILITAR CARRITO SEGÚN ESTADO DE CAJA
-  //* ==========================================
-
   const habilitado =
-    !cargandoAuth &&
-    !cargandoCaja &&
-    cajaAbierta &&
-    !errorCaja;
+    !cargandoAuth && !cargandoCaja && cajaAbierta && !errorCaja;
 
-  //* ==========================================
-  //* AGREGAR PRODUCTO AL CARRITO
-  //* ==========================================
-
+  // Agregar un producto al carrito
   function agregarProducto(platillo) {
-    if (!habilitado) return;
+    if (!habilitado || modalCobroAbierto) return;
 
     const precio = Number(platillo.precio);
 
-    if (!Number.isFinite(precio) || precio < 0) {
-      return;
-    }
+    if (!Number.isFinite(precio) || precio < 0) return;
+
+    setVentaCompletada(null);
 
     setCarrito((anterior) => {
-      const existente = anterior.find(
-        (item) => item.id === platillo.id
-      );
+      const existente = anterior.find((item) => item.id === platillo.id);
 
       if (existente) {
         return anterior.map((item) =>
           item.id === platillo.id
-            ? {
-                ...item,
-                cantidad: item.cantidad + 1,
-              }
+            ? { ...item, cantidad: item.cantidad + 1 }
             : item
         );
       }
@@ -217,46 +164,33 @@ export default function PosPage() {
     });
   }
 
-  //* ==========================================
-  //* AUMENTAR O DISMINUIR CANTIDAD
-  //* ==========================================
-
+  // Modificar la cantidad de un producto
   function cambiarCantidad(id, cambio) {
-    if (!habilitado) return;
+    if (!habilitado || modalCobroAbierto) return;
 
     setCarrito((anterior) =>
       anterior
         .map((item) =>
           item.id === id
-            ? {
-                ...item,
-                cantidad: item.cantidad + cambio,
-              }
+            ? { ...item, cantidad: item.cantidad + cambio }
             : item
         )
         .filter((item) => item.cantidad > 0)
     );
   }
 
-  //* ==========================================
-  //* ELIMINAR PRODUCTO DEL CARRITO
-  //* ==========================================
-
+  // Eliminar un producto del carrito
   function eliminarProducto(id) {
-    if (!habilitado) return;
+    if (!habilitado || modalCobroAbierto) return;
 
     setCarrito((anterior) =>
       anterior.filter((item) => item.id !== id)
     );
   }
 
-  //* ==========================================
-  //* TOTAL ESTIMADO
-  //* ==========================================
-
+  // Resumen visual del carrito
   const totalEstimado = carrito.reduce(
-    (suma, item) =>
-      suma + item.precio * item.cantidad,
+    (suma, item) => suma + item.precio * item.cantidad,
     0
   );
 
@@ -265,32 +199,50 @@ export default function PosPage() {
     0
   );
 
-  //* ==========================================
-  //* INTERFAZ PRINCIPAL
-  //* ==========================================
+  // Registrar la venta mediante el backend
+  async function confirmarCobro({ tipoDocumento, metodoPago, cliente }) {
+    if (!habilitado || carrito.length === 0) {
+      throw new Error("No se puede registrar la venta.");
+    }
+
+    const datosVenta = {
+      tipo_doc: tipoDocumento,
+      metodo_pago: metodoPago,
+      items: carrito.map((item) => ({
+        platillo_id: item.id,
+        cantidad: item.cantidad,
+      })),
+    };
+
+    if (tipoDocumento === "CCF") {
+      datosVenta.cliente = {
+        nombre: cliente.nombre.trim(),
+        nit: cliente.nit.trim(),
+        nrc: cliente.nrc.trim(),
+      };
+    }
+
+    const venta = await crearVentaPOS(datosVenta);
+
+    setVentaCompletada(venta);
+    setCarrito([]);
+    setModalCobroAbierto(false);
+
+    return venta;
+  }
 
   return (
     <main className="pos-page container-fluid py-4 px-3 px-lg-4">
-
-      {/* ======================================
-          ENCABEZADO
-      ====================================== */}
-
       <header className="mb-4">
         <h1 className="font-origenes text-dark mb-2">
           Punto de venta
         </h1>
-
         <p className="text-muted mb-0">
-          Gestiona los pedidos y registra las ventas
-          de Restaurante Orígenes.
+          Gestiona los pedidos y registra las ventas de Restaurante Orígenes.
         </p>
       </header>
 
-      {/* ======================================
-          ESTADO DE CAJA
-      ====================================== */}
-
+      {/* Estado de caja */}
       {cargandoCaja && (
         <div className="alert alert-info">
           Verificando estado de caja...
@@ -298,48 +250,31 @@ export default function PosPage() {
       )}
 
       {!cargandoCaja && errorCaja && (
-        <div className="alert alert-danger">
-          {errorCaja}
-        </div>
+        <div className="alert alert-danger">{errorCaja}</div>
       )}
 
-      {!cargandoCaja &&
-        !errorCaja &&
-        !cajaAbierta && (
-          <div className="alert alert-warning">
-            No hay una caja abierta en la sucursal.
-            Debes abrir una caja para realizar ventas.
-          </div>
-        )}
-
+      {!cargandoCaja && !errorCaja && !cajaAbierta && (
+        <div className="alert alert-warning">
+          No hay una caja abierta en la sucursal.
+          Debes abrir una caja para realizar ventas.
+        </div>
+      )}
       <div className="row g-4">
-
-        {/* ======================================
-            CATÁLOGO DE PLATILLOS
-        ====================================== */}
-
+        {/* Catálogo */}
         <section className="col-12 col-xl-8">
-
-          {/* BUSCADOR */}
-
           <div className="input-group pos-buscador mb-3">
             <span className="input-group-text bg-white border-end-0">
               ⌕
             </span>
-
             <input
               type="search"
               className="form-control border-start-0"
               placeholder="Buscar producto..."
               aria-label="Buscar producto"
               value={busqueda}
-              onChange={(e) =>
-                setBusqueda(e.target.value)
-              }
+              onChange={(e) => setBusqueda(e.target.value)}
             />
           </div>
-
-          {/* FILTROS POR CATEGORÍA */}
 
           <div className="d-flex flex-wrap gap-2 mb-4">
             {categorias.map((item) => (
@@ -347,56 +282,34 @@ export default function PosPage() {
                 key={item}
                 type="button"
                 className={`btn rounded-pill px-3 pos-filtro ${
-                  categoria === item
-                    ? "btn-dark"
-                    : "btn-outline-dark"
+                  categoria === item ? "btn-dark" : "btn-outline-dark"
                 }`}
-                onClick={() =>
-                  setCategoria(item)
-                }
+                onClick={() => setCategoria(item)}
               >
                 {item}
               </button>
             ))}
           </div>
 
-          {/* CARGANDO PLATILLOS */}
-
           {cargando && (
             <div className="text-center py-5">
-              <div
-                className="spinner-border text-secondary"
-                role="status"
-              >
-                <span className="visually-hidden">
-                  Cargando...
-                </span>
+              <div className="spinner-border text-secondary" role="status">
+                <span className="visually-hidden">Cargando...</span>
               </div>
             </div>
           )}
 
-          {/* ERROR AL OBTENER PLATILLOS */}
-
           {error && (
-            <div
-              className="alert alert-danger"
-              role="alert"
-            >
+            <div className="alert alert-danger" role="alert">
               {error}
             </div>
           )}
 
-          {/* SIN RESULTADOS */}
-
-          {!cargando &&
-            !error &&
-            platillosFiltrados.length === 0 && (
-              <div className="alert alert-light border">
-                No se encontraron platillos.
-              </div>
-            )}
-
-          {/* TARJETAS DE PRODUCTOS */}
+          {!cargando && !error && platillosFiltrados.length === 0 && (
+            <div className="alert alert-light border">
+              No se encontraron platillos.
+            </div>
+          )}
 
           {!cargando && !error && (
             <div className="row g-3">
@@ -409,16 +322,13 @@ export default function PosPage() {
                     className="w-100"
                     style={{
                       opacity: habilitado ? 1 : 0.65,
-                      pointerEvents: habilitado
-                        ? "auto"
-                        : "none",
+                      pointerEvents:
+                        habilitado && !modalCobroAbierto ? "auto" : "none",
                     }}
                   >
                     <PlatilloCard
                       platillo={platillo}
-                      onAgregar={() =>
-                        agregarProducto(platillo)
-                      }
+                      onAgregar={() => agregarProducto(platillo)}
                     />
                   </div>
                 </div>
@@ -427,26 +337,17 @@ export default function PosPage() {
           )}
         </section>
 
-        {/* ======================================
-            CARRITO DE VENTA
-        ====================================== */}
-
+        {/* Carrito */}
         <aside className="col-12 col-xl-4">
           <div className="pos-carrito bg-white rounded-4 shadow-sm border p-4 d-flex flex-column">
-
-            {/* ENCABEZADO DEL CARRITO */}
-
             <div className="d-flex justify-content-between align-items-center gap-2 mb-4">
               <h2 className="font-origenes fs-3 mb-0">
                 Venta actual
               </h2>
-
               <span className="badge bg-cream text-dark rounded-pill px-3 py-2">
                 {cantidadProductos} productos
               </span>
             </div>
-
-            {/* PRODUCTOS AGREGADOS */}
 
             <div className="pos-carrito-contenido flex-grow-1">
               {carrito.length === 0 ? (
@@ -454,11 +355,9 @@ export default function PosPage() {
                   <div className="pos-carrito-icono rounded-circle bg-light d-flex align-items-center justify-content-center mb-2">
                     🛒
                   </div>
-
                   <strong className="text-dark">
                     Tu carrito está vacío
                   </strong>
-
                   <small>
                     Selecciona un producto para agregarlo.
                   </small>
@@ -470,76 +369,52 @@ export default function PosPage() {
                       key={item.id}
                       className="pos-carrito-producto rounded-4 p-3"
                     >
-
-                      {/* NOMBRE Y PRECIO */}
-
                       <div className="d-flex justify-content-between align-items-start gap-3 mb-3">
                         <div>
                           <h3 className="fs-6 fw-bold mb-1">
                             {item.nombre}
                           </h3>
-
                           <small className="text-muted">
                             {moneda(item.precio)} c/u
                           </small>
                         </div>
-
                         <strong className="fs-5 text-dark">
-                          {moneda(
-                            item.precio * item.cantidad
-                          )}
+                          {moneda(item.precio * item.cantidad)}
                         </strong>
                       </div>
 
-                      {/* CONTROLES DE CANTIDAD */}
-
                       <div className="d-flex justify-content-between align-items-center">
                         <div className="d-flex align-items-center gap-3">
-
-                          {/* DISMINUIR */}
-
                           <button
                             type="button"
                             className="btn pos-cantidad-btn"
-                            disabled={!habilitado}
-                            onClick={() =>
-                              cambiarCantidad(item.id, -1)
-                            }
+                            disabled={!habilitado || modalCobroAbierto}
+                            onClick={() => cambiarCantidad(item.id, -1)}
                             aria-label={`Quitar una unidad de ${item.nombre}`}
                           >
                             −
                           </button>
 
-                          {/* CANTIDAD */}
-
                           <span className="fw-semibold">
                             {item.cantidad}
                           </span>
 
-                          {/* AUMENTAR */}
-
                           <button
                             type="button"
                             className="btn pos-cantidad-btn"
-                            disabled={!habilitado}
-                            onClick={() =>
-                              cambiarCantidad(item.id, 1)
-                            }
+                            disabled={!habilitado || modalCobroAbierto}
+                            onClick={() => cambiarCantidad(item.id, 1)}
                             aria-label={`Agregar una unidad de ${item.nombre}`}
                           >
                             +
                           </button>
                         </div>
 
-                        {/* ELIMINAR PRODUCTO */}
-
                         <button
                           type="button"
                           className="btn pos-eliminar-btn"
-                          disabled={!habilitado}
-                          onClick={() =>
-                            eliminarProducto(item.id)
-                          }
+                          disabled={!habilitado || modalCobroAbierto}
+                          onClick={() => eliminarProducto(item.id)}
                           aria-label={`Eliminar ${item.nombre}`}
                           title="Eliminar producto"
                         >
@@ -568,30 +443,22 @@ export default function PosPage() {
               )}
             </div>
 
-            {/* ======================================
-                RESUMEN DE VENTA
-            ====================================== */}
-
+            {/* Resumen */}
             <div className="pos-carrito-resumen border-top pt-4 mt-4">
-
               <div className="d-flex justify-content-between align-items-center mb-4">
                 <strong className="fs-6">
                   Total estimado
                 </strong>
-
                 <strong className="fs-5 text-dark pos-carrito-total">
                   {moneda(totalEstimado)}
                 </strong>
               </div>
 
-              {/* BOTÓN COBRAR
-                  Pendiente de implementar el modal */}
-
               <button
                 type="button"
                 className="btn pos-btn-cobrar w-100 py-3 fw-bold"
-                disabled
-                title="Módulo de cobro pendiente de implementación"
+                disabled={!habilitado || carrito.length === 0}
+                onClick={() => setModalCobroAbierto(true)}
               >
                 Cobrar {moneda(totalEstimado)}
               </button>
@@ -599,6 +466,19 @@ export default function PosPage() {
           </div>
         </aside>
       </div>
+
+      {/* Modal de cobro */}
+      <CobroModal
+        abierto={modalCobroAbierto}
+        onCerrar={() => setModalCobroAbierto(false)}
+        onConfirmar={confirmarCobro}
+        total={totalEstimado}
+      />
+      {/* Modal de venta completa */}
+      <VentaCompletadaModal
+        venta={ventaCompletada}
+        onNuevaVenta={() => setVentaCompletada(null)}
+      />
     </main>
   );
 }
