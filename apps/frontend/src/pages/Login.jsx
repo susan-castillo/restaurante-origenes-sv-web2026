@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import {Navigate, useNavigate} from 'react-router-dom';
 import {
   Alert, Button, Card, CardBody, Container, Form, FormGroup,
   Input, InputGroup, InputGroupText, Label,
@@ -27,10 +27,6 @@ export default function Login() {
 
   const { usuario, login } = useAuth();
   const navigate = useNavigate();
-  const ubicacion = useLocation();
-
-  // Si ProtectedRoute nos mandó aquí, "desde" trae la página que el usuario quería abrir.
-  const desde = ubicacion.state?.desde?.pathname;
 
   // --- Cambio de fondo cada 5 segundos ---
   useEffect(() => {
@@ -45,26 +41,28 @@ export default function Login() {
     return () => clearInterval(intervalo); // se limpia al salir de la pantalla
   }, []);
 
-  // Con sesión iniciada no tiene sentido ver el login.
-  // (Va DESPUÉS de los hooks: React exige llamar los hooks siempre en el mismo orden.)
   if (usuario) {
-    return <Navigate replace to={desde || rutaInicial(usuario)} />;
+    return <Navigate replace to={rutaInicial(usuario)} />;
   }
 
   // --- Enviar el formulario ---
   const handleSubmit = async (e) => {
-    e.preventDefault(); // evita que el navegador recargue la página
+    e.preventDefault();
     setError('');
     setCargando(true);
 
     try {
-      const user = await login(email, password); // devuelve el usuario
-      navigate(desde || rutaInicial(user), { replace: true });
+      const res = await login(email, password);
+      // Extraemos el objeto usuario de forma segura
+      const userObj = res?.usuario || res;
+
+      // 🟢 Redirigir SIEMPRE a la ruta inicial según su ROL
+      const destino = rutaInicial(userObj);
+      navigate(destino, { replace: true });
     } catch (err) {
-      // El mensaje viene del backend ("Correo o contraseña incorrectos") o de api.js
       setError(err.message || 'Error al iniciar sesión.');
     } finally {
-      setCargando(false); // siempre reactivamos el botón
+      setCargando(false);
     }
   };
 

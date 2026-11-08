@@ -5,6 +5,8 @@ import { rateLimit } from 'express-rate-limit';
 import authRoutes from './routes/authRoutes.js';
 import posRoutes from './routes/posRoutes.js';
 import inventarioRoutes from './routes/inventarioRoutes.js';
+import sucursalRoutes from "./routes/sucursalRoutes.js";
+import cajaRoutes from "./routes/cajaRoutes.js";
 
 const app = express();
 
@@ -59,6 +61,11 @@ app.use('/api/pos', posRoutes);
 // Rutas del módulo de Inventario/Recetas
 app.use('/api', inventarioRoutes);
 
+// Rutas del módulo de sucursales
+app.use('/api/sucursales', sucursalRoutes);
+
+// Rutas del módulo de caja
+app.use('/api/caja', cajaRoutes);
 // ----------------------------------------------------
 // MIDDLEWARES DE MANEJO DE ERRORES Y RUTAS NO ENCONTRADAS
 // ----------------------------------------------------
