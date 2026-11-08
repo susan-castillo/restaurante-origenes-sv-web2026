@@ -17,6 +17,7 @@ import {
   crearInsumo,
 
   actualizarInsumo,
+  cambiarEstadoInsumo,
 
 } from "../services/insumosService";
 
@@ -46,7 +47,7 @@ import Tabs from "../components/Common/Tabs.jsx";
 
 import StatusBadge from "../components/Common/StatusBadge.jsx";
 
-import { Pencil, Trash2, BookOpen } from "lucide-react";
+import { Pencil, Ban, BookOpen, RotateCcw } from "lucide-react";
 
 import Modal from "../components/Common/Modal.jsx";
 
@@ -71,6 +72,7 @@ const filtros = [
   { value: "bajo", label: "Bajo mínimo" },
 
   { value: "agotados", label: "Agotados" },
+  { value: "deshabilitados", label: "Deshabilitados" },
 
 ];
 
@@ -165,6 +167,11 @@ export default function InventarioPage() {
   const [cargando, setCargando] = useState(true);
 
   const [error, setError] = useState("");
+  const [insumosDeshabilitados, setInsumosDeshabilitados] = useState([]);
+  const [cargandoDeshabilitados, setCargandoDeshabilitados] = useState(false);
+  const [errorDeshabilitados, setErrorDeshabilitados] = useState("");
+  const [habilitandoId, setHabilitandoId] = useState(null);
+  const deshabilitadosCargaRef = useRef(null);
 
   // ========================================
 
@@ -215,6 +222,8 @@ const [errorProductoModal, setErrorProductoModal] = useState("");
 const [modalEditar, setModalEditar] = useState(false);
 
 const [modalEliminar, setModalEliminar] = useState(false);
+const [deshabilitandoInsumo, setDeshabilitandoInsumo] = useState(false);
+const [errorEstadoInsumo, setErrorEstadoInsumo] = useState("");
 
 const [modalAgregar, setModalAgregar] = useState(false);
 
@@ -588,6 +597,42 @@ async function guardarCambiosReceta() {
 
   }, []);
 
+  // Consultar los deshabilitados solo cuando se abre su filtro.
+  // El servicio de insumos devuelve todo el catálogo (activos e inactivos).
+  useEffect(() => {
+    if (filtro !== "deshabilitados") return;
+    let vigente = true;
+
+    async function cargarDeshabilitados() {
+      setCargandoDeshabilitados(true);
+      setErrorDeshabilitados("");
+      try {
+        if (!deshabilitadosCargaRef.current) {
+          deshabilitadosCargaRef.current = obtenerInsumos()
+            .then((datos) => {
+              if (!Array.isArray(datos)) {
+                throw new Error("La API no devolvió un catálogo de insumos válido.");
+              }
+              return datos.filter((item) => item.activo === false);
+            })
+            .catch((err) => {
+              deshabilitadosCargaRef.current = null;
+              throw err;
+            });
+        }
+        const datos = await deshabilitadosCargaRef.current;
+        if (vigente) setInsumosDeshabilitados(datos);
+      } catch (err) {
+        if (vigente) setErrorDeshabilitados(err.message || "No se pudieron cargar los insumos deshabilitados.");
+      } finally {
+        if (vigente) setCargandoDeshabilitados(false);
+      }
+    }
+
+    cargarDeshabilitados();
+    return () => { vigente = false; };
+  }, [filtro]);
+
   // ========================================
 
   // CARGAR PRODUCTOS DEL BACKEND
@@ -679,19 +724,18 @@ useEffect(() => {
 
   // ========================================
 
-  const inventarioFiltrado = inventario.filter((item) => {
+  const inventarioFiltrado = filtro === "deshabilitados"
+    ? insumosDeshabilitados.map((item) => ({
+        ...item,
+        insumo_id: item.id,
+      }))
+    : inventario.filter((item) => {
+        if (filtro === "todos") return true;
+        return obtenerEstado(item).codigo === filtro;
+      });
 
-    if (filtro === "todos") {
-
-      return true;
-
-    }
-
-    const estado = obtenerEstado(item);
-
-    return estado.codigo === filtro;
-
-  });
+  const cargandoExistencias = filtro === "deshabilitados" ? cargandoDeshabilitados : cargando;
+  const errorExistencias = filtro === "deshabilitados" ? errorDeshabilitados : error;
 
   // ========================================
 
@@ -762,9 +806,72 @@ function abrirEditar(item) {
 function abrirEliminar(item) {
 
   setInsumoSeleccionado(item);
-
+  setErrorEstadoInsumo("");
   setModalEliminar(true);
 
+}
+
+async function confirmarDeshabilitarInsumo() {
+  if (!insumoSeleccionado || deshabilitandoInsumo) return;
+
+  const id = insumoSeleccionado.insumo_id;
+  try {
+    setDeshabilitandoInsumo(true);
+    setErrorEstadoInsumo("");
+
+    // Desactivación lógica: se conserva el registro en la base de datos.
+    await cambiarEstadoInsumo(id, false);
+
+    // Actualizar la vista sin otra petición de inventario.
+    setInventario((actuales) =>
+      actuales.filter((item) => item.insumo_id !== id)
+    );
+    // Actualizar los listados locales y permitir refrescar el catálogo.
+    setInsumosDeshabilitados((anteriores) => [
+      { ...insumoSeleccionado, id, activo: false },
+      ...anteriores.filter((item) => item.id !== id),
+    ]);
+    deshabilitadosCargaRef.current = null;
+    catalogoCargaRef.current = null;
+
+    setModalEliminar(false);
+    setInsumoSeleccionado(null);
+  } catch (err) {
+    setErrorEstadoInsumo(err.message || "No se pudo deshabilitar el insumo.");
+  } finally {
+    setDeshabilitandoInsumo(false);
+  }
+}
+
+async function habilitarInsumo(item) {
+  const id = Number(item.id ?? item.insumo_id);
+  if (!Number.isInteger(id) || id <= 0 || habilitandoId !== null) return;
+
+  try {
+    setHabilitandoId(id);
+    setErrorDeshabilitados("");
+    await cambiarEstadoInsumo(id, true);
+
+    // Refrescar existencias una sola vez para recuperar su stock real.
+    setInsumosDeshabilitados((anteriores) =>
+      anteriores.filter((insumo) => Number(insumo.id) !== id)
+    );
+    deshabilitadosCargaRef.current = null;
+    catalogoCargaRef.current = null;
+
+    try {
+      const datos = await obtenerInventario();
+      if (!Array.isArray(datos)) throw new Error("La API no devolvió una lista de inventario.");
+      setInventario(datos);
+      setError("");
+    } catch (err) {
+      setError(err.message || "No se pudieron actualizar las existencias.");
+    }
+  } catch (err) {
+    setErrorDeshabilitados(err.message || "No se pudo habilitar el insumo.");
+  } finally {
+    setHabilitandoId(null);
+  }
 }
 
 async function guardarCambiosInsumo() {
@@ -1044,7 +1151,7 @@ async function guardarNuevoProducto() {
 
   return (
 
-    <div className="inventario-page">
+    <div className="inventario-page" style={{ minWidth: 0, flex: "1 1 0%", maxWidth: "100%" }}>
 
       {/* ENCABEZADO */}
 
@@ -1144,7 +1251,7 @@ async function guardarNuevoProducto() {
 
             {/* MENSAJE DE CARGA */}
 
-            {cargando && (
+            {cargandoExistencias && (
 
               <div
 
@@ -1162,7 +1269,7 @@ async function guardarNuevoProducto() {
 
             {/* MENSAJE DE ERROR */}
 
-            {!cargando && error && (
+            {!cargandoExistencias && errorExistencias && (
 
               <div
 
@@ -1172,7 +1279,7 @@ async function guardarNuevoProducto() {
 
               >
 
-                {error}
+                {errorExistencias}
 
               </div>
 
@@ -1180,13 +1287,13 @@ async function guardarNuevoProducto() {
 
             {/* TABLA DE EXISTENCIAS */}
 
-            {!cargando && !error && (
+            {!cargandoExistencias && !errorExistencias && (
 
-              <div className="inventario-tabla-contenedor">
+              <div className="inventario-tabla-contenedor" style={{ maxHeight: "608px", overflowY: "auto" }}>
 
                 <table className="inventario-tabla">
 
-                  <thead>
+                  <thead style={{ position: "sticky", top: 0, zIndex: 1, backgroundColor: "#fff" }}>
 
                     <tr>
 
@@ -1218,11 +1325,11 @@ async function guardarNuevoProducto() {
 
                         >
 
-                          {filtro === "todos"
-
-                            ? "No hay insumos registrados."
-
-                            : "No hay insumos que coincidan con este filtro."}
+                          {filtro === "deshabilitados"
+                            ? "No hay insumos deshabilitados."
+                            : filtro === "todos"
+                              ? "No hay insumos registrados."
+                              : "No hay insumos que coincidan con este filtro."}
 
                         </td>
 
@@ -1254,9 +1361,9 @@ async function guardarNuevoProducto() {
 
                             <td>
 
-                              {stock.toLocaleString("es-SV")}{" "}
-
-                              {item.unidad}
+                              {filtro === "deshabilitados"
+                                ? "—"
+                                : <>{stock.toLocaleString("es-SV")} {item.unidad}</>}
 
                             </td>
 
@@ -1264,9 +1371,9 @@ async function guardarNuevoProducto() {
 
                             <td>
 
-                              {minimo.toLocaleString("es-SV")}{" "}
-
-                              {item.unidad}
+                              {filtro === "deshabilitados"
+                                ? "—"
+                                : <>{minimo.toLocaleString("es-SV")} {item.unidad}</>}
 
                             </td>
 
@@ -1276,17 +1383,31 @@ async function guardarNuevoProducto() {
 
                               <StatusBadge
 
-                                text={estado.texto}
+                                text={filtro === "deshabilitados" ? "Deshabilitado" : estado.texto}
 
-                                variant={estado.variante}
+                                variant={filtro === "deshabilitados" ? "danger" : estado.variante}
 
                               />
 
                             </td>
 
 {/* ACCIONES */}
-
 <td>
+  {filtro === "deshabilitados" ? (
+    <div className="inventario-acciones">
+      <button
+        type="button"
+        className="inventario-icono inventario-icono--editar"
+        title="Volver a habilitar insumo"
+        aria-label={`Habilitar ${item.nombre}`}
+        onClick={() => habilitarInsumo(item)}
+        disabled={habilitandoId !== null}
+      >
+        <RotateCcw size={18} />
+      </button>
+    </div>
+  ) : (
+
 
   <div className="inventario-acciones">
 
@@ -1310,7 +1431,7 @@ async function guardarNuevoProducto() {
 
     </button>
 
-    {/* ELIMINAR */}
+    {/* DESHABILITAR (sin borrar de la base de datos) */}
 
     <button
 
@@ -1318,20 +1439,22 @@ async function guardarNuevoProducto() {
 
       className="inventario-icono inventario-icono--eliminar"
 
-      title="Eliminar insumo"
+      title="Deshabilitar insumo"
 
-      aria-label={`Eliminar ${item.nombre}`}
+      aria-label={`Deshabilitar ${item.nombre}`}
 
       onClick={() => abrirEliminar(item)}
 
     >
 
-      <Trash2 size={18} />
+      <Ban size={18} />
 
     </button>
 
   </div>
 
+
+  )}
 </td>
 
                           </tr>
@@ -1422,7 +1545,7 @@ async function guardarNuevoProducto() {
 
 {!cargandoProductos && !errorProductos && (
 
-  <div className="row g-3">
+  <div className="row g-3" style={{ maxHeight: "calc(2 * 390px + 1rem)", overflowY: "auto", overflowX: "hidden", alignContent: "flex-start" }}>
 
     {productosFiltrados.length === 0 ? (
 
@@ -1494,7 +1617,7 @@ async function guardarNuevoProducto() {
 
           <div
 
-            className="col-12 col-md-6"
+            className="col-12 col-md-4"
 
             key={id}
 
@@ -1808,15 +1931,15 @@ async function guardarNuevoProducto() {
 
 </Modal>
 
-{/* MODAL ELIMINAR INSUMO */}
+{/* MODAL DESHABILITAR INSUMO */}
 
 <Modal
 
   show={modalEliminar}
 
-  title="Eliminar insumo"
+  title="Deshabilitar insumo"
 
-  onClose={() => setModalEliminar(false)}
+  onClose={() => { if (!deshabilitandoInsumo) setModalEliminar(false); }}
 
   footer={
 
@@ -1828,19 +1951,21 @@ async function guardarNuevoProducto() {
 
         variant="outline-secondary"
 
+        disabled={deshabilitandoInsumo}
+
         onClick={() => setModalEliminar(false)}
 
       />
 
       <Button
 
-        text="Eliminar"
+        text={deshabilitandoInsumo ? "Deshabilitando..." : "Deshabilitar"}
 
         variant="danger"
 
-        disabled
+        disabled={deshabilitandoInsumo}
 
-        title="La eliminación todavía no está disponible en el backend"
+        onClick={confirmarDeshabilitarInsumo}
 
       />
 
@@ -1852,7 +1977,7 @@ async function guardarNuevoProducto() {
 
   <p>
 
-    ¿Estás segura de que deseas eliminar el insumo{" "}
+    ¿Estás segura de que deseas deshabilitar el insumo{" "}
 
     <strong>{insumoSeleccionado?.nombre}</strong>?
 
@@ -1860,11 +1985,13 @@ async function guardarNuevoProducto() {
 
   <div className="alert alert-warning mb-0">
 
-    La eliminación todavía no está habilitada en el backend.
-
-    Por ahora este formulario es solamente visual.
+    El insumo dejará de aparecer en las existencias activas, pero no se borrará de la base de datos.
 
   </div>
+
+  {errorEstadoInsumo && (
+    <div className="alert alert-danger mt-2" role="alert">{errorEstadoInsumo}</div>
+  )}
 
 </Modal>
 
