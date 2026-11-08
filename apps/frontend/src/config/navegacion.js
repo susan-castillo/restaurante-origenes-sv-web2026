@@ -17,9 +17,20 @@ export const MENU = [
 // A dónde va cada usuario justo después de iniciar sesión.
 // Se decide por el ROL (permisos), no por el cargo (puesto): un gerente ya es ADMIN.
 export const rutaInicial = (usuario) => {
-    if (usuario.rol === 'RRHH') return '/admin/rrhh';
-    if (usuario.rol === 'ADMIN') return '/admin/inventario';
-    return '/pos'; // EMPLEADO (barista, cajero)
+    // Leemos el rol y lo convertimos a mayúsculas por seguridad
+    const rolBruto = usuario?.rol || usuario?.usuario?.rol || '';
+    const rol = String(rolBruto).toUpperCase().trim();
+
+    switch (rol) {
+        case 'ADMIN':
+            return '/admin/inventario';
+        case 'RRHH':
+            return '/admin/rrhh';
+        case 'EMPLEADO':
+            return '/pos';
+        default:
+            return '/pos';
+    }
 };
 
 // Opciones del menú lateral que este usuario puede ver.
