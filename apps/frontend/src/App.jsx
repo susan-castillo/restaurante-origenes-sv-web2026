@@ -12,6 +12,7 @@ import NotFound from './pages/NotFound.jsx';
 import NoAutorizadoPage from "./pages/NoAutorizados.jsx";
 import EnConstruccionPage from "./pages/EnConstruccion.jsx";
 import InventarioPage from './pages/InventarioPage.jsx';
+import PosPage from "./pages/PosPage.jsx";
 
 // Marco común de las pantallas internas: barra superior + menú lateral + contenido.
 function DashboardLayout() {
@@ -59,7 +60,7 @@ function AppRoutes() {
                 <Route element={<DashboardLayout />}>
                     {/* Punto de venta: cajeros, baristas y gerentes de sucursal */}
                     <Route element={<ProtectedRoute roles={['EMPLEADO', 'ADMIN']} />}>
-                        <Route path="/pos" element={<EnConstruccionPage titulo="Punto de venta" responsable="Frontend 1" />} />
+                        <Route path="/pos" element={<PosPage titulo="Punto de venta" responsable="Frontend 1" />} />
                     </Route>
 
                     {/* Administración: solo ADMIN */}
