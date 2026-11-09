@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { obtenerPlatillosPOS, crearVentaPOS } from "../services/posService.js";
+import { obtenerPlatillosPOS, crearVentaPOS, obtenerPlatilloPOS } from "../services/posService.js";
 import { getEstadoCaja } from "../services/cajasService.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import PlatilloCard from "../components/pos/PlatilloCard.jsx";
 import CobroModal from "../components/pos/CobroModal.jsx";
 import VentaCompletadaModal from "../components/pos/VentaCompletadaModal.jsx";
 import { generarComprobantePDF } from "../utils/generarComprobantePDF.js";
+import PlatilloDetalleModal from "../components/pos/PlatilloDetalleModal.jsx";
 import "../styles/pos.scss";
 //Import para poder obtener la sucursal seleccionada
 import {useOutletContext} from "react-router-dom";
@@ -27,6 +28,10 @@ export default function PosPage() {
   const [error, setError] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [categoria, setCategoria] = useState("Todos");
+  const [detalleAbierto, setDetalleAbierto] = useState(false);
+  const [platilloDetalle, setPlatilloDetalle] = useState(null);
+  const [cargandoDetalle, setCargandoDetalle] = useState(false);
+  const [errorDetalle, setErrorDetalle] = useState("");
 
   // Estados del carrito y cobro
   const [carrito, setCarrito] = useState([]);
@@ -143,6 +148,8 @@ export default function PosPage() {
   function agregarProducto(platillo) {
     if (!habilitado || modalCobroAbierto) return;
 
+    if (!platillo.disponible) return;
+
     const precio = Number(platillo.precio);
 
     if (!Number.isFinite(precio) || precio < 0) return;
@@ -236,7 +243,42 @@ export default function PosPage() {
     setCarrito([]);
     setModalCobroAbierto(false);
 
+    // Actualizar disponibilidad después de descontar inventario
+    try {
+      const platillosActualizados = await obtenerPlatillosPOS();
+
+      if (!Array.isArray(platillosActualizados)) {
+        throw new Error("La API no devolvió una lista válida.");
+      }
+
+      setPlatillos(platillosActualizados);
+      setError("");
+    } catch (err) {
+      setError(
+        "La venta se registró, pero no se pudo actualizar el catálogo. " +
+        (err.message || "")
+      );
+    }
+
     return venta;
+  }
+
+  async function abrirDetallePlatillo(platillo) {
+    setDetalleAbierto(true);
+    setPlatilloDetalle(null);
+    setCargandoDetalle(true);
+    setErrorDetalle("");
+
+    try {
+      const detalle = await obtenerPlatilloPOS(platillo.id);
+      setPlatilloDetalle(detalle);
+    } catch (err) {
+      setErrorDetalle(
+        err.message || "No se pudo obtener el detalle del platillo."
+      );
+    } finally {
+      setCargandoDetalle(false);
+    }
   }
 
   return (
@@ -320,7 +362,7 @@ export default function PosPage() {
           )}
 
           {!cargando && !error && (
-            <div className="row g-3">
+            <div className="row g-3 pos-catalogo-scroll">
               {platillosFiltrados.map((platillo) => (
                 <div
                   key={platillo.id}
@@ -337,6 +379,7 @@ export default function PosPage() {
                     <PlatilloCard
                       platillo={platillo}
                       onAgregar={() => agregarProducto(platillo)}
+                      onVerDetalle={() => abrirDetallePlatillo(platillo)}
                     />
                   </div>
                 </div>
@@ -474,6 +517,14 @@ export default function PosPage() {
           </div>
         </aside>
       </div>
+      {/* Modal de detalles del los ingredientes del platillo */}
+      <PlatilloDetalleModal
+        abierto={detalleAbierto}
+        platillo={platilloDetalle}
+        cargando={cargandoDetalle}
+        error={errorDetalle}
+        onCerrar={() => setDetalleAbierto(false)}
+      />
 
       {/* Modal de cobro */}
       <CobroModal
