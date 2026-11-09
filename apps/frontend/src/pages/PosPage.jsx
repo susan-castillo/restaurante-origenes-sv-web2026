@@ -7,12 +7,19 @@ import CobroModal from "../components/pos/CobroModal.jsx";
 import VentaCompletadaModal from "../components/pos/VentaCompletadaModal.jsx";
 import { generarComprobantePDF } from "../utils/generarComprobantePDF.js";
 import "../styles/pos.scss";
+//Import para poder obtener la sucursal seleccionada
+import {useOutletContext} from "react-router-dom";
 
 const moneda = (valor) => `$${Number(valor ?? 0).toFixed(2)}`;
 
 export default function PosPage() {
   const { usuario, cargando: cargandoAuth } = useAuth();
-  const sucursalId = usuario?.sucursal_id;
+
+  // Obtenemos la sucursal seleccionada actualmente en la barra superior
+  const {sucursalSeleccionada} = useOutletContext() || {};
+
+  // Determinamos el ID de la sucursal (Prioridad a la seleccionada en NavBar)
+  const sucursalId = sucursalSeleccionada?.id || usuario?.sucursal_id;
 
   // Estados del catálogo
   const [platillos, setPlatillos] = useState([]);
@@ -61,7 +68,7 @@ export default function PosPage() {
     return () => {
       activo = false;
     };
-  }, []);
+  }, [sucursalId]);
 
   // Verificar estado de caja
   useEffect(() => {
@@ -235,7 +242,7 @@ export default function PosPage() {
   return (
     <main className="pos-page container-fluid py-4 px-3 px-lg-4">
       <header className="mb-4">
-        <h1 className="font-origenes text-dark mb-2">
+        <h1 className="font-origenes fs-3 text-dark mb-2">
           Punto de venta
         </h1>
         <p className="text-muted mb-0">

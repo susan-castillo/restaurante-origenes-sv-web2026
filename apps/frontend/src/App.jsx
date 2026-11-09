@@ -89,7 +89,7 @@ function DashboardLayout() {
                 <Sidebar onLogout={cerrarSesion} />
                 <main className="flex-grow-1 p-4 bg-light">
                     {/* Aquí se dibuja la página que corresponde a la ruta */}
-                    <Outlet />
+                    <Outlet context={{sucursalSeleccionada, sucursales, handleCambiarSucursal}} />
                 </main>
             </div>
         </div>
