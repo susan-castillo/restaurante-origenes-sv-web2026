@@ -21,6 +21,7 @@ function obtenerImagen(platillo) {
 export default function PlatilloCard({
   platillo,
   onAgregar,
+  onVerDetalle,
 }) {
   const inicial =
     platillo.nombre?.charAt(0).toUpperCase() || "P";
@@ -38,11 +39,33 @@ export default function PlatilloCard({
     setErrorImagen(false);
   }, [imagen]);
 
-  const disponibilidad =
-    platillo.stock ?? platillo.disponibles;
+  // Disponibilidad calculada por el backend
+  const disponible = platillo.disponible === true;
+
+  const puedeAgregar = disponible && precioValido;
+
+  const abrirDetalle = () => {
+    onVerDetalle?.(platillo);
+  };
+
+  const manejarTeclado = (event) => {
+    if (event.target !== event.currentTarget) return;
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      abrirDetalle();
+    }
+  };
 
   return (
-    <article className="card pos-producto-card rounded-4 shadow-sm border-0 w-100 h-100">
+    <article
+      className="card pos-producto-card rounded-4 shadow-sm border-0 w-100 h-100"
+      onClick={abrirDetalle}
+      onKeyDown={manejarTeclado}
+      role="button"
+      tabIndex={0}
+      aria-label={`Ver detalles de ${platillo.nombre}`}
+    >
       {/* IMAGEN */}
       <div className="pos-producto-imagen d-flex align-items-center justify-content-center position-relative">
         {imagen && !errorImagen ? (
@@ -63,8 +86,11 @@ export default function PlatilloCard({
         <button
           type="button"
           className="pos-producto-agregar rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center"
-          onClick={onAgregar}
-          disabled={!precioValido}
+          onClick={(event) => {
+            event.stopPropagation();
+            if (puedeAgregar) onAgregar();
+          }}
+          disabled={!puedeAgregar}
           aria-label={`Agregar ${platillo.nombre}`}
         >
           +
@@ -104,11 +130,15 @@ export default function PlatilloCard({
               : "Sin precio"}
           </strong>
 
-          {disponibilidad != null && (
-            <small className="text-muted text-end">
-              {disponibilidad} disponibles
-            </small>
-          )}
+          <small
+            className={
+              disponible
+                ? "text-muted text-end"
+                : "text-danger fw-semibold text-end"
+            }
+          >
+            {disponible ? "Disponible" : "No disponible"}
+          </small>
         </div>
       </div>
     </article>

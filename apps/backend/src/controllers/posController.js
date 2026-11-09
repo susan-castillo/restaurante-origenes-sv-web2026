@@ -58,3 +58,27 @@ export async function obtenerVentaPorId(req, res, next) {
         return responderError(error, res, next);
     }
 }
+
+// GET /api/pos/platillos
+export async function listarPlatillosPOS(req, res, next) {
+    try {
+        const platillos = await posService.listarPlatillosPOS(req.usuario);
+        return res.status(200).json(platillos);
+    } catch (error) {
+        return responderError(error, res, next);
+    }
+}
+
+// GET /api/pos/platillos/:id
+export async function obtenerDetallePlatilloPOS(req, res, next) {
+    try {
+        const platillo = await posService.obtenerDetallePlatilloPOS(
+            req.usuario,
+            req.params.id
+        );
+
+        return res.status(200).json(platillo);
+    } catch (error) {
+        return responderError(error, res, next);
+    }
+}

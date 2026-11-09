@@ -1,32 +1,35 @@
+
 import { apiFetch } from "./api.js";
 
-//* ==========================================
-//* CATÁLOGO DE PLATILLOS
-//* ==========================================
+// ==========================================
+// CATÁLOGO DE PLATILLOS DEL POS
+// ==========================================
 
-//* GET /api/platillos?activo=true
+// GET /api/pos/platillos
+// Devuelve los platillos con disponibilidad según la sucursal.
 export const obtenerPlatillosPOS = () =>
-  apiFetch("/platillos?activo=true");
+  apiFetch("/pos/platillos");
 
-//* GET /api/platillos/:id
+// GET /api/pos/platillos/:id
+// Devuelve la receta y el inventario para el modal.
 export const obtenerPlatilloPOS = (id) =>
-  apiFetch(`/platillos/${id}`);
+  apiFetch(`/pos/platillos/${id}`);
 
-//* ==========================================
-//* VENTAS DEL POS
-//* ==========================================
+// ==========================================
+// VENTAS DEL POS
+// ==========================================
 
-//* POST /api/pos/ventas
+// POST /api/pos/ventas
 export const crearVentaPOS = (datosVenta) =>
   apiFetch("/pos/ventas", {
     method: "POST",
     body: JSON.stringify(datosVenta),
   });
 
-//* GET /api/pos/ventas
+// GET /api/pos/ventas
 export const listarVentasPOS = () =>
   apiFetch("/pos/ventas");
 
-//* GET /api/pos/ventas/:id
+// GET /api/pos/ventas/:id
 export const obtenerVentaPOS = (id) =>
   apiFetch(`/pos/ventas/${id}`);
