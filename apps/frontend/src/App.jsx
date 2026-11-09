@@ -15,6 +15,8 @@ import InventarioPage from './pages/InventarioPage.jsx';
 import {useEffect, useState} from "react";
 import {getEstadoCaja} from "./services/cajasService.js";
 import {getSucursales} from "./services/sucursales.js";
+import EmpleadosPage from "./pages/EmpleadosPage.jsx";
+import PlanillaPage from "./pages/PlanillaPage.jsx";
 
 // Marco común de las pantallas internas: barra superior + menú lateral + contenido.
 function DashboardLayout() {
@@ -128,7 +130,8 @@ function AppRoutes() {
 
                     {/* Recursos humanos: RRHH y ADMIN */}
                     <Route element={<ProtectedRoute roles={['RRHH', 'ADMIN']} />}>
-                        <Route path="/admin/rrhh" element={<EnConstruccionPage titulo="Recursos Humanos" responsable="Frontend 3" />} />
+                        <Route path="/rrhh/empleados" element={<EmpleadosPage />} />
+                        <Route path="/rrhh/planilla" element={<PlanillaPage />} />
                     </Route>
                 </Route>
             </Route>
