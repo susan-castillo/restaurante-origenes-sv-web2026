@@ -3,10 +3,20 @@ import { prisma } from '../models/db.js';
 import { coincideNombre } from '../utils/validaciones.js';
 
 // Lista el catálogo ordenado por nombre.
-// activo: true/false filtra por estado (undefined = todos). buscar: texto dentro del nombre.
-export const listarInsumos = async ({ activo, buscar } = {}) => {
+// activo: true/false filtra por estado (undefined = todos).
+// buscar: texto dentro del nombre.
+// sucursalId: solo los insumos registrados en el inventario de esa sucursal.
+export const listarInsumos = async ({ activo, buscar, sucursalId } = {}) => {
+    if (sucursalId) {
+        const sucursal = await prisma.sucursales.findUnique({ where: { id: sucursalId } });
+        if (!sucursal) throw new Error('SUCURSAL_NO_ENCONTRADA');
+    }
+
     const insumos = await prisma.insumos.findMany({
-        where: activo !== undefined ? { activo } : {},
+        where: {
+            ...(activo !== undefined ? { activo } : {}),
+            ...(sucursalId ? { inventario_sucursal: { some: { sucursal_id: sucursalId } } } : {}),
+        },
         orderBy: { nombre: 'asc' },
     });
     return buscar ? insumos.filter((insumo) => coincideNombre(insumo.nombre, buscar)) : insumos;

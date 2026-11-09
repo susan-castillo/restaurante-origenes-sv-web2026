@@ -1,6 +1,8 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../models/db.js';
-import { descontarInventario } from './inventarioService.js';
+import { descontarInventario, listarInventario } from './inventarioService.js';
+import { listarPlatillos } from './platillosService.js';
+import { obtenerReceta } from './recetasService.js';
 
 const MAX_INT = 2_147_483_647;
 const tiposDocumento = ['FACTURA', 'CCF'];
@@ -162,6 +164,83 @@ async function obtenerTurnoAbierto(client, usuario, { bloquear = false } = {}) {
 
     return turnos[0];
 }
+
+// Calcula la disponibilidad de un platillo con el inventario
+// de la sucursal del usuario.
+const calcularDisponibilidadPOS = (platillo, receta, stockPorInsumo) => {
+    const ingredientes = receta.items.map((item) => {
+        const existencia = stockPorInsumo.get(item.insumo_id);
+
+        const cantidadRequerida = Number(item.cantidad);
+        const stockActual = Number(existencia?.stock_actual ?? 0);
+
+        return {
+            insumo_id: item.insumo_id,
+            nombre: item.nombre,
+            unidad: item.unidad,
+            cantidad_requerida: item.cantidad,
+            stock_actual: existencia?.stock_actual ?? '0',
+            suficiente: stockActual >= cantidadRequerida,
+        };
+    });
+
+    return {
+        ...platillo,
+        disponible:
+            platillo.activo &&
+            ingredientes.length > 0 &&
+            ingredientes.every((item) => item.suficiente),
+        ingredientes,
+    };
+};
+
+// Obtiene todos los platillos con disponibilidad por sucursal.
+export const listarPlatillosPOS = async (usuario) => {
+    const sucursalId = obtenerSucursal(usuario);
+
+    const [platillos, inventario] = await Promise.all([
+        listarPlatillos({ activo: true }),
+        listarInventario(sucursalId),
+    ]);
+
+    const stockPorInsumo = new Map(
+        inventario.map((item) => [item.insumo_id, item])
+    );
+
+    const recetas = await Promise.all(
+        platillos.map((platillo) => obtenerReceta(platillo.id))
+    );
+
+    return platillos.map((platillo, index) =>
+        calcularDisponibilidadPOS(
+            platillo,
+            recetas[index],
+            stockPorInsumo
+        )
+    );
+};
+
+// Obtiene el detalle de un platillo para el modal.
+export const obtenerDetallePlatilloPOS = async (usuario, platilloId) => {
+    const sucursalId = obtenerSucursal(usuario);
+    const id = leerId(platilloId, 'platilloId');
+
+    const [platillo, receta, inventario] = await Promise.all([
+        prisma.platillos.findUnique({ where: { id } }),
+        obtenerReceta(id),
+        listarInventario(sucursalId),
+    ]);
+
+    const stockPorInsumo = new Map(
+        inventario.map((item) => [item.insumo_id, item])
+    );
+
+    return calcularDisponibilidadPOS(
+        platillo,
+        receta,
+        stockPorInsumo
+    );
+};
 
 export async function crearVenta(usuario, body) {
     const sucursalId = obtenerSucursal(usuario);

@@ -12,9 +12,10 @@ import NotFound from './pages/NotFound.jsx';
 import NoAutorizadoPage from "./pages/NoAutorizados.jsx";
 import EnConstruccionPage from "./pages/EnConstruccion.jsx";
 import InventarioPage from './pages/InventarioPage.jsx';
-import {useEffect, useState} from "react";
-import {getEstadoCaja} from "./services/cajasService.js";
-import {getSucursales} from "./services/sucursales.js";
+import PosPage from "./pages/PosPage.jsx";
+import { useEffect, useState } from "react";
+import { getEstadoCaja } from "./services/cajasService.js";
+import { getSucursales } from "./services/sucursales.js";
 
 // Marco común de las pantallas internas: barra superior + menú lateral + contenido.
 function DashboardLayout() {
@@ -88,7 +89,7 @@ function DashboardLayout() {
                 <Sidebar onLogout={cerrarSesion} />
                 <main className="flex-grow-1 p-4 bg-light">
                     {/* Aquí se dibuja la página que corresponde a la ruta */}
-                    <Outlet />
+                    <Outlet context={{sucursalSeleccionada, sucursales, handleCambiarSucursal}} />
                 </main>
             </div>
         </div>
@@ -115,7 +116,7 @@ function AppRoutes() {
                 <Route element={<DashboardLayout />}>
                     {/* Punto de venta: cajeros, baristas y gerentes de sucursal */}
                     <Route element={<ProtectedRoute roles={['EMPLEADO', 'ADMIN']} />}>
-                        <Route path="/pos" element={<EnConstruccionPage titulo="Punto de venta" responsable="Frontend 1" />} />
+                        <Route path="/pos" element={<PosPage titulo="Punto de venta" responsable="Frontend 1" />} />
                     </Route>
 
                     {/* Administración: solo ADMIN */}

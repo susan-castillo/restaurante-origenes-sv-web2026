@@ -12,9 +12,21 @@ export const listarInsumos = async (req, res) => {
         if (errorBuscar) {
             return res.status(400).json({ error: errorBuscar });
         }
-        const insumos = await insumosService.listarInsumos({ activo, buscar });
+
+        let sucursalId;
+        if (req.query.sucursal_id !== undefined) {
+            sucursalId = idValido(req.query.sucursal_id);
+            if (!sucursalId) {
+                return res.status(400).json({ error: 'El filtro sucursal_id no es válido.' });
+            }
+        }
+
+        const insumos = await insumosService.listarInsumos({ activo, buscar, sucursalId });
         return res.status(200).json(insumos);
     } catch (error) {
+        if (error.message === 'SUCURSAL_NO_ENCONTRADA') {
+            return res.status(404).json({ error: 'Sucursal no encontrada.' });
+        }
         console.error('Error al listar insumos:', error);
         return res.status(500).json({ error: 'Error al obtener los insumos.' });
     }

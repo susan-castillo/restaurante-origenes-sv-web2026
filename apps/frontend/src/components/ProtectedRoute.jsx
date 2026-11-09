@@ -1,9 +1,12 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import {Navigate, Outlet, useLocation, useOutletContext} from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function ProtectedRoute({ roles }) {
   const { usuario, cargando } = useAuth();
   const ubicacion = useLocation();
+
+  //Nos sirve para poder pasar la sucursal seleccionada del navBar a las demas pantallas
+  const context =  useOutletContext();
 
   // 1) Todavía verificando el token guardado: ni dejamos pasar ni expulsamos.
   if (cargando) {
@@ -24,6 +27,6 @@ export default function ProtectedRoute({ roles }) {
     return <Navigate replace to="/no-autorizado" />;
   }
 
-  // 4) Todo bien: se muestran las rutas hijas.
-  return <Outlet />;
+  // 4) se muestran las rutas hijas.
+  return <Outlet context={context} />;
 }
