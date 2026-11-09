@@ -1,0 +1,459 @@
+/* ==========================================
+   PUNTO DE VENTA - RESTAURANTE ORÍGENES
+   Estilos personalizados
+   ========================================== */
+
+.pos-page {
+  min-width: 0;
+
+  // ========================================
+  // BUSCADOR
+  // ========================================
+
+  .pos-buscador {
+    .input-group-text,
+    .form-control {
+      border-color: var(--bs-primary);
+    }
+
+    .form-control:focus {
+      box-shadow: none;
+      border-color: var(--bs-secondary);
+    }
+  }
+
+  // ========================================
+  // FILTROS
+  // ========================================
+
+  .pos-filtro {
+    font-size: 13px;
+    font-weight: 600;
+
+    &.btn-dark {
+      background: var(--bs-dark);
+    }
+  }
+
+  // ========================================
+  // TARJETAS
+  // ========================================
+
+  .pos-producto-card {
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 18px rgba(38, 28, 20, 0.15) !important;
+    }
+  }
+
+  // Encabezado del producto
+  .pos-producto-imagen {
+    height: 140px;
+    background: var(--bs-cream);
+  }
+
+  // Inicial circular
+  .pos-producto-inicial {
+    width: 80px;
+    height: 80px;
+    border: 12px solid var(--bs-primary);
+    background: var(--bs-cream);
+    color: var(--bs-brown);
+    font: 30px Georgia, serif;
+  }
+
+  // Botón agregar
+  .pos-producto-agregar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    color: var(--bs-secondary);
+    font-size: 25px;
+    cursor: pointer;
+    transition: transform 0.2s;
+
+    &:hover:not(:disabled) {
+      transform: scale(1.1);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  // Etiqueta de categoría
+  .pos-producto-categoria {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    font-size: 10px;
+    padding: 7px 12px;
+  }
+
+  // Descripción
+  .pos-producto-descripcion {
+    color: var(--bs-brown);
+    opacity: 0.75;
+  }
+
+  // Precio
+  .pos-producto-precio {
+    color: var(--bs-secondary);
+  }
+
+  // ========================================
+  // CARRITO
+  // ========================================
+
+  .pos-carrito {
+    position: sticky;
+    top: 20px;
+    min-height: 560px;
+    max-height: calc(100vh - 40px);
+  }
+
+  .pos-carrito-contenido {
+    min-height: 180px;
+    overflow-y: auto;
+  }
+
+  .pos-carrito-icono {
+    width: 72px;
+    height: 72px;
+    font-size: 30px;
+  }
+
+  // ========================================
+  // BOTÓN COBRAR
+  // ========================================
+
+  .pos-btn-cobrar {
+    background: linear-gradient(#c86d1f);
+    color: white;
+    border: 0;
+
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+      color: white;
+    }
+
+    &:disabled {
+      background: #d8cec8;
+      color: white;
+    }
+  }
+
+  // ========================================
+  // RESPONSIVE
+  // ========================================
+
+  @media (max-width: 1199.98px) {
+    .pos-carrito {
+      position: static;
+      min-height: 350px;
+      max-height: none;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .pos-producto-imagen {
+      height: 130px;
+    }
+  }
+}
+
+.pos-producto-foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+
+/* ==========================================
+   IMPRESIÓN DEL TICKET POS
+========================================== */
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  #ticket-pos,
+  #ticket-pos * {
+    visibility: visible !important;
+  }
+
+  #ticket-pos {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 12px;
+  }
+
+  @page {
+    margin: 8mm;
+  }
+}
+
+
+/* ==========================================
+   ETIQUETAS DE CATEGORÍA Y TIPO
+========================================== */
+
+.pos-producto-etiquetas {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 2;
+
+  .badge {
+    font-size: 0.7rem;
+    padding: 6px 10px;
+  }
+}
+
+/* Imagen del platillo */
+.pos-producto-foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+
+/* ==========================================
+   CARRITO POS
+========================================== */
+
+.pos-carrito {
+  min-height: 560px;
+}
+
+/* Tarjeta individual del producto */
+.pos-carrito-producto {
+  border: 1px solid #f0e1d3;
+  background-color: #fff;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: var(--bs-primary);
+  }
+}
+
+/* Botones para aumentar y disminuir */
+.pos-cantidad-btn {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background-color: #f5eee8;
+  color: var(--bs-dark);
+  font-size: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    background-color: var(--bs-cream);
+    color: var(--bs-dark);
+  }
+}
+
+/* Botón eliminar */
+.pos-eliminar-btn {
+  border: none;
+  color: #c94c4c;
+  background: transparent;
+  padding: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    color: #a62e2e;
+    background-color: #fff0f0;
+  }
+}
+
+/* Total */
+.pos-carrito-total {
+  font-size: 2.2rem;
+  color: var(--bs-dark);
+}
+
+/* Botón cobrar */
+.pos-btn-cobrar {
+  background-color: var(--bs-secondary);
+  color: white;
+  border: none;
+  border-radius: 14px;
+
+  &:hover:not(:disabled) {
+    background-color: #c86d1f;
+    color: white;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+/* Adaptación para móviles */
+@media (max-width: 575px) {
+  .pos-carrito {
+    padding: 16px !important;
+  }
+
+  .pos-carrito-total {
+    font-size: 1.8rem;
+  }
+
+  .pos-carrito-producto {
+    padding: 12px !important;
+  }
+}
+
+
+/* MODAL DE COBRO */
+
+.pos-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(35, 24, 18, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.pos-cobro-modal {
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 30px;
+  color: #4b3024;
+}
+
+.pos-modal-seccion {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 12px;
+}
+
+.pos-modal-opcion {
+  min-height: 62px;
+  padding: 10px;
+  border: 1px solid #e6d3c5;
+  border-radius: 15px;
+  background: white;
+  color: #4b3024;
+  font-weight: 700;
+  transition: 0.2s ease;
+}
+
+.pos-modal-opcion:hover {
+  border-color: #e9872d;
+}
+
+.pos-modal-opcion.seleccionado {
+  border-color: #e9872d;
+  background: #fff4ea;
+}
+
+.pos-modal-input {
+  min-height: 60px;
+  border-radius: 12px;
+  border-color: #e6d3c5;
+}
+
+.pos-modal-input:focus {
+  border-color: #e9872d;
+  box-shadow: 0 0 0 0.2rem rgba(233, 135, 45, 0.15);
+}
+
+@media (max-width: 576px) {
+  .pos-cobro-modal {
+    padding: 22px;
+  }
+
+  .pos-modal-opcion {
+    font-size: 0.85rem;
+  }
+}
+
+
+/* Modal de venta completada */
+
+.pos-venta-completada {
+  width: 100%;
+  max-width: 440px;
+  padding: 36px 30px;
+  text-align: center;
+  color: #4b3024;
+}
+
+.pos-venta-exito-icono {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 22px;
+  border-radius: 50%;
+  background: #e8f7ee;
+  color: #24965a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pos-venta-completada-resumen {
+  background: #faf6f2;
+  border: 1px solid #f0e4da;
+  border-radius: 16px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.pos-venta-completada-total {
+  font-size: 2rem;
+  color: #4b3024;
+}
+
+.pos-venta-imprimir {
+  background: #fff;
+  border: 1px solid #e9872d;
+  color: #b8661e;
+  border-radius: 12px;
+}
+
+.pos-venta-imprimir:hover:not(:disabled) {
+  background: #fff4ea;
+  border-color: #e9872d;
+  color: #965018;
+}
+
+.pos-venta-imprimir:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 576px) {
+  .pos-venta-completada {
+    padding: 28px 20px;
+  }
+}
