@@ -43,7 +43,7 @@ app.use(
     '/api',
     rateLimit({
         windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 900_000), // 15 minutos por defecto
-        limit: Number(process.env.RATE_LIMIT_MAX || 100),              // Máximo 100 peticiones por ventana
+        limit: Number(process.env.RATE_LIMIT_MAX || 500),              // Máximo 100 peticiones por ventana
         standardHeaders: 'draft-8',
         legacyHeaders: false,
     })
