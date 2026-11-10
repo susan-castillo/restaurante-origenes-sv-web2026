@@ -82,11 +82,32 @@ export async function cierreCaja(req, res) {
   try {
     const turnoCerrado = await cajaService.cierreCaja(idTurno, efectivo);
 
+    const reporteCuadre = await cajaService.calcularCuadre(idTurno);
+
     return res.json({
       mensaje: "Caja cerrada exitosamente",
       turno: turnoCerrado,
+      reporte: reporteCuadre,
     });
   } catch (error) {
     return res.status(500).json({ error: "Error interno al cerrar el turno" });
+  }
+}
+
+export async function getCuadreTurno(req, res) {
+  const idTurno = Number(req.params.id);
+
+  if (!Number.isInteger(idTurno) || idTurno < 0) {
+    return res.status(400).json({ error: "Id de turno inválido." });
+  }
+
+  try {
+    const reporte = await cajaService.calcularCuadre(idTurno);
+
+    return res.json(reporte);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: "Hubo un error interno al calcular el cuadre" });
   }
 }

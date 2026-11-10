@@ -8,5 +8,6 @@ const router = Router();
 router.get("/estado", verifyToken, cajaController.getEstadoCaja);
 router.post("/apertura", verifyToken, cajaController.aperturaCaja);
 router.put("/cierre/:id", verifyToken, cajaController.cierreCaja);
+router.get("/cuadre/:id", verifyToken, cajaController.getCuadreTurno);
 
 export default router;
