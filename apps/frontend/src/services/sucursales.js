@@ -1,4 +1,4 @@
 import { apiFetch } from './api.js';
 
-// Obtener la lista general de sucursales
-export const getSucursales = () => apiFetch('/sucursales/');
+// VITE_API_URL ya incluye /api, igual que en el servicio de autenticación.
+export const getSucursales = () => apiFetch('/sucursales');

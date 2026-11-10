@@ -1,0 +1,56 @@
+// Paleta de marca. Los estilos quedan limitados al módulo.
+.sucursales-page {
+  --sede-cream: #faeadb;
+  --sede-camel: #cca679;
+  --sede-sky: #82bcc7;
+  --sede-ink: #261c14;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: var(--sede-ink);
+
+  &__encabezado {
+    margin: 12px 0 24px;
+    h1 { font-size: clamp(1.65rem, 3vw, 2.2rem); margin-bottom: 8px; }
+    p { color: #67584c; }
+  }
+
+  &__filtros {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 280px);
+    gap: 12px;
+    margin-bottom: 16px;
+    .form-control, .form-select { min-height: 46px; border: 1px solid var(--sede-camel); border-radius: 8px; }
+    input:focus, select:focus { border-color: #613001; box-shadow: 0 0 0 3px var(--sede-cream); }
+  }
+
+  &__buscador {
+    position: relative;
+    > svg { position: absolute; left: 14px; top: 14px; color: #67584c; pointer-events: none; }
+    input { padding-left: 42px; }
+  }
+
+  &__conteo { font-size: .85rem; color: #67584c; margin-bottom: 18px; }
+  &__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  &__mensaje {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    padding: 48px 20px; background: #fff; border: 1px solid var(--sede-camel); border-radius: 12px; text-align: center;
+    h2 { font-size: 1.2rem; }
+    p { color: #67584c; }
+  }
+
+  .sucursal-card {
+    border: 1px solid #e4d7c9; border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(38, 28, 20, .04);
+    .card-body { padding: 24px; }
+    .card-title { font-size: 1.15rem; font-weight: 600; margin-bottom: 24px; overflow-wrap: anywhere; }
+    &__estado { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+    &__estado > svg { color: #613001; }
+    &__badge { background: var(--sede-sky); color: var(--sede-ink); border-radius: 20px; padding: 4px 12px; font-size: .75rem; font-weight: 600; }
+    &__direccion { display: flex; align-items: flex-start; gap: 8px; color: #67584c; margin: 0; font-size: .9rem; overflow-wrap: anywhere; }
+    &__direccion > svg { flex-shrink: 0; margin-top: 2px; }
+  }
+
+  @media (max-width: 900px) {
+    &__grid, &__filtros { grid-template-columns: minmax(0, 1fr); }
+  }
+}

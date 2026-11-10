@@ -1,7 +1,7 @@
 // =====================================================================
 // App.jsx — mapa de rutas de TODA la aplicación.
 // =====================================================================
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -12,6 +12,7 @@ import NotFound from './pages/NotFound.jsx';
 import NoAutorizadoPage from "./pages/NoAutorizados.jsx";
 import EnConstruccionPage from "./pages/EnConstruccion.jsx";
 import InventarioPage from './pages/InventarioPage.jsx';
+import SucursalesPage from './pages/SucursalesPage.jsx';
 import PosPage from "./pages/PosPage.jsx";
 import { useEffect, useState } from "react";
 import { getEstadoCaja } from "./services/cajasService.js";
@@ -21,6 +22,8 @@ import { getSucursales } from "./services/sucursales.js";
 function DashboardLayout() {
     const { usuario, logout } = useAuth();
     const navigate = useNavigate();
+    const { pathname } = useLocation();
+    const esSucursales = pathname === '/admin/sucursales';
 
     // Estados dinámicos traídos de la base de datos
     const [sucursales, setSucursales] = useState([]);
@@ -35,7 +38,7 @@ function DashboardLayout() {
                 setSucursales(data);
 
                 // Asignar por defecto la sucursal asignada al usuario
-                const sucursalInicial = usuario?.sucursal || data[0];
+                const sucursalInicial = data.find((sucursal) => sucursal.id === usuario.sucursal_id) || data[0] || null;
                 setSucursalSeleccionada(sucursalInicial);
             } catch (err) {
                 console.error("Error al obtener sucursales:", err);
@@ -80,6 +83,7 @@ function DashboardLayout() {
     return (
         <div className="app-shell d-flex flex-column min-vh-100">
             <Navbar usuario={usuario}
+                    {...(esSucursales ? { titulo: 'Sucursales', subtitulo: 'Consulta de sedes activas' } : {})}
                     sucursales={sucursales}
                     sucursalActual={sucursalSeleccionada}
                     cajaAbierta={cajaAbierta}
@@ -123,6 +127,7 @@ function AppRoutes() {
                     <Route element={<ProtectedRoute roles={['ADMIN']} />}>
                         <Route path="/admin" element={<Navigate replace to="/admin/inventario" />} />
                         <Route path="/admin/inventario" element={<InventarioPage />} />
+                        <Route path="/admin/sucursales" element={<SucursalesPage />} />
                         <Route path="/admin/compras" element={<EnConstruccionPage titulo="Compras" responsable="Frontend 4" />} />
                         <Route path="/admin/caja" element={<EnConstruccionPage titulo="Historial de caja" responsable="Frontend 4" />} />
                     </Route>
