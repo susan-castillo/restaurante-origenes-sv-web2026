@@ -59,3 +59,34 @@ export async function crearCompra(req, res) {
       .json({ error: "Error interno al registrar la compra" });
   }
 }
+
+export async function getResumenCostos(req, res) {
+  const { fecha_inicio, fecha_fin } = req.query;
+
+  if (!fecha_inicio || !fecha_fin) {
+    return res.status(400).json({
+      error:
+        "Debes proporcionar una fecha_inicio y fecha_fin en los parametros de la URL",
+    });
+  }
+
+  if (isNaN(Date.parse(fecha_inicio)) || isNaN(Date.parse(fecha_fin))) {
+    return res.status(400).json({
+      error:
+        "Las fechas proporcionadas no tienen un formato valido (usa YYYY-MM-DD)",
+    });
+  }
+
+  try {
+    const resumen = await comprasService.obtenerResumenCostos(
+      fecha_inicio,
+      fecha_fin,
+    );
+    return res.json(resumen);
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ error: "Error interno al generar el resumen de costos" });
+  }
+}

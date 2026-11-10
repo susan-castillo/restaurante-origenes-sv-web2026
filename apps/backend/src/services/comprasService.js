@@ -56,3 +56,47 @@ export async function registrarCompra(
   });
   return compraRegistrada;
 }
+
+export async function obtenerResumenCostos(fechaInicio, fechaFinal) {
+  // Buscamos las compras en ese rango de fechas
+  // Aseguramos que el inicio sea a las 00:00:00 y el fin a las 23:59:59
+
+  const inicio = new Date(fechaInicio);
+  const fin = new Date(`${fechaFinal}T23:59:59.999Z`);
+
+  const compras = await prisma.compras.findMany({
+    where: {
+      creado_en: {
+        gte: inicio,
+        lte: fin,
+      },
+    },
+  });
+
+  let totalPagado = 0;
+  let totalPendiente = 0;
+
+  // Clasificamos y sumamos
+  compras.forEach((compra) => {
+    const monto = Number(compra.total);
+
+    if (compra.estado_pago === "PAGADA") {
+      totalPagado += monto;
+    } else if (compra.estado_pago === "PENDIENTE") {
+      totalPendiente += monto;
+    }
+  });
+
+  return {
+    rango: {
+      inicio: fechaInicio,
+      fin: fechaFinal,
+    },
+    resumen: {
+      gastos_totales: totalPagado + totalPendiente,
+      total_pagado: totalPagado,
+      cuentas_por_pagar: totalPendiente,
+    },
+    cantidad_transacciones: compras.length,
+  };
+}
