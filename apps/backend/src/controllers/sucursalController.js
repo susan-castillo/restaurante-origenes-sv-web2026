@@ -57,7 +57,7 @@ export async function registrarSucursal(req, res) {
   ) {
     return res
       .status(400)
-      .json({ error: "El nombre de la sucursal es obligattorio" });
+      .json({ error: "El nombre de la sucursal es obligatorio" });
   }
 
   try {
@@ -145,5 +145,17 @@ export async function desactivarSucursal(req, res) {
     return res
       .status(500)
       .json({ error: "Error interno al desactivar la sucursal" });
+  }
+}
+
+export async function getEstadisticasDashboard(req, res) {
+  try {
+    const estadisticas = await sucursalService.obtenerEstadisticasDashboard();
+    return res.status(200).json(estadisticas);
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ error: "Error interno al obtener estadisticas" });
   }
 }

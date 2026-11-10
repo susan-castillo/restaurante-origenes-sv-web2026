@@ -59,3 +59,53 @@ export async function desactivarSucursal(id) {
   });
   return sucursalDesactivada;
 }
+
+export async function obtenerEstadisticasDashboard() {
+  const sucursales = await prisma.sucursales.findMany({
+    where: { activa: true },
+    select: { id: true, nombre: true },
+  });
+
+  let totalGlobalVentas = 0;
+  let totalGlobalCompras = 0;
+
+  // Iteramos para sacar la sumatoria de ventas y compras por sucursal
+  const rendimientoSucursales = await Promise.all(
+    sucursales.map(async (sucursal) => {
+      // Sumar todas las compras asociadas a esta sucursal
+      const compras = await prisma.compras.aggregate({
+        where: { sucursal_id: sucursal.id },
+        _sum: { total: true },
+      });
+
+      // Sumar todas las ventas
+      const ventas = await prisma.ventas.aggregate({
+        where: { sucursal_id: sucursal.id },
+        _sum: { total: true },
+      });
+
+      const totalVentas = Number(ventas._sum.total || 0);
+      const totalCompras = Number(compras._sum.total || 0);
+
+      totalGlobalVentas += totalVentas;
+      totalGlobalCompras += totalCompras;
+
+      return {
+        nombre: sucursal.nombre,
+        ventas: totalVentas,
+        compras: totalCompras,
+        rentabilidad: totalVentas - totalCompras,
+      };
+    }),
+  );
+
+  return {
+    tarjetas_superiores: {
+      sucursales_activas: sucursales.length,
+      ingresos_totales: totalGlobalVentas,
+      gastos_totales: totalGlobalCompras,
+      ganancia_neta: totalGlobalVentas - totalGlobalCompras,
+    },
+    grafico_rendimiento: rendimientoSucursales,
+  };
+}
