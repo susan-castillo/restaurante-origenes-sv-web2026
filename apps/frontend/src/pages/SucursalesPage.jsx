@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Alert, Button, Input, Label, Spinner } from 'reactstrap';
-import { Search, Store } from 'lucide-react';
+import { Plus, Search, Store } from 'lucide-react';
 import SucursalCard from '../components/sucursales/SucursalCard.jsx';
+import SucursalNuevaForm from '../components/sucursales/SucursalNuevaForm.jsx';
 import { getSucursalesAdministracion } from '../services/sucursales.js';
 import '../styles/sucursales.scss';
 
@@ -10,6 +12,8 @@ const normalizar = (texto) => String(texto ?? '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim();
 
 export default function SucursalesPage() {
+    const { registrarSucursalActiva } = useOutletContext();
+    const botonAgregar = useRef(null);
     const [sucursales, setSucursales] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [sucursalId, setSucursalId] = useState('');
@@ -17,6 +21,8 @@ export default function SucursalesPage() {
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState('');
     const [intento, setIntento] = useState(0);
+    const [formularioAbierto, setFormularioAbierto] = useState(false);
+    const [confirmacion, setConfirmacion] = useState('');
 
     useEffect(() => {
         // Evita actualizar una pantalla desmontada o con una petición anterior.
@@ -50,12 +56,37 @@ export default function SucursalesPage() {
         setEstado('');
     };
 
+    const cerrarFormulario = () => {
+        setFormularioAbierto(false);
+        botonAgregar.current?.focus();
+    };
+
+    const confirmarCreacion = (sucursal) => {
+        registrarSucursalActiva(sucursal);
+        limpiarFiltros();
+        setIntento((anterior) => anterior + 1);
+        setConfirmacion(`Se creó la sucursal ${sucursal.nombre}.`);
+        cerrarFormulario();
+    };
+
     return (
         <section className="sucursales-page" aria-labelledby="sucursales-titulo">
-            <header className="sucursales-page__encabezado">
-                <h1 id="sucursales-titulo" className="font-origenes">Un mismo origen, distintas sedes</h1>
-                <p>Consulta las sucursales, sus direcciones y su estado.</p>
+            <header className="sucursales-page__encabezado d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div>
+                    <h1 id="sucursales-titulo" className="font-origenes">Un mismo origen, distintas sedes</h1>
+                    <p>Consulta las sucursales, sus direcciones y su estado.</p>
+                </div>
+                <Button color="primary" innerRef={botonAgregar} aria-expanded={formularioAbierto}
+                    className="d-inline-flex align-items-center gap-2"
+                    onClick={() => {
+                        setConfirmacion('');
+                        setFormularioAbierto(true);
+                    }}>
+                    <Plus size={18} aria-hidden="true" /> Agregar sucursal
+                </Button>
             </header>
+
+            {confirmacion && <Alert color="success" role="status">{confirmacion}</Alert>}
 
             <div className="sucursales-page__filtros" role="search" aria-label="Buscar sucursales">
                 <div>
@@ -115,6 +146,7 @@ export default function SucursalesPage() {
                     )}
                 </>
             )}
+            {formularioAbierto && <SucursalNuevaForm onCancel={cerrarFormulario} onCreated={confirmarCreacion} />}
         </section>
     );
 }

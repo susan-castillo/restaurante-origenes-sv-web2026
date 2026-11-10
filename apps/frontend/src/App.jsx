@@ -74,6 +74,14 @@ function DashboardLayout() {
         setSucursalSeleccionada(sucursal);
     };
 
+    const registrarSucursalActiva = (sucursal) => {
+        if (!sucursal.activa) return;
+        setSucursales((actuales) => {
+            const actualizadas = actuales.filter((sede) => sede.id !== sucursal.id);
+            return [...actualizadas, sucursal].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+        });
+    };
+
     // Una sola forma de cerrar sesión, usada por el Navbar y por el Sidebar.
     // Primero se borra la sesión y luego se navega al login (replace: el botón "atrás" no vuelve).
     const cerrarSesion = () => {
@@ -94,7 +102,7 @@ function DashboardLayout() {
                 <Sidebar onLogout={cerrarSesion} />
                 <main className="flex-grow-1 p-4 bg-light">
                     {/* Aquí se dibuja la página que corresponde a la ruta */}
-                    <Outlet context={{sucursalSeleccionada, sucursales, handleCambiarSucursal}} />
+                    <Outlet context={{sucursalSeleccionada, sucursales, handleCambiarSucursal, registrarSucursalActiva}} />
                 </main>
             </div>
         </div>

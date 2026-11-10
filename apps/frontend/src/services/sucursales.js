@@ -4,3 +4,7 @@ import { apiFetch } from './api.js';
 export const getSucursales = () => apiFetch('/sucursales');
 export const getSucursalesAdministracion = () => apiFetch('/sucursales?todas=true');
 export const getSucursalPorId = (id) => apiFetch(`/sucursales/${encodeURIComponent(id)}`);
+export const crearSucursal = (nombre, direccion) => apiFetch('/sucursales', {
+    method: 'POST',
+    body: JSON.stringify({ nombreSucursal: nombre, direccionSucursal: direccion }),
+});
