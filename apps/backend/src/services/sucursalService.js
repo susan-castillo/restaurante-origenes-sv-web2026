@@ -1,11 +1,13 @@
 import { prisma } from "../models/db.js";
 
-export const getSucursales = async (usuario) => {
+export const getSucursales = async (usuario, incluirInactivas = false) => {
   // 1. Si es ADMIN o su sucursal_id es null, devuelve TODAS las sucursales activas
   if (usuario.rol === "ADMIN" || !usuario.sucursal_id) {
+    const condicionWhere = incluirInactivas ? {} : { activa: true };
+
     return prisma.sucursales.findMany({
-      where: { activa: true },
-      select: { id: true, nombre: true, direccion: true },
+      where: condicionWhere,
+      select: { id: true, nombre: true, direccion: true, activa: true },
       orderBy: { nombre: "asc" },
     });
   }

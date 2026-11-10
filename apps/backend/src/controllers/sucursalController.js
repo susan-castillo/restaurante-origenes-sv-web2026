@@ -3,8 +3,14 @@ import * as sucursalService from "../services/sucursalService.js";
 // Controlador para listar sucursales
 export const getSucursales = async (req, res) => {
   try {
+    // Incluir inactivas
+    const incluirInactivas = req.query.todas === "true";
+
     // Le pasamos req.usuario (que lo inyecta verifyToken)
-    const sucursales = await sucursalService.getSucursales(req.usuario);
+    const sucursales = await sucursalService.getSucursales(
+      req.usuario,
+      incluirInactivas,
+    );
     return res.status(200).json(sucursales);
   } catch (error) {
     console.error("Error al obtener sucursales:", error);
