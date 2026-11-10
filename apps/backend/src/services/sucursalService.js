@@ -41,13 +41,15 @@ export async function obtenerSucursalPorId(id) {
   return sucursal;
 }
 
-export async function actualizarSucursal(id, nombre, direccion) {
+export async function actualizarSucursal(id, { nombre, direccion, activa }) {
+  const data = {};
+  if (nombre !== undefined) data.nombre = nombre;
+  if (direccion !== undefined) data.direccion = direccion || null;
+  if (activa !== undefined) data.activa = activa;
+
   const sucursalActualizada = await prisma.sucursales.update({
     where: { id: id },
-    data: {
-      nombre: nombre !== undefined ? nombre : undefined,
-      direccion: direccion !== undefined ? direccion || null : undefined,
-    },
+    data,
   });
   return sucursalActualizada;
 }

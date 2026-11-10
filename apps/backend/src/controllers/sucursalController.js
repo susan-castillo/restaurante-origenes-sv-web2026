@@ -79,14 +79,18 @@ export async function registrarSucursal(req, res) {
 
 export async function actualizarSucursal(req, res) {
   const idSucursal = Number(req.params.id);
-  const { nombre, direccion } = req.body;
+  const { nombre, direccion, activa } = req.body ?? {};
 
   if (!Number.isInteger(idSucursal) || idSucursal <= 0) {
     return res.status(400).json({ error: "ID de sucursal invalido" });
   }
 
-  if (nombre === undefined && direccion === undefined) {
+  if (nombre === undefined && direccion === undefined && activa === undefined) {
     return res.status(400).json({ error: "Se debe enviar al menos un campo" });
+  }
+
+  if (activa !== undefined && typeof activa !== "boolean") {
+    return res.status(400).json({ error: "El estado activa debe ser booleano" });
   }
 
   if (nombre !== undefined) {
@@ -100,8 +104,7 @@ export async function actualizarSucursal(req, res) {
   try {
     const sucursal = await sucursalService.actualizarSucursal(
       idSucursal,
-      nombre,
-      direccion,
+      { nombre, direccion, activa },
     );
 
     return res.status(200).json({
