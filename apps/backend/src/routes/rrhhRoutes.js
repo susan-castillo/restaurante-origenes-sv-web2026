@@ -1,27 +1,18 @@
-const router = require('express').Router();
-const { requireRole } = require('../middlewares/roles');
-const rrhh = require('../controllers/rrhh.controller');
-const emp  = require('../controllers/empleados.controller');
-const plan = require('../controllers/planilla.controller');
+import { Router } from 'express';
+import { requireRole } from '../middlewares/roles.js';
+import * as rrhh from '../controllers/rrhhController.js';
+
+const router = Router();
 
 router.use(requireRole('RRHH', 'ADMIN'));
 
-// /rrhh
-router.get('/', rrhh.dashboard);
-
 // /rrhh/empleados
-router.get('/empleados',                emp.listar);
-router.post('/empleados',               emp.crear);
-router.get('/empleados/:id',            emp.obtener);
-router.put('/empleados/:id',            emp.actualizar);
-router.patch('/empleados/:id/estado',   emp.cambiarEstado);
-router.delete('/empleados/:id',         emp.desactivar);
+router.get('/empleados',                   rrhh.listarUsuarios);
+router.get('/empleados/buscar',            rrhh.buscarUsuarioPorNombre);
+router.post('/empleados',                  rrhh.crearUsuario);
+router.get('/empleados/:id',               rrhh.buscarUsuarioPorId);
+router.put('/empleados/:id',               rrhh.actualizarUsuario);
+router.patch('/empleados/:id/password',    rrhh.cambiarPassword);
+router.delete('/empleados/desactivar/:id', rrhh.desactivarUsuario);
 
-// /rrhh/planilla
-router.get('/planilla',                                   plan.listar);   // resumen por quincena
-router.post('/planilla/generar',                          plan.generar);
-router.get('/planilla/:anio/:mes/:quincena',              plan.detalle);
-router.get('/planilla/:anio/:mes/:quincena/boletas',      plan.boletas);
-router.get('/planilla/:anio/:mes/:quincena/boletas/:usuarioId', plan.boleta);
-
-module.exports = router;
+export default router;
