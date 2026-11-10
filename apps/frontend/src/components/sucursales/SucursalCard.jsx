@@ -1,5 +1,6 @@
-import { Card, CardBody, CardTitle } from 'reactstrap';
+import { Button, Card, CardBody, CardTitle } from 'reactstrap';
 import { MapPin, Store } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function SucursalCard({ sucursal }) {
     return (
@@ -8,13 +9,20 @@ export default function SucursalCard({ sucursal }) {
                 <CardTitle tag="h2">{sucursal.nombre}</CardTitle>
                 <div className="sucursal-card__estado">
                     <Store size={26} aria-hidden="true" />
-                    {/* El endpoint actual consulta exclusivamente sedes activas. */}
-                    <span className="sucursal-card__badge">Activa</span>
+                    <span className={`sucursal-card__badge${sucursal.activa ? '' : ' sucursal-card__badge--inactiva'}`}>
+                        {sucursal.activa ? 'Activa' : 'Inactiva'}
+                    </span>
                 </div>
                 <p className="sucursal-card__direccion">
                     <MapPin size={17} aria-hidden="true" />
                     {sucursal.direccion || 'Dirección no registrada'}
                 </p>
+                <div className="sucursal-card__acciones">
+                    <Button tag={Link} to={`/admin/sucursales/${sucursal.id}`} color="primary" outline
+                        aria-label={`Ver sede: ${sucursal.nombre}`}>
+                        Ver sede
+                    </Button>
+                </div>
             </CardBody>
         </Card>
     );

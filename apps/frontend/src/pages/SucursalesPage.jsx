@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Button, Input, Label, Spinner } from 'reactstrap';
 import { Search, Store } from 'lucide-react';
 import SucursalCard from '../components/sucursales/SucursalCard.jsx';
-import { getSucursales } from '../services/sucursales.js';
+import { getSucursalesAdministracion } from '../services/sucursales.js';
 import '../styles/sucursales.scss';
 
 // Permite buscar "escalon" y encontrar "Escalón".
@@ -13,6 +13,7 @@ export default function SucursalesPage() {
     const [sucursales, setSucursales] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [sucursalId, setSucursalId] = useState('');
+    const [estado, setEstado] = useState('');
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState('');
     const [intento, setIntento] = useState(0);
@@ -24,7 +25,7 @@ export default function SucursalesPage() {
             setCargando(true);
             setError('');
             try {
-                const datos = await getSucursales();
+                const datos = await getSucursalesAdministracion();
                 if (!Array.isArray(datos)) throw new Error('La respuesta de sucursales no es válida.');
                 if (vigente) setSucursales(datos);
             } catch (err) {
@@ -40,18 +41,20 @@ export default function SucursalesPage() {
     const termino = normalizar(busqueda);
     const filtradas = sucursales.filter((sucursal) =>
         (!sucursalId || String(sucursal.id) === sucursalId)
+        && (!estado || sucursal.activa === (estado === 'activa'))
         && normalizar(`${sucursal.nombre} ${sucursal.direccion ?? ''}`).includes(termino));
 
     const limpiarFiltros = () => {
         setBusqueda('');
         setSucursalId('');
+        setEstado('');
     };
 
     return (
         <section className="sucursales-page" aria-labelledby="sucursales-titulo">
             <header className="sucursales-page__encabezado">
                 <h1 id="sucursales-titulo" className="font-origenes">Un mismo origen, distintas sedes</h1>
-                <p>Consulta las sucursales activas y sus direcciones.</p>
+                <p>Consulta las sucursales, sus direcciones y su estado.</p>
             </header>
 
             <div className="sucursales-page__filtros" role="search" aria-label="Buscar sucursales">
@@ -67,10 +70,19 @@ export default function SucursalesPage() {
                     <Label for="filtro-sucursal" className="visually-hidden">Sucursal</Label>
                     <Input id="filtro-sucursal" type="select" value={sucursalId}
                         onChange={(event) => setSucursalId(event.target.value)}>
-                        <option value="">Todas las sucursales activas</option>
+                        <option value="">Todas las sucursales</option>
                         {sucursales.map((sucursal) => (
                             <option key={sucursal.id} value={sucursal.id}>{sucursal.nombre}</option>
                         ))}
+                    </Input>
+                </div>
+                <div>
+                    <Label for="filtro-estado" className="visually-hidden">Estado</Label>
+                    <Input id="filtro-estado" type="select" value={estado}
+                        onChange={(event) => setEstado(event.target.value)}>
+                        <option value="">Todos los estados</option>
+                        <option value="activa">Activas</option>
+                        <option value="inactiva">Inactivas</option>
                     </Input>
                 </div>
             </div>
@@ -96,9 +108,9 @@ export default function SucursalesPage() {
                     ) : (
                         <div className="sucursales-page__mensaje">
                             <Store size={32} aria-hidden="true" />
-                            <h2>{sucursales.length ? 'No hay coincidencias' : 'No hay sucursales activas'}</h2>
-                            <p>{sucursales.length ? 'Prueba con otro nombre o dirección.' : 'Las sucursales aparecerán aquí cuando estén disponibles.'}</p>
-                            {(busqueda || sucursalId) && <Button color="primary" outline onClick={limpiarFiltros}>Limpiar filtros</Button>}
+                            <h2>{sucursales.length ? 'No hay coincidencias' : 'No hay sucursales registradas'}</h2>
+                            <p>{sucursales.length ? 'Prueba con otros filtros.' : 'Las sucursales aparecerán aquí cuando estén disponibles.'}</p>
+                            {(busqueda || sucursalId || estado) && <Button color="primary" outline onClick={limpiarFiltros}>Limpiar filtros</Button>}
                         </div>
                     )}
                 </>

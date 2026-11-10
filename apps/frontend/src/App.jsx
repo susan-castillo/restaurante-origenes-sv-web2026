@@ -13,6 +13,7 @@ import NoAutorizadoPage from "./pages/NoAutorizados.jsx";
 import EnConstruccionPage from "./pages/EnConstruccion.jsx";
 import InventarioPage from './pages/InventarioPage.jsx';
 import SucursalesPage from './pages/SucursalesPage.jsx';
+import SucursalDetallePage from './pages/SucursalDetallePage.jsx';
 import PosPage from "./pages/PosPage.jsx";
 import { useEffect, useState } from "react";
 import { getEstadoCaja } from "./services/cajasService.js";
@@ -23,7 +24,7 @@ function DashboardLayout() {
     const { usuario, logout } = useAuth();
     const navigate = useNavigate();
     const { pathname } = useLocation();
-    const esSucursales = pathname === '/admin/sucursales';
+    const esSucursales = pathname === '/admin/sucursales' || pathname.startsWith('/admin/sucursales/');
 
     // Estados dinámicos traídos de la base de datos
     const [sucursales, setSucursales] = useState([]);
@@ -83,7 +84,7 @@ function DashboardLayout() {
     return (
         <div className="app-shell d-flex flex-column min-vh-100">
             <Navbar usuario={usuario}
-                    {...(esSucursales ? { titulo: 'Sucursales', subtitulo: 'Consulta de sedes activas' } : {})}
+                    {...(esSucursales ? { titulo: 'Sucursales', subtitulo: 'Consulta de sedes' } : {})}
                     sucursales={sucursales}
                     sucursalActual={sucursalSeleccionada}
                     cajaAbierta={cajaAbierta}
@@ -128,6 +129,7 @@ function AppRoutes() {
                         <Route path="/admin" element={<Navigate replace to="/admin/inventario" />} />
                         <Route path="/admin/inventario" element={<InventarioPage />} />
                         <Route path="/admin/sucursales" element={<SucursalesPage />} />
+                        <Route path="/admin/sucursales/:id" element={<SucursalDetallePage />} />
                         <Route path="/admin/compras" element={<EnConstruccionPage titulo="Compras" responsable="Frontend 4" />} />
                         <Route path="/admin/caja" element={<EnConstruccionPage titulo="Historial de caja" responsable="Frontend 4" />} />
                     </Route>

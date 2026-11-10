@@ -16,7 +16,7 @@
 
   &__filtros {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(200px, 280px);
+    grid-template-columns: minmax(0, 1fr) minmax(170px, 230px) minmax(160px, 190px);
     gap: 12px;
     margin-bottom: 16px;
     .form-control, .form-select { min-height: 46px; border: 1px solid var(--sede-camel); border-radius: 8px; }
@@ -46,8 +46,24 @@
     &__estado { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
     &__estado > svg { color: #613001; }
     &__badge { background: var(--sede-sky); color: var(--sede-ink); border-radius: 20px; padding: 4px 12px; font-size: .75rem; font-weight: 600; }
+    &__badge--inactiva { background: var(--sede-cream); }
+    &__acciones { border-top: 1px solid #e4d7c9; margin-top: 20px; padding-top: 16px; }
     &__direccion { display: flex; align-items: flex-start; gap: 8px; color: #67584c; margin: 0; font-size: .9rem; overflow-wrap: anywhere; }
     &__direccion > svg { flex-shrink: 0; margin-top: 2px; }
+  }
+
+  &__detalle { max-width: 760px; }
+  &__datos {
+    margin: 0;
+    display: grid;
+    gap: 16px;
+    dd {
+      margin: 4px 0 0;
+      padding: 12px 14px;
+      border: 1px solid #e4d7c9;
+      border-radius: 8px;
+      overflow-wrap: anywhere;
+    }
   }
 
   @media (max-width: 900px) {
