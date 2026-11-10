@@ -65,3 +65,15 @@ export async function cierreCaja(idTurno, efectivoContado) {
   return turnoActualizado;
 }
 
+export async function obtenerTurnoAbierto(sucursalId, usuarioId) {
+  const turno = await prisma.turnos_caja.findFirst({
+    where: {
+      sucursal_id: sucursalId,
+      usuario_id: usuarioId,
+      estado: "ABIERTO",
+      cerrado_en: null,
+    },
+  });
+
+  return turno;
+}
