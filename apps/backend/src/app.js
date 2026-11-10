@@ -4,6 +4,7 @@ import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
 import authRoutes from './routes/authRoutes.js';
 import posRoutes from './routes/posRoutes.js';
+import proveedorRoutes from './routes/proveedorRoutes.js';
 import inventarioRoutes from './routes/inventarioRoutes.js';
 import sucursalRoutes from "./routes/sucursalRoutes.js";
 import cajaRoutes from "./routes/cajaRoutes.js";
@@ -58,6 +59,7 @@ app.use('/api/auth', authRoutes);
 
 app.use('/api/pos', posRoutes);
 
+app.use('/api/proveedores', proveedorRoutes);
 // Rutas del módulo de Inventario/Recetas
 app.use('/api', inventarioRoutes);
 
