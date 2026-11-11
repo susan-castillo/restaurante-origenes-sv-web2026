@@ -10,6 +10,9 @@
 @import "./login";
 // Futuro módulo de recetas
  @import "./recetas";
+// Estilos específicos del módulo de recursos humanos
+@import "personal-empleados";
+@import "personal-planilla";
 // Estilos para el menu
 @import "./components/sideBar";
 @import "./components/navBar";

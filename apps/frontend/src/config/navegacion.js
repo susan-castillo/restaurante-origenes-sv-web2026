@@ -1,7 +1,16 @@
 // =====================================================================
 // navegacion.js — Una sola fuente de verdad sobre rutas y permisos.
 // =====================================================================
-import { FaBoxes, FaCashRegister, FaMoneyBillWave, FaShoppingCart, FaStore, FaUsers } from 'react-icons/fa';
+import {
+    FaBoxes,
+    FaCashRegister,
+    FaFileInvoiceDollar,
+    FaMoneyBillWave,
+    FaShoppingCart,
+    FaStore,
+    FaUserPlus,
+    FaUsers
+} from 'react-icons/fa';
 
 // Cada entrada es una pantalla del sistema.
 //   roles            -> quién puede entrar
@@ -12,7 +21,16 @@ export const MENU = [
     { ruta: '/admin/inventario', etiqueta: 'Inventario y recetas', icono: FaBoxes, roles: ['ADMIN'] },
     { ruta: '/admin/compras', etiqueta: 'Compras', icono: FaShoppingCart, roles: ['ADMIN'] },
     { ruta: '/admin/caja', etiqueta: 'Historial de caja', icono: FaMoneyBillWave, roles: ['ADMIN'] },
-    { ruta: '/admin/rrhh', etiqueta: 'Recursos Humanos', icono: FaUsers, roles: ['ADMIN', 'RRHH'] },
+    {
+        ruta: '/rrhh',
+        etiqueta: 'Recursos Humanos',
+        icono: FaUsers,
+        roles: ['ADMIN', 'RRHH'],
+        hijos: [
+            { ruta: '/rrhh/empleados', etiqueta: 'Empleados', icono: FaUserPlus, roles: ['ADMIN', 'RRHH'] },
+            { ruta: '/rrhh/planilla', etiqueta: 'Planillas', icono: FaFileInvoiceDollar, roles: ['ADMIN', 'RRHH'] },
+        ]
+    },
 ];
 
 // A dónde va cada usuario justo después de iniciar sesión.
@@ -26,7 +44,7 @@ export const rutaInicial = (usuario) => {
         case 'ADMIN':
             return '/admin/inventario';
         case 'RRHH':
-            return '/admin/rrhh';
+            return '/rrhh/empleados';
         case 'EMPLEADO':
             return '/pos';
         default:
@@ -34,11 +52,21 @@ export const rutaInicial = (usuario) => {
     }
 };
 
-// Opciones del menú lateral que este usuario puede ver.
-export const menuPermitido = (usuario) =>
-    MENU.filter(
-        (item) => item.roles.includes(usuario.rol) && (!item.requiereSucursal || usuario.sucursal_id)
-    );
+// Opciones del menú lateral que este usuario puede ver (incluyendo filtrado de sub-opciones).
+export const menuPermitido = (usuario) => {
+    if (!usuario || !usuario.rol) return [];
+
+    return MENU
+        .filter((item) => item.roles.includes(usuario.rol) && (!item.requiereSucursal || usuario.sucursal_id))
+        .map((item) => {
+            // Si el ítem principal tiene subopciones, las filtramos según el rol del usuario
+            if (item.hijos && item.hijos.length > 0) {
+                const hijosPermitidos = item.hijos.filter((hijo) => hijo.roles.includes(usuario.rol));
+                return { ...item, hijos: hijosPermitidos };
+            }
+            return item;
+        });
+};
 
 export const esAdminCentral = (usuario) =>
     usuario?.rol === 'ADMIN' && usuario.sucursal_id === null;

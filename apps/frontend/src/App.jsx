@@ -1,12 +1,15 @@
 // =====================================================================
 // App.jsx — mapa de rutas de TODA la aplicación.
 // =====================================================================
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { rutaInicial } from './config/navegacion.js';
+
 import Login from './pages/Login.jsx';
 import NotFound from './pages/NotFound.jsx';
 import NoAutorizadoPage from "./pages/NoAutorizados.jsx";
@@ -17,7 +20,9 @@ import SucursalDetallePage from './pages/SucursalDetallePage.jsx';
 import ComprasPage from './pages/ComprasPage.jsx';
 import CajaHistorialPage from './pages/CajaHistorialPage.jsx';
 import PosPage from "./pages/PosPage.jsx";
-import { useEffect, useState } from "react";
+import EmpleadosPage from "./pages/EmpleadosPage.jsx";
+import PlanillaPage from "./pages/PlanillaPage.jsx";
+
 import { getEstadoCaja } from "./services/cajasService.js";
 import { getSucursales } from "./services/sucursales.js";
 
@@ -34,6 +39,7 @@ function DashboardLayout() {
     const [cajaAbierta, setCajaAbierta] = useState(false);
     const [revisionCaja, setRevisionCaja] = useState(0);
     const refrescarEstadoCaja = () => setRevisionCaja((actual) => actual + 1);
+    const sucursalCajaId = sucursalSeleccionada?.id ?? usuario?.sucursal_id;
 
     // 1. Cargar la lista de sucursales desde la API
     useEffect(() => {
@@ -42,8 +48,8 @@ function DashboardLayout() {
                 const data = await getSucursales();
                 setSucursales(data);
 
-                // Asignar por defecto la sucursal asignada al usuario
-                const sucursalInicial = data.find((sucursal) => sucursal.id === usuario.sucursal_id) || data[0] || null;
+                // Asignar por defecto la sucursal asignada al usuario o la primera disponible
+                const sucursalInicial = data.find((s) => s.id === usuario?.sucursal_id) || usuario?.sucursal || data[0] || null;
                 setSucursalSeleccionada(sucursalInicial);
             } catch (err) {
                 console.error("Error al obtener sucursales:", err);
@@ -51,23 +57,21 @@ function DashboardLayout() {
         };
 
         if (usuario) {
-            cargarSucursales().then(r => {}).catch(err => console.error(err));
+            cargarSucursales();
         }
     }, [usuario]);
 
     // 2. Verificar si la caja de la sucursal seleccionada está abierta
     useEffect(() => {
         let vigente = true;
-        const targetId = sucursalSeleccionada?.id;
-        if (!targetId) {
+        if (!sucursalCajaId) {
             setCajaAbierta(false);
             return;
         }
 
         const consultarCaja = async () => {
             try {
-                const res = await getEstadoCaja(targetId);
-                // backend suele responder: { abierta: true/false } o { estado: "ABIERTA" }
+                const res = await getEstadoCaja(sucursalCajaId);
                 if (vigente) setCajaAbierta(res?.abierta ?? res?.estado === "ABIERTA");
             } catch {
                 if (vigente) setCajaAbierta(false);
@@ -76,9 +80,9 @@ function DashboardLayout() {
 
         consultarCaja();
         return () => { vigente = false; };
-    }, [sucursalSeleccionada?.id, revisionCaja]);
+    }, [sucursalCajaId, revisionCaja]);
 
-    // 3. Cambiar sucursal
+    // 3. Handlers para sucursales
     const handleCambiarSucursal = (sucursal) => {
         setSucursalSeleccionada(sucursal);
     };
@@ -95,8 +99,7 @@ function DashboardLayout() {
         });
     };
 
-    // Una sola forma de cerrar sesión, usada por el Navbar y por el Sidebar.
-    // Primero se borra la sesión y luego se navega al login (replace: el botón "atrás" no vuelve).
+    // Cierre de sesión centralizado
     const cerrarSesion = () => {
         logout();
         navigate('/login', { replace: true });
@@ -114,15 +117,14 @@ function DashboardLayout() {
             <div className="d-flex flex-grow-1">
                 <Sidebar onLogout={cerrarSesion} />
                 <main className="flex-grow-1 p-4 bg-light">
-                    {/* Aquí se dibuja la página que corresponde a la ruta */}
-                    <Outlet context={{sucursalSeleccionada, sucursales, handleCambiarSucursal, sincronizarSucursal, refrescarEstadoCaja}} />
+                    <Outlet context={{ sucursalSeleccionada, sucursales, handleCambiarSucursal, sincronizarSucursal, refrescarEstadoCaja }} />
                 </main>
             </div>
         </div>
     );
 }
 
-// "/" no es una pantalla: manda a cada usuario a la principal de su rol.
+// "/" redirige según el rol del usuario logged-in
 function Inicio() {
     const { usuario } = useAuth();
     return <Navigate replace to={rutaInicial(usuario)} />;
@@ -135,12 +137,12 @@ function AppRoutes() {
             <Route path="/login" element={<Login />} />
             <Route path="/no-autorizado" element={<NoAutorizadoPage />} />
 
-            {/* ---------- Rutas que exigen sesión ---------- */}
+            {/* ---------- Rutas protegidas por autenticación ---------- */}
             <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<Inicio />} />
 
                 <Route element={<DashboardLayout />}>
-                    {/* Punto de venta: cajeros, baristas y gerentes de sucursal */}
+                    {/* Punto de venta: EMPLEADO y ADMIN */}
                     <Route element={<ProtectedRoute roles={['EMPLEADO', 'ADMIN']} />}>
                         <Route path="/pos" element={<PosPage titulo="Punto de venta" responsable="Frontend 1" />} />
                     </Route>
@@ -158,11 +160,13 @@ function AppRoutes() {
                     {/* Recursos humanos: RRHH y ADMIN */}
                     <Route element={<ProtectedRoute roles={['RRHH', 'ADMIN']} />}>
                         <Route path="/admin/rrhh" element={<EnConstruccionPage titulo="Recursos Humanos" responsable="Frontend 3" />} />
+                        <Route path="/rrhh/empleados" element={<EmpleadosPage />} />
+                        <Route path="/rrhh/planilla" element={<PlanillaPage />} />
                     </Route>
                 </Route>
             </Route>
 
-            {/* ---------- 404 ---------- */}
+            {/* ---------- Fallback 404 ---------- */}
             <Route path="*" element={<NotFound />} />
         </Routes>
     );
