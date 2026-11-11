@@ -12,7 +12,7 @@ const normalizar = (texto) => String(texto ?? '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim();
 
 export default function SucursalesPage() {
-    const { sincronizarSucursalActiva } = useOutletContext();
+    const { sincronizarSucursal } = useOutletContext();
     const botonAgregar = useRef(null);
     const [sucursales, setSucursales] = useState([]);
     const [busqueda, setBusqueda] = useState('');
@@ -62,7 +62,7 @@ export default function SucursalesPage() {
     };
 
     const confirmarCreacion = (sucursal) => {
-        sincronizarSucursalActiva(sucursal);
+        sincronizarSucursal(sucursal);
         limpiarFiltros();
         setIntento((anterior) => anterior + 1);
         setConfirmacion(`Se creó la sucursal ${sucursal.nombre}.`);

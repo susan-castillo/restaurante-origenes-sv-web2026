@@ -26,6 +26,11 @@ export default function SucursalCard({ sucursal }) {
                         aria-label={`Editar sede: ${sucursal.nombre}`}>
                         Editar
                     </Button>
+                    <Button tag={Link} to={`/admin/sucursales/${sucursal.id}?estado=1`}
+                        color={sucursal.activa ? 'danger' : 'primary'} outline
+                        aria-label={`${sucursal.activa ? 'Desactivar' : 'Activar'} sede: ${sucursal.nombre}`}>
+                        {sucursal.activa ? 'Desactivar' : 'Activar'}
+                    </Button>
                 </div>
             </CardBody>
         </Card>

@@ -53,6 +53,12 @@
   }
 
   &__detalle { max-width: 760px; }
+  &__detalle-con-estado {
+    display: grid;
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 20px;
+  }
   &__datos {
     margin: 0;
     display: grid;
@@ -67,6 +73,6 @@
   }
 
   @media (max-width: 900px) {
-    &__grid, &__filtros { grid-template-columns: minmax(0, 1fr); }
+    &__grid, &__filtros, &__detalle-con-estado { grid-template-columns: minmax(0, 1fr); }
   }
 }

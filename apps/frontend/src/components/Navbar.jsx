@@ -45,6 +45,7 @@ export default function Navbar({
                 : usuario?.sucursal || sucursalActual;
 
     const rolMostrar = usuario?.cargo || usuario?.rol || "Rol no definido";
+    const puedeElegirSucursal = sucursales.length > 1 || (!sucursalActual && sucursales.length === 1);
 
     return (
         <header
@@ -73,27 +74,26 @@ export default function Navbar({
 
             {/* 2. Controles de la derecha */}
             <div className="d-flex align-items-center gap-3">
-                {/* Si solo hay 1 sucursal disponible, se deshabilita el toggle */}
                 <Dropdown
                     isOpen={dropdownOpen}
                     toggle={toggleDropdown}
-                    disabled={sucursales.length <= 1}
+                    disabled={!puedeElegirSucursal}
                 >
                     <DropdownToggle
                         tag="button"
-                        disabled={sucursales.length <= 1}
+                        disabled={!puedeElegirSucursal}
                         className="btn btn-outline-brown d-flex align-items-center gap-2 px-3 py-2 rounded-4 bg-white shadow-sm"
                     >
                         <FaStore className="text-brown" size={14}/>
                         <span className="fw-medium text-dark-brown small">
-                        {nombreSucursal}
+                        {nombreSucursal || (sucursales.length ? 'Elegir sucursal' : 'Sin sucursales activas')}
                         </span>
-                        {sucursales.length > 1 && (
+                        {puedeElegirSucursal && (
                             <FaChevronDown className="text-muted ms-1" size={10}/>
                         )}
                     </DropdownToggle>
 
-                    {sucursales.length > 1 && (
+                    {puedeElegirSucursal && (
                         <DropdownMenu end className="shadow-sm border-0 rounded-3 mt-1">
                             {sucursales.map((suc) => {
                                 const nombreItem = typeof suc === 'object' ? suc.nombre : suc;

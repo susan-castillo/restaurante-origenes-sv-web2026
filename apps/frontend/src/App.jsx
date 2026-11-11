@@ -53,34 +53,42 @@ function DashboardLayout() {
 
     // 2. Verificar si la caja de la sucursal seleccionada está abierta
     useEffect(() => {
-        const consultarCaja = async () => {
-            if (!sucursalSeleccionada?.id && !usuario?.sucursal_id) return;
+        let vigente = true;
+        const targetId = sucursalSeleccionada?.id;
+        if (!targetId) {
+            setCajaAbierta(false);
+            return;
+        }
 
-            const targetId = sucursalSeleccionada?.id || usuario?.sucursal_id;
+        const consultarCaja = async () => {
             try {
                 const res = await getEstadoCaja(targetId);
                 // backend suele responder: { abierta: true/false } o { estado: "ABIERTA" }
-                setCajaAbierta(res?.abierta ?? res?.estado === "ABIERTA");
+                if (vigente) setCajaAbierta(res?.abierta ?? res?.estado === "ABIERTA");
             } catch {
-                setCajaAbierta(false);
+                if (vigente) setCajaAbierta(false);
             }
         };
 
-        consultarCaja().then(r => {}).catch(err => console.error(err));
-    }, [sucursalSeleccionada, usuario]);
+        consultarCaja();
+        return () => { vigente = false; };
+    }, [sucursalSeleccionada?.id]);
 
     // 3. Cambiar sucursal
     const handleCambiarSucursal = (sucursal) => {
         setSucursalSeleccionada(sucursal);
     };
 
-    const sincronizarSucursalActiva = (sucursal) => {
-        if (!sucursal.activa) return;
+    const sincronizarSucursal = (sucursal) => {
         setSucursales((actuales) => {
             const actualizadas = actuales.filter((sede) => sede.id !== sucursal.id);
+            if (!sucursal.activa) return actualizadas;
             return [...actualizadas, sucursal].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
         });
-        setSucursalSeleccionada((actual) => actual?.id === sucursal.id ? sucursal : actual);
+        setSucursalSeleccionada((actual) => {
+            if (actual?.id !== sucursal.id) return actual;
+            return sucursal.activa ? sucursal : null;
+        });
     };
 
     // Una sola forma de cerrar sesión, usada por el Navbar y por el Sidebar.
@@ -103,7 +111,7 @@ function DashboardLayout() {
                 <Sidebar onLogout={cerrarSesion} />
                 <main className="flex-grow-1 p-4 bg-light">
                     {/* Aquí se dibuja la página que corresponde a la ruta */}
-                    <Outlet context={{sucursalSeleccionada, sucursales, handleCambiarSucursal, sincronizarSucursalActiva}} />
+                    <Outlet context={{sucursalSeleccionada, sucursales, handleCambiarSucursal, sincronizarSucursal}} />
                 </main>
             </div>
         </div>

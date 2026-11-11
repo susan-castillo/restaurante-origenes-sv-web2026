@@ -3,14 +3,16 @@ import { Link, useOutletContext, useParams, useSearchParams } from 'react-router
 import { Alert, Button, Card, CardBody, CardTitle, Spinner } from 'reactstrap';
 import { ArrowLeft } from 'lucide-react';
 import SucursalForm from '../components/sucursales/SucursalForm.jsx';
+import SucursalEstadoConfirmacion from '../components/sucursales/SucursalEstadoConfirmacion.jsx';
 import { getSucursalPorId } from '../services/sucursales.js';
 import '../styles/sucursales.scss';
 
 export default function SucursalDetallePage() {
     const { id } = useParams();
     const [parametros, setParametros] = useSearchParams();
-    const { sincronizarSucursalActiva } = useOutletContext();
+    const { sincronizarSucursal } = useOutletContext();
     const editando = parametros.get('editar') === '1';
+    const confirmandoEstado = !editando && parametros.get('estado') === '1';
     const idValido = /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id));
     const [resultado, setResultado] = useState(null);
     const [intento, setIntento] = useState(0);
@@ -36,12 +38,12 @@ export default function SucursalDetallePage() {
     const sucursal = actual?.sucursal;
     const error = actual?.error;
 
-    const cerrarEdicion = () => setParametros({}, { replace: true });
+    const cerrarAccion = () => setParametros({}, { replace: true });
 
-    const confirmarEdicion = (sedeActualizada) => {
-        sincronizarSucursalActiva(sedeActualizada);
-        setResultado({ id, intento, sucursal: sedeActualizada, guardada: true });
-        cerrarEdicion();
+    const guardarResultado = (sedeActualizada, mensaje) => {
+        sincronizarSucursal(sedeActualizada);
+        setResultado({ id, intento, sucursal: sedeActualizada, mensaje });
+        cerrarAccion();
     };
 
     return (
@@ -50,7 +52,9 @@ export default function SucursalDetallePage() {
                 <h1 id="detalle-sucursal-titulo" className="font-origenes">{sucursal?.nombre ?? 'Detalle de sede'}</h1>
             </header>
 
-            {actual?.guardada && !editando && <Alert color="success" role="status">Se guardaron los cambios.</Alert>}
+            {actual?.mensaje && !editando && !confirmandoEstado && (
+                <Alert color="success" role="status">{actual.mensaje}</Alert>
+            )}
 
             {!idValido || error?.status === 404 ? (
                 <Alert color="warning" role="alert">No se encontró la sucursal solicitada.</Alert>
@@ -66,21 +70,33 @@ export default function SucursalDetallePage() {
                     <Spinner size="sm" aria-hidden="true" /> Cargando sede…
                 </div>
             ) : editando ? (
-                <SucursalForm key={id} sucursal={sucursal} onCancel={cerrarEdicion} onSaved={confirmarEdicion} />
+                <SucursalForm key={id} sucursal={sucursal} onCancel={cerrarAccion}
+                    onSaved={(sede) => guardarResultado(sede, 'Se guardaron los cambios.')} />
             ) : (
-                <Card className="sucursal-card sucursales-page__detalle">
-                    <CardBody>
-                        <CardTitle tag="h2">Información de la sede</CardTitle>
-                        <dl className="sucursales-page__datos">
-                            <div><dt>Nombre</dt><dd>{sucursal.nombre}</dd></div>
-                            <div><dt>Dirección</dt><dd>{sucursal.direccion || 'Dirección no registrada'}</dd></div>
-                            <div><dt>Estado actual</dt><dd>{sucursal.activa ? 'Activa' : 'Inactiva'}</dd></div>
-                        </dl>
-                        <Button tag={Link} to="?editar=1" color="primary" outline className="mt-3">
-                            Editar sede
-                        </Button>
-                    </CardBody>
-                </Card>
+                <div className={confirmandoEstado ? 'sucursales-page__detalle-con-estado' : 'sucursales-page__detalle'}>
+                    <Card className="sucursal-card">
+                        <CardBody>
+                            <CardTitle tag="h2">Información de la sede</CardTitle>
+                            <dl className="sucursales-page__datos">
+                                <div><dt>Nombre</dt><dd>{sucursal.nombre}</dd></div>
+                                <div><dt>Dirección</dt><dd>{sucursal.direccion || 'Dirección no registrada'}</dd></div>
+                                <div><dt>Estado actual</dt><dd>{sucursal.activa ? 'Activa' : 'Inactiva'}</dd></div>
+                            </dl>
+                            {!confirmandoEstado && (
+                                <div className="d-flex flex-wrap gap-2 mt-3">
+                                    <Button tag={Link} to="?editar=1" color="primary" outline>Editar sede</Button>
+                                    <Button tag={Link} to="?estado=1" color={sucursal.activa ? 'danger' : 'primary'} outline>
+                                        {sucursal.activa ? 'Desactivar sede' : 'Activar sede'}
+                                    </Button>
+                                </div>
+                            )}
+                        </CardBody>
+                    </Card>
+                    {confirmandoEstado && (
+                        <SucursalEstadoConfirmacion key={id} sucursal={sucursal} onCancel={cerrarAccion}
+                            onSaved={(sede) => guardarResultado(sede, sede.activa ? 'Se activó la sucursal.' : 'Se desactivó la sucursal.')} />
+                    )}
+                </div>
             )}
 
             <Button tag={Link} to="/admin/sucursales" color="primary" outline className="mt-4 d-inline-flex gap-2 align-items-center">
