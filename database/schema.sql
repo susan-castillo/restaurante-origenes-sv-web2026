@@ -96,6 +96,8 @@ CREATE TABLE turnos_caja (
     abierto_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    -- Fecha y hora de apertura
     cerrado_en TIMESTAMP,                              -- Fecha y hora de cierre (NULL indica turno activo)
     efectivo_contado NUMERIC(10, 2),                   -- Arqueo final reportado por el cajero al cerrar
+    tarjeta_reportada NUMERIC(10, 2) CHECK (tarjeta_reportada >= 0),
+    bitcoin_reportado NUMERIC(10, 2) CHECK (bitcoin_reportado >= 0),
     estado VARCHAR(10) NOT NULL DEFAULT 'ABIERTO'
         CHECK (estado IN ('ABIERTO', 'CERRADO'))       -- Estado operativo del turno
 );

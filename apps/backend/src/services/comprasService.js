@@ -64,7 +64,7 @@ export async function registrarCompra(
   return compraRegistrada;
 }
 
-export async function obtenerResumenCostos(fechaInicio, fechaFinal) {
+export async function obtenerResumenCostos(fechaInicio, fechaFinal, sucursalId) {
   // Buscamos las compras en ese rango de fechas
   // Aseguramos que el inicio sea a las 00:00:00 y el fin a las 23:59:59
 
@@ -73,6 +73,7 @@ export async function obtenerResumenCostos(fechaInicio, fechaFinal) {
 
   const compras = await prisma.compras.findMany({
     where: {
+      ...(sucursalId !== null && { sucursal_id: sucursalId }),
       creado_en: {
         gte: inicio,
         lte: fin,

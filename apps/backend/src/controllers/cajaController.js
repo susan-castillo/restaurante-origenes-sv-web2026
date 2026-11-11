@@ -122,45 +122,66 @@ export async function aperturaCaja(req, res) {
   }
 }
 
+function esImporteCaja(valor) {
+  return typeof valor === "number" && /^\d{1,8}(\.\d{1,2})?$/.test(String(valor));
+}
+
 export async function cierreCaja(req, res) {
   const idTurno = Number(req.params.id);
   const efectivo = req.body?.efectivo_contado;
+  const tarjeta = req.body?.tarjeta_reportada ?? null;
+  const bitcoin = req.body?.bitcoin_reportado ?? null;
   const { id: usuarioId, sucursal_id: sucursalId } = req.usuario;
 
   if (!Number.isInteger(idTurno) || idTurno <= 0) {
     return res.status(400).json({ error: "Id de turno inválido." });
   }
 
-  if (typeof efectivo !== "number" || !/^\d{1,8}(\.\d{1,2})?$/.test(String(efectivo))) {
+  if (!esImporteCaja(efectivo)) {
     return res.status(400).json({ error: "Ingresa el efectivo contado con hasta dos decimales." });
+  }
+  if ([tarjeta, bitcoin].some((importe) => importe !== null && !esImporteCaja(importe))) {
+    return res.status(400).json({ error: "Los importes de tarjeta y Bitcoin deben estar en USD, con hasta dos decimales." });
   }
   if (!sucursalId) {
     return res.status(403).json({ error: "Tu cuenta necesita una sucursal asignada para cerrar caja." });
   }
 
   try {
-    const resultado = await cajaService.cierreCaja(idTurno, efectivo, usuarioId, sucursalId);
+    const resultado = await cajaService.cierreCaja(idTurno, {
+      efectivo_contado: efectivo,
+      tarjeta_reportada: tarjeta,
+      bitcoin_reportado: bitcoin,
+    }, usuarioId, sucursalId);
     return res.json({ mensaje: "Caja cerrada exitosamente", ...resultado });
   } catch (error) {
     if (error.message === "TURNO_NO_ENCONTRADO") {
       return res.status(404).json({ error: "No se encontró el turno en tu sucursal y cuenta." });
     }
     if (error.message === "TURNO_YA_CERRADO") {
-      return res.status(409).json({ error: "El turno ya se cerró con otro monto. Actualiza el estado de caja." });
+      return res.status(409).json({ error: "El turno ya se cerró con otros importes. Actualiza el estado de caja." });
     }
     return res.status(500).json({ error: "Error interno al cerrar el turno" });
   }
 }
 
 export async function getCuadreTurno(req, res) {
-  const idTurno = Number(req.params.id);
+  const idTurno = enteroPositivo(req.params.id);
 
-  if (!Number.isInteger(idTurno) || idTurno < 0) {
+  if (idTurno === null) {
     return res.status(400).json({ error: "Id de turno inválido." });
   }
 
   try {
-    const reporte = await cajaService.calcularCuadre(idTurno);
+    const usuario = req.usuario;
+    const alcance = {};
+    if (!esAdminCentral(usuario)) {
+      if (!usuario.sucursal_id) return res.status(403).json({ error: "Tu cuenta necesita una sucursal asignada." });
+      alcance.sucursal_id = usuario.sucursal_id;
+      if (usuario.rol === "EMPLEADO") alcance.usuario_id = usuario.id;
+    }
+    const reporte = await cajaService.consultarCuadre(idTurno, alcance);
+    if (!reporte) return res.status(404).json({ error: "No se encontró el turno." });
 
     return res.json(reporte);
   } catch (error) {

@@ -42,18 +42,20 @@ export async function aperturaCaja(sucursalId, usuarioId, montoInicial) {
   }, { isolationLevel: "Serializable" });
 }
 
-export async function cierreCaja(idTurno, efectivoContado, usuarioId, sucursalId) {
+const importeONulo = (importe) => importe == null ? null : Number(importe);
+
+export async function cierreCaja(idTurno, importes, usuarioId, sucursalId) {
   return prisma.$transaction(async (tx) => {
     const alcance = { id: idTurno, usuario_id: usuarioId, sucursal_id: sucursalId };
     const cambio = await tx.turnos_caja.updateMany({
       where: { ...alcance, estado: "ABIERTO", cerrado_en: null },
-      data: { estado: "CERRADO", cerrado_en: new Date(), efectivo_contado: efectivoContado },
+      data: { estado: "CERRADO", cerrado_en: new Date(), ...importes },
     });
     const turno = await tx.turnos_caja.findFirst({ where: alcance });
     if (!turno) throw new Error("TURNO_NO_ENCONTRADO");
-    // Si se perdió la respuesta, repetir el mismo importe recupera el cuadre original.
-    if (!cambio.count && (turno.estado !== "CERRADO" || turno.efectivo_contado === null
-      || Number(turno.efectivo_contado) !== efectivoContado)) {
+    // Reintentar con los mismos importes recupera el cuadre original.
+    if (!cambio.count && (turno.estado !== "CERRADO" ||
+      Object.entries(importes).some(([campo, importe]) => importeONulo(turno[campo]) !== importe))) {
       throw new Error("TURNO_YA_CERRADO");
     }
     return { turno, reporte: await calcularCuadre(idTurno, tx) };
@@ -83,13 +85,31 @@ export async function calcularCuadre(turnoId, cliente = prisma) {
     throw new Error("El turno especificado no existe");
   }
 
+  return calcularCuadreDeTurno(turno, cliente);
+}
+
+export async function consultarCuadre(turnoId, alcance) {
+  const turno = await prisma.turnos_caja.findUnique({ where: { id: turnoId, ...alcance } });
+  return turno ? calcularCuadreDeTurno(turno, prisma) : null;
+}
+
+async function calcularCuadreDeTurno(turno, cliente) {
   // Obtenemos todas las ventas de este turno
   const ventas = await cliente.ventas.findMany({
-    where: { turno_id: turnoId },
+    where: { turno_id: turno.id },
     select: { metodo_pago: true, total: true },
   });
 
   return armarCuadre(turno, ventas);
+}
+
+function cuadreMedio(esperadoCentavos, reportado) {
+  const importe = importeONulo(reportado);
+  return {
+    esperado: esperadoCentavos / 100,
+    reportado: importe,
+    diferencia: importe === null ? null : (Math.round(importe * 100) - esperadoCentavos) / 100,
+  };
 }
 
 function armarCuadre(turno, ventas) {
@@ -137,6 +157,8 @@ function armarCuadre(turno, ventas) {
       reportado_por_cajero: efectivoContado,
       diferencia: diferencia,
     },
+    cuadre_tarjeta: cuadreMedio(totalTarjeta, turno.tarjeta_reportada),
+    cuadre_bitcoin: cuadreMedio(totalBitcoin, turno.bitcoin_reportado),
   };
 }
 
@@ -153,6 +175,7 @@ export async function listarHistorialCaja({ sucursalId, cerradoEn, cursor }) {
     take: limite + 1,
     select: {
       id: true, abierto_en: true, cerrado_en: true, monto_inicial: true, efectivo_contado: true,
+      tarjeta_reportada: true, bitcoin_reportado: true,
       sucursales: { select: { nombre: true } },
       usuarios: { select: { nombre: true } },
     },

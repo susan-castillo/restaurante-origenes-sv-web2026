@@ -13,6 +13,6 @@ router.get("/mi-turno", verifyToken, operador, cajaController.getMiTurno);
 router.post("/apertura", verifyToken, operador, cajaController.aperturaCaja);
 router.put("/cierre/:id", verifyToken, operador, cajaController.cierreCaja);
 router.get("/historial", verifyToken, cargarAccesoSucursales, requireRole("ADMIN"), cajaController.getHistorialCaja);
-router.get("/cuadre/:id", verifyToken, cajaController.getCuadreTurno);
+router.get("/cuadre/:id", verifyToken, cargarAccesoSucursales, operador, cajaController.getCuadreTurno);
 
 export default router;

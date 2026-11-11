@@ -1,10 +1,18 @@
 import { useId, useRef, useState } from 'react';
 import { Alert, Button, Form, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 
-export default function CajaMontoModal({ titulo, etiqueta, accion, onCerrar, onConfirmar }) {
+const formatoImporte = /^\d{1,8}(\.\d{1,2})?$/;
+const medios = [
+    ['tarjeta_reportada', 'Tarjeta reportada (USD)'],
+    ['bitcoin_reportado', 'Bitcoin reportado (USD)'],
+];
+
+export default function CajaMontoModal({ titulo, etiqueta, accion, onCerrar, onConfirmar, conciliacion = false }) {
     const id = useId();
     const campoMonto = useRef(null);
+    const seccionConciliacion = useRef(null);
     const [monto, setMonto] = useState('');
+    const [reportados, setReportados] = useState({ tarjeta_reportada: '', bitcoin_reportado: '' });
     const [guardando, setGuardando] = useState(false);
     const [error, setError] = useState('');
     const cerrar = guardando ? undefined : onCerrar;
@@ -12,7 +20,10 @@ export default function CajaMontoModal({ titulo, etiqueta, accion, onCerrar, onC
     async function confirmar(evento) {
         evento.preventDefault();
         if (guardando) return;
-        if (!/^\d{1,8}(\.\d{1,2})?$/.test(monto)) {
+        const conciliacionInvalida = Object.values(reportados)
+            .some((valor) => valor !== '' && !formatoImporte.test(valor));
+        if (!formatoImporte.test(monto) || conciliacionInvalida) {
+            if (conciliacionInvalida && seccionConciliacion.current) seccionConciliacion.current.open = true;
             setError('Ingresa un importe en dólares con hasta dos decimales.');
             return;
         }
@@ -20,7 +31,10 @@ export default function CajaMontoModal({ titulo, etiqueta, accion, onCerrar, onC
         setGuardando(true);
         setError('');
         try {
-            await onConfirmar(Number(monto));
+            const importes = Object.fromEntries(
+                medios.map(([campo]) => [campo, reportados[campo] === '' ? null : Number(reportados[campo])]),
+            );
+            await onConfirmar(Number(monto), importes);
         } catch (err) {
             setError(err.message || 'No se pudo guardar el movimiento de caja.');
         } finally {
@@ -40,6 +54,23 @@ export default function CajaMontoModal({ titulo, etiqueta, accion, onCerrar, onC
                             innerRef={campoMonto} value={monto} disabled={guardando}
                             onChange={(evento) => setMonto(evento.target.value)} />
                     </FormGroup>
+                    {conciliacion && (
+                        <details className="border-top pt-3" ref={seccionConciliacion}
+                            onInvalid={() => { seccionConciliacion.current.open = true; }}>
+                            <summary className="small fw-semibold">Conciliar tarjeta y Bitcoin (opcional)</summary>
+                            <p className="small text-muted mt-2 mb-3">Ingresa los totales del reporte de prueba del turno.</p>
+                            <div className="row g-3">
+                                {medios.map(([campo, nombre]) => (
+                                    <FormGroup key={campo} className="col-12 col-sm-6 mb-0">
+                                        <Label for={`${id}-${campo}`}>{nombre}</Label>
+                                        <Input id={`${id}-${campo}`} type="number" min="0" max="99999999.99" step="0.01"
+                                            value={reportados[campo]} disabled={guardando}
+                                            onChange={({ target }) => setReportados({ ...reportados, [campo]: target.value })} />
+                                    </FormGroup>
+                                ))}
+                            </div>
+                        </details>
+                    )}
                     {error && <Alert color="danger" role="alert">{error}</Alert>}
                 </ModalBody>
                 <ModalFooter>

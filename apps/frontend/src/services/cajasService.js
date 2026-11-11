@@ -11,9 +11,9 @@ export const abrirCaja = (montoInicial) => apiFetch('/caja/apertura', {
     body: JSON.stringify({ monto_inicial: montoInicial }),
 });
 
-export const cerrarCaja = (turnoId, efectivoContado) => apiFetch(`/caja/cierre/${encodeURIComponent(turnoId)}`, {
+export const cerrarCaja = (turnoId, efectivoContado, importesReportados) => apiFetch(`/caja/cierre/${encodeURIComponent(turnoId)}`, {
     method: 'PUT',
-    body: JSON.stringify({ efectivo_contado: efectivoContado }),
+    body: JSON.stringify({ efectivo_contado: efectivoContado, ...importesReportados }),
 });
 
 export function getHistorialCaja(filtros) {

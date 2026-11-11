@@ -7,6 +7,8 @@ import { getSucursalesAdministracion } from '../services/sucursales.js';
 
 const vacios = { fecha_inicio: '', fecha_fin: '', sucursal_id: '' };
 const moneda = new Intl.NumberFormat('es-SV', { style: 'currency', currency: 'USD' });
+const destacarDiferencia = (valor) => valor != null && valor !== 0 ? 'text-danger fw-semibold' : undefined;
+const mostrarDiferencia = (valor) => valor == null ? 'Sin conciliar' : moneda.format(valor);
 const fechaHora = new Intl.DateTimeFormat('es-SV', {
     dateStyle: 'short', timeStyle: 'short', timeZone: 'America/El_Salvador',
 });
@@ -95,7 +97,7 @@ export default function CajaHistorialPage() {
                 {central && errorSedes && <p role="status" className="mt-2 mb-0">{errorSedes}</p>}
             </Form>
 
-            <p className="small">Fechas en hora de El Salvador. Para tarjeta y Bitcoin se muestran las ventas registradas; el cierre aún no guarda importes para calcular sus diferencias.</p>
+            <p className="small">Fechas en hora de El Salvador. Las diferencias se calculan restando el importe esperado del reportado.</p>
             {cargando ? (
                 <p role="status"><Spinner tag="span" aria-hidden="true" size="sm" className="me-2" />Cargando turnos…</p>
             ) : error ? (
@@ -111,13 +113,14 @@ export default function CajaHistorialPage() {
                             <thead>
                                 <tr>
                                     {['Turno', 'Sucursal', 'Cajero', 'Cierre', 'Efectivo esperado', 'Efectivo contado',
-                                        'Diferencia de efectivo', 'Ventas con tarjeta', 'Ventas en Bitcoin'].map((columna) => (
+                                        'Diferencia de efectivo', 'Ventas con tarjeta', 'Diferencia de tarjeta',
+                                        'Ventas en Bitcoin', 'Diferencia de Bitcoin'].map((columna) => (
                                         <th key={columna} scope="col">{columna}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {pagina.turnos.map(({ id, sucursal, cajero, cerrado_en, cuadre_efectivo, ventas }) => {
+                                {pagina.turnos.map(({ id, sucursal, cajero, cerrado_en, cuadre_efectivo, cuadre_tarjeta, cuadre_bitcoin, ventas }) => {
                                     const { esperado_en_caja, reportado_por_cajero, diferencia } = cuadre_efectivo;
                                     return (
                                         <tr key={id}>
@@ -127,11 +130,13 @@ export default function CajaHistorialPage() {
                                             <td>{fechaHora.format(new Date(cerrado_en))}</td>
                                             <td>{moneda.format(esperado_en_caja)}</td>
                                             <td>{reportado_por_cajero === null ? 'Sin conteo' : moneda.format(reportado_por_cajero)}</td>
-                                            <td className={diferencia !== null && diferencia !== 0 ? 'text-danger fw-semibold' : undefined}>
+                                            <td className={destacarDiferencia(diferencia)}>
                                                 {diferencia === null ? 'Sin conteo' : moneda.format(diferencia)}
                                             </td>
                                             <td>{moneda.format(ventas.tarjeta)}</td>
+                                            <td className={destacarDiferencia(cuadre_tarjeta?.diferencia)}>{mostrarDiferencia(cuadre_tarjeta?.diferencia)}</td>
                                             <td>{moneda.format(ventas.bitcoin)}</td>
+                                            <td className={destacarDiferencia(cuadre_bitcoin?.diferencia)}>{mostrarDiferencia(cuadre_bitcoin?.diferencia)}</td>
                                         </tr>
                                     );
                                 })}

@@ -341,6 +341,17 @@ export default function PosPage() {
             <dd className={reporteCierre.cuadre_efectivo.diferencia === 0 ? "col-sm-5" : "col-sm-5 text-danger fw-bold"}>
               {moneda(reporteCierre.cuadre_efectivo.diferencia)}
             </dd>
+            {[
+              ["Tarjeta", reporteCierre.cuadre_tarjeta],
+              ["Bitcoin", reporteCierre.cuadre_bitcoin],
+            ].map(([medio, cuadre]) => (
+              <div key={medio} className="row mx-0 px-0">
+                <dt className="col-sm-7">Diferencia de {medio}</dt>
+                <dd className={cuadre?.diferencia ? "col-sm-5 text-danger fw-bold" : "col-sm-5"}>
+                  {cuadre?.diferencia == null ? "Sin conciliar" : moneda(cuadre.diferencia)}
+                </dd>
+              </div>
+            ))}
           </dl>
         </section>
       )}
@@ -557,9 +568,10 @@ export default function PosPage() {
           titulo="Cerrar caja"
           etiqueta="Efectivo contado (USD)"
           accion="Confirmar cierre"
+          conciliacion
           onCerrar={() => setCierreVisible(false)}
-          onConfirmar={async (efectivo) => {
-            const { reporte } = await cerrarCaja(turnoCaja.id, efectivo);
+          onConfirmar={async (efectivo, importesReportados) => {
+            const { reporte } = await cerrarCaja(turnoCaja.id, efectivo, importesReportados);
             setReporteCierre(reporte);
             setTurnoCaja(null);
             setCierreVisible(false);
