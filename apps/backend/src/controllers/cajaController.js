@@ -1,4 +1,5 @@
 import * as cajaService from "../services/cajaService.js";
+import * as sucursalService from "../services/sucursalService.js";
 
 // Controlador para verificar el estado de la caja
 export const getEstadoCaja = async (req, res) => {
@@ -52,6 +53,22 @@ export async function aperturaCaja(req, res) {
   }
 
   try {
+    const sucursalInfo = await sucursalService.obtenerSucursalPorId(idSucursal);
+
+    if (!sucursalInfo) {
+      return res
+        .status(404)
+        .json({ error: "La sucursal especificada no existe." });
+    }
+
+    if (sucursalInfo.activa === false) {
+      return res
+        .status(403)
+        .json({
+          error: "Acceso denegado: No se puede abrir una caja inactiva",
+        });
+    }
+
     const cajaAbierta = await cajaService.aperturaCaja(
       idSucursal,
       idUsuario,
