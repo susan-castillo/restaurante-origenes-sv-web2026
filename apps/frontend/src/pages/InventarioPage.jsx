@@ -1,6 +1,7 @@
 
 
 import { useEffect, useRef, useState } from "react";
+import { escucharCambiosInventario } from "../services/inventarioEventos.js";
 
 // ==========================================
 
@@ -163,6 +164,11 @@ export default function InventarioPage() {
   const [filtro, setFiltro] = useState("todos");
 
   const [inventario, setInventario] = useState([]);
+  const [revisionInventario, setRevisionInventario] = useState(0);
+
+  useEffect(() => escucharCambiosInventario(() => {
+    setRevisionInventario((revision) => revision + 1);
+  }), []);
 
   const [cargando, setCargando] = useState(true);
 
@@ -595,7 +601,7 @@ async function guardarCambiosReceta() {
 
     };
 
-  }, []);
+  }, [revisionInventario]);
 
   // Consultar los deshabilitados solo cuando se abre su filtro.
   // El servicio de insumos devuelve todo el catálogo (activos e inactivos).
