@@ -3,22 +3,30 @@ import { obtenerPlatillosPOS, crearVentaPOS, obtenerPlatilloPOS } from "../servi
 import { getEstadoCaja } from "../services/cajasService.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import PlatilloCard from "../components/pos/PlatilloCard.jsx";
+import Button from "../components/Common/Button.jsx";
+import Feedback from "../components/Common/Feedback.jsx";
 import CobroModal from "../components/pos/CobroModal.jsx";
 import VentaCompletadaModal from "../components/pos/VentaCompletadaModal.jsx";
 import { generarComprobantePDF } from "../utils/generarComprobantePDF.js";
 import PlatilloDetalleModal from "../components/pos/PlatilloDetalleModal.jsx";
 import VistaPreviaFacturaModal from "../components/pos/VistaPreviaFacturaModal.jsx";
 import "../styles/pos.scss";
-//*Import para poder obtener la sucursal seleccionada*
-import {useOutletContext} from "react-router-dom";
+
+//**Import para poder obtener la sucursal seleccionada**
+import { useOutletContext } from "react-router-dom";
+
 const moneda = (valor) => `$${Number(valor ?? 0).toFixed(2)}`;
+
 export default function PosPage() {
   const { usuario, cargando: cargandoAuth } = useAuth();
-  // Obtenemos la sucursal seleccionada actualmente en la barra superior*
-  const {sucursalSeleccionada} = useOutletContext() || {};
-  // Determinamos el ID de la sucursal (Prioridad a la seleccionada en NavBar)*
+
+  //* Obtenemos la sucursal seleccionada actualmente en la barra superior**
+  const { sucursalSeleccionada } = useOutletContext() || {};
+
+  //* Determinamos el ID de la sucursal (Prioridad a la seleccionada en NavBar)**
   const sucursalId = sucursalSeleccionada?.id || usuario?.sucursal_id;
-  // Estados del catálogo*
+
+  //* Estados del catálogo**
   const [platillos, setPlatillos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -28,19 +36,23 @@ export default function PosPage() {
   const [platilloDetalle, setPlatilloDetalle] = useState(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
   const [errorDetalle, setErrorDetalle] = useState("");
-  // Estados del carrito y cobro*
+
+  //* Estados del carrito y cobro**
   const [carrito, setCarrito] = useState([]);
   const [modalCobroAbierto, setModalCobroAbierto] = useState(false);
   const [ventaCompletada, setVentaCompletada] = useState(null);
   const [vistaPreviaAbierta, setVistaPreviaAbierta] = useState(false);
   const [datosCobroPendientes, setDatosCobroPendientes] = useState(null);
-  // Estados de caja*
+
+  //* Estados de caja**
   const [cajaAbierta, setCajaAbierta] = useState(false);
   const [cargandoCaja, setCargandoCaja] = useState(true);
   const [errorCaja, setErrorCaja] = useState("");
-  // Cargar catálogo*
+
+  //* Cargar catálogo**
   useEffect(() => {
     let activo = true;
+
     async function cargarPlatillos() {
       try {
         setCargando(true);
@@ -59,13 +71,16 @@ export default function PosPage() {
       }
     }
     cargarPlatillos();
+
     return () => {
       activo = false;
     };
   }, [sucursalId]);
-  // Verificar estado de caja*
+
+  //* Verificar estado de caja**
   useEffect(() => {
     let activo = true;
+
     async function verificarCaja() {
       if (cargandoAuth) return;
       if (!sucursalId) {
@@ -92,11 +107,13 @@ export default function PosPage() {
       }
     }
     verificarCaja();
+
     return () => {
       activo = false;
     };
   }, [sucursalId, cargandoAuth]);
-  // Categorías disponibles*
+
+  //* Categorías disponibles**
   const categorias = useMemo(
     () => [
       "Todos",
@@ -104,7 +121,8 @@ export default function PosPage() {
     ],
     [platillos]
   );
-  // Buscar y filtrar platillos*
+
+  //* Buscar y filtrar platillos**
   const platillosFiltrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
     return platillos.filter((platillo) => {
@@ -116,9 +134,11 @@ export default function PosPage() {
       return coincideNombre && coincideCategoria;
     });
   }, [platillos, busqueda, categoria]);
+
   const habilitado =
     !cargandoAuth && !cargandoCaja && cajaAbierta && !errorCaja;
-  // Agregar un producto al carrito*
+
+  //* Agregar un producto al carrito**
   function agregarProducto(platillo) {
     if (!habilitado || modalCobroAbierto || vistaPreviaAbierta) return;
     if (!platillo.disponible) return;
@@ -145,7 +165,8 @@ export default function PosPage() {
       ];
     });
   }
-  // Modificar la cantidad de un producto*
+
+  //* Modificar la cantidad de un producto**
   function cambiarCantidad(id, cambio) {
     if (!habilitado || modalCobroAbierto || vistaPreviaAbierta) return;
     setCarrito((anterior) =>
@@ -158,22 +179,26 @@ export default function PosPage() {
         .filter((item) => item.cantidad > 0)
     );
   }
-  // Eliminar un producto del carrito*
+
+  //* Eliminar un producto del carrito**
   function eliminarProducto(id) {
     if (!habilitado || modalCobroAbierto || vistaPreviaAbierta) return;
     setCarrito((anterior) =>
       anterior.filter((item) => item.id !== id)
     );
   }
-  // Resumen visual del carrito*
+
+  //* Resumen visual del carrito**
   const totalEstimado = carrito.reduce(
     (suma, item) => suma + item.precio * item.cantidad,
     0
   );
+
   const cantidadProductos = carrito.reduce(
     (suma, item) => suma + item.cantidad,
     0
   );
+
   function prepararVistaPrevia(datosCobro) {
     if (!habilitado || carrito.length === 0) {
       throw new Error("No se puede preparar la venta.");
@@ -182,7 +207,8 @@ export default function PosPage() {
     setModalCobroAbierto(false);
     setVistaPreviaAbierta(true);
   }
-  // Registrar la venta mediante el backend*
+
+  //* Registrar la venta mediante el backend**
   async function confirmarCobro() {
       if (!datosCobroPendientes) {
         throw new Error("No hay una venta pendiente.");
@@ -216,7 +242,8 @@ export default function PosPage() {
     setModalCobroAbierto(false);
     setVistaPreviaAbierta(false);
     setDatosCobroPendientes(null);
-    // Actualizar disponibilidad después de descontar inventario*
+
+    //* Actualizar disponibilidad después de descontar inventario**
     try {
       const platillosActualizados = await obtenerPlatillosPOS();
       if (!Array.isArray(platillosActualizados)) {
@@ -232,6 +259,7 @@ export default function PosPage() {
     }
     return venta;
   }
+
   async function abrirDetallePlatillo(platillo) {
     setDetalleAbierto(true);
     setPlatilloDetalle(null);
@@ -248,6 +276,7 @@ export default function PosPage() {
       setCargandoDetalle(false);
     }
   }
+
   return (
     <main className="pos-page container-fluid py-4 px-3 px-lg-4">
       <header className="mb-4">
@@ -258,14 +287,14 @@ export default function PosPage() {
           Gestiona los pedidos y registra las ventas de Restaurante Orígenes.
         </p>
       </header>
-      {/** Estado de caja **/}
+      {/*** Estado de caja ***/}
       {cargandoCaja && (
         <div className="alert alert-info">
           Verificando estado de caja...
         </div>
       )}
       {!cargandoCaja && errorCaja && (
-        <div className="alert alert-danger">{errorCaja}</div>
+        <Feedback color="danger">{errorCaja}</Feedback>
       )}
       {!cargandoCaja && !errorCaja && !cajaAbierta && (
         <div className="alert alert-warning">
@@ -274,7 +303,7 @@ export default function PosPage() {
         </div>
       )}
       <div className="row g-4">
-        {/** Catálogo **/}
+        {/*** Catálogo ***/}
         <section className="col-12 col-xl-8">
           <div className="input-group pos-buscador mb-3">
             <span className="input-group-text bg-white border-end-0">
@@ -311,9 +340,7 @@ export default function PosPage() {
             </div>
           )}
           {error && (
-            <div className="alert alert-danger" role="alert">
-              {error}
-            </div>
+            <Feedback color="danger">{error}</Feedback>
           )}
           {!cargando && !error && platillosFiltrados.length === 0 && (
             <div className="alert alert-light border">
@@ -346,7 +373,7 @@ export default function PosPage() {
             </div>
           )}
         </section>
-        {/** Carrito **/}
+        {/*** Carrito ***/}
         <aside className="col-12 col-xl-4">
           <div className="pos-carrito bg-white rounded-4 shadow-sm border p-4 d-flex flex-column">
             <div className="d-flex justify-content-between align-items-center gap-2 mb-4">
@@ -446,7 +473,7 @@ export default function PosPage() {
                 </div>
               )}
             </div>
-            {/** Resumen **/}
+            {/*** Resumen ***/}
             <div className="pos-carrito-resumen border-top pt-4 mt-4">
               <div className="d-flex justify-content-between align-items-center mb-4">
                 <strong className="fs-6">
@@ -456,19 +483,19 @@ export default function PosPage() {
                   {moneda(totalEstimado)}
                 </strong>
               </div>
-              <button
-                type="button"
-                className="btn pos-btn-cobrar w-100 py-3 fw-bold"
+              <Button
+                variant="secondary"
+                className="w-100 py-3 fw-bold text-white"
                 disabled={!habilitado || carrito.length === 0 || vistaPreviaAbierta}
                 onClick={() => setModalCobroAbierto(true)}
               >
                 Cobrar {moneda(totalEstimado)}
-              </button>
+              </Button>
             </div>
           </div>
         </aside>
       </div>
-      {/** Modal de detalles del los ingredientes del platillo **/}
+      {/*** Modal de detalles del los ingredientes del platillo ***/}
       <PlatilloDetalleModal
         abierto={detalleAbierto}
         platillo={platilloDetalle}
@@ -476,15 +503,16 @@ export default function PosPage() {
         error={errorDetalle}
         onCerrar={() => setDetalleAbierto(false)}
       />
-      {/** Modal de cobro **/}
+      {/*** Modal de cobro ***/}
       <CobroModal
         abierto={modalCobroAbierto}
         onCerrar={() => setModalCobroAbierto(false)}
         onConfirmar={prepararVistaPrevia}
         total={totalEstimado}
       />
-      {/** Modal de venta completa **/}
+      {/*** Modal de venta completa ***/}
       <VistaPreviaFacturaModal
+        empleado={usuario}
         abierto={vistaPreviaAbierta}
         carrito={carrito}
         datosCobro={datosCobroPendientes}

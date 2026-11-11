@@ -1,61 +1,37 @@
-/* ==========================================
-   PUNTO DE VENTA - RESTAURANTE ORÍGENES
-   Estilos personalizados
-   ========================================== */
+// RESTAURANTE ORÍGENES — POS
+// Estilos específicos del POS; botones y feedback comunes se gestionan globalmente.
+
+// CATÁLOGO Y TARJETAS
 
 .pos-page {
   min-width: 0;
-
-  // ========================================
-  // BUSCADOR
-  // ========================================
-
   .pos-buscador {
     .input-group-text,
     .form-control {
       border-color: var(--bs-primary);
     }
-
     .form-control:focus {
       box-shadow: none;
       border-color: var(--bs-secondary);
     }
   }
-
-  // ========================================
-  // FILTROS
-  // ========================================
-
   .pos-filtro {
     font-size: 13px;
     font-weight: 600;
-
-    &.btn-dark {
-      background: var(--bs-dark);
-    }
   }
-
-  // ========================================
-  // TARJETAS
-  // ========================================
-
   .pos-producto-card {
+    cursor: pointer;
     overflow: hidden;
     transition: transform 0.2s, box-shadow 0.2s;
-
     &:hover {
       transform: translateY(-4px);
       box-shadow: 0 8px 18px rgba(38, 28, 20, 0.15) !important;
     }
   }
-
-  // Encabezado del producto
   .pos-producto-imagen {
     height: 140px;
     background: var(--bs-cream);
   }
-
-  // Inicial circular
   .pos-producto-inicial {
     width: 80px;
     height: 80px;
@@ -64,8 +40,6 @@
     color: var(--bs-brown);
     font: 30px Georgia, serif;
   }
-
-  // Botón agregar
   .pos-producto-agregar {
     position: absolute;
     top: 12px;
@@ -77,91 +51,21 @@
     font-size: 25px;
     cursor: pointer;
     transition: transform 0.2s;
-
     &:hover:not(:disabled) {
       transform: scale(1.1);
     }
-
     &:disabled {
-      opacity: 0.5;
+      opacity: 0.45;
       cursor: not-allowed;
     }
   }
-
-  // Etiqueta de categoría
-  .pos-producto-categoria {
-    position: absolute;
-    bottom: 12px;
-    left: 12px;
-    font-size: 10px;
-    padding: 7px 12px;
-  }
-
-  // Descripción
   .pos-producto-descripcion {
     color: var(--bs-brown);
     opacity: 0.75;
   }
-
-  // Precio
   .pos-producto-precio {
     color: var(--bs-secondary);
   }
-
-  // ========================================
-  // CARRITO
-  // ========================================
-
-  .pos-carrito {
-    position: sticky;
-    top: 20px;
-    min-height: 560px;
-    max-height: calc(100vh - 40px);
-  }
-
-  .pos-carrito-contenido {
-    min-height: 180px;
-    overflow-y: auto;
-  }
-
-  .pos-carrito-icono {
-    width: 72px;
-    height: 72px;
-    font-size: 30px;
-  }
-
-  // ========================================
-  // BOTÓN COBRAR
-  // ========================================
-
-  .pos-btn-cobrar {
-    background: linear-gradient(#c86d1f);
-    color: white;
-    border: 0;
-
-    &:hover:not(:disabled) {
-      opacity: 0.9;
-      color: white;
-    }
-
-    &:disabled {
-      background: #d8cec8;
-      color: white;
-    }
-  }
-
-  // ========================================
-  // RESPONSIVE
-  // ========================================
-
-  @media (max-width: 1199.98px) {
-    .pos-carrito {
-      position: static;
-      min-height: 350px;
-      max-height: none;
-    }
-  }
-
   @media (max-width: 575.98px) {
     .pos-producto-imagen {
       height: 130px;
@@ -176,38 +80,20 @@
   display: block;
 }
 
-
-/* ==========================================
-   IMPRESIÓN DEL TICKET POS
-========================================== */
-
-@media print {
-  body * {
-    visibility: hidden !important;
+.pos-btn-volver {
+  &:hover:not(:disabled) {
+    background-color: transparent;
+    color: var(--bs-secondary);
+    border-color: var(--bs-secondary);
   }
 
-  #ticket-pos,
-  #ticket-pos * {
-    visibility: visible !important;
-  }
-
-  #ticket-pos {
-    position: absolute !important;
-    top: 0;
-    left: 0;
-    width: 100%;
-    padding: 12px;
-  }
-
-  @page {
-    margin: 8mm;
+  &:focus,
+  &:active {
+    background-color: transparent;
+    color: var(--bs-secondary);
+    border-color: var(--bs-secondary);
   }
 }
-
-
-/* ==========================================
-   ETIQUETAS DE CATEGORÍA Y TIPO
-========================================== */
 
 .pos-producto-etiquetas {
   position: absolute;
@@ -215,42 +101,95 @@
   left: 12px;
   right: 12px;
   z-index: 2;
-
   .badge {
     font-size: 0.7rem;
     padding: 6px 10px;
   }
 }
 
-/* Imagen del platillo */
-.pos-producto-foto {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.pos-catalogo-scroll {
+  max-height: 720px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-content: flex-start;
+  padding: 4px 8px 12px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #c9b5a8 #f5f0eb;
+  &::-webkit-scrollbar {
+    width: 7px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #f5f0eb;
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #c9b5a8;
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a58c7e;
+  }
 }
 
+// IMPRESIÓN
 
-/* ==========================================
-   CARRITO POS
-========================================== */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #ticket-pos,
+  #ticket-pos * {
+    visibility: visible !important;
+  }
+  #ticket-pos {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 12px;
+  }
+  @page {
+    margin: 8mm;
+  }
+}
 
-.pos-carrito {
+// CARRITO
+
+.pos-page .pos-carrito {
+  position: sticky;
+  top: 20px;
   min-height: 560px;
+  max-height: calc(100vh - 40px);
 }
 
-/* Tarjeta individual del producto */
+.pos-page .pos-carrito-contenido {
+  min-height: 180px;
+  overflow-y: auto;
+}
+
+.pos-page .pos-carrito-icono {
+  width: 72px;
+  height: 72px;
+  font-size: 30px;
+}
+
+@media (max-width: 1199.98px) {
+  .pos-page .pos-carrito {
+    position: static;
+    min-height: 350px;
+    max-height: none;
+  }
+}
+
 .pos-carrito-producto {
   border: 1px solid #f0e1d3;
   background-color: #fff;
   transition: border-color 0.2s ease;
-
   &:hover {
     border-color: var(--bs-primary);
   }
 }
 
-/* Botones para aumentar y disminuir */
 .pos-cantidad-btn {
   width: 42px;
   height: 42px;
@@ -263,14 +202,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   &:hover:not(:disabled) {
     background-color: var(--bs-cream);
     color: var(--bs-dark);
   }
 }
 
-/* Botón eliminar */
 .pos-eliminar-btn {
   border: none;
   color: #c94c4c;
@@ -279,53 +216,30 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   &:hover:not(:disabled) {
     color: #a62e2e;
     background-color: #fff0f0;
   }
 }
 
-/* Total */
 .pos-carrito-total {
   font-size: 2.2rem;
   color: var(--bs-dark);
 }
 
-/* Botón cobrar */
-.pos-btn-cobrar {
-  background-color: var(--bs-secondary);
-  color: white;
-  border: none;
-  border-radius: 14px;
-
-  &:hover:not(:disabled) {
-    background-color: #c86d1f;
-    color: white;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-  }
-}
-
-/* Adaptación para móviles */
 @media (max-width: 575px) {
   .pos-carrito {
     padding: 16px !important;
   }
-
   .pos-carrito-total {
     font-size: 1.8rem;
   }
-
   .pos-carrito-producto {
     padding: 12px !important;
   }
 }
 
-
-/* MODAL DE COBRO */
+// MODAL DE COBRO
 
 .pos-modal-overlay {
   position: fixed;
@@ -389,14 +303,43 @@
   .pos-cobro-modal {
     padding: 22px;
   }
-
   .pos-modal-opcion {
     font-size: 0.85rem;
   }
 }
 
+.pos-pago-extra {
+  background: #faf7f4;
+  border: 1px solid #e8dcd2;
+  border-radius: 14px;
+  padding: 20px;
+  animation: posPagoEntrada 0.2s ease;
+}
 
-/* Modal de venta completada */
+.pos-bitcoin-qr {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  margin: 0 auto;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid #e8dcd2;
+  border-radius: 12px;
+}
+
+@keyframes posPagoEntrada {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// VENTA COMPLETADA
 
 .pos-venta-completada {
   width: 100%;
@@ -434,32 +377,13 @@
   color: #4b3024;
 }
 
-.pos-venta-imprimir {
-  background: #fff;
-  border: 1px solid #e9872d;
-  color: #b8661e;
-  border-radius: 12px;
-}
-
-.pos-venta-imprimir:hover:not(:disabled) {
-  background: #fff4ea;
-  border-color: #e9872d;
-  color: #965018;
-}
-
-.pos-venta-imprimir:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
 @media (max-width: 576px) {
   .pos-venta-completada {
     padding: 28px 20px;
   }
 }
 
-
-/* MODAL DE DETALLE DEL PLATILLO */
+// DETALLE DE PLATILLO
 
 .pos-detalle-overlay {
   position: fixed;
@@ -567,7 +491,6 @@
   justify-content: flex-end;
   align-items: center;
   gap: 12px;
-
   span {
     font-size: 12px;
     border: 1px solid currentColor;
@@ -578,7 +501,6 @@
     justify-content: center;
     align-items: center;
   }
-
   &.insuficiente {
     color: #dc3545;
   }
@@ -606,122 +528,34 @@
   border-radius: 20px;
   background: #f3efec;
   color: #69554d;
-
   &.no-disponible {
     color: #dc3545;
     background: #fff0f0;
   }
 }
 
-.pos-producto-card {
-  cursor: pointer;
-}
-
-.pos-producto-agregar:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
 @media (max-width: 576px) {
   .pos-detalle-modal {
     padding: 20px 16px;
   }
-
   .pos-detalle-nombre {
     font-size: 26px;
   }
-
   .pos-detalle-columnas,
   .pos-detalle-fila {
     gap: 12px;
   }
-
   .pos-detalle-receta {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
   }
-
   .pos-detalle-pie {
     flex-wrap: wrap;
   }
 }
 
-
-/* CATÁLOGO DEL POS CON SCROLL INTERNO */
-
-.pos-catalogo-scroll {
-  max-height: 720px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  align-content: flex-start;
-
-  padding: 4px 8px 12px 4px;
-
-  scrollbar-width: thin;
-  scrollbar-color: #c9b5a8 #f5f0eb;
-
-  &::-webkit-scrollbar {
-    width: 7px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #f5f0eb;
-    border-radius: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #c9b5a8;
-    border-radius: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: #a58c7e;
-  }
-}
-
-
-/* MÉTODOS DE PAGO ADICIONALES */
-
-.pos-pago-extra {
-  background: #faf7f4;
-  border: 1px solid #e8dcd2;
-  border-radius: 14px;
-  padding: 20px;
-  animation: posPagoEntrada 0.2s ease;
-}
-
-.pos-bitcoin-qr {
-  display: block;
-  width: 100%;
-  max-width: 220px;
-  height: auto;
-  margin: 0 auto;
-  padding: 10px;
-  background: #fff;
-  border: 1px solid #e8dcd2;
-  border-radius: 12px;
-}
-
-.pos-cobro-modal {
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-@keyframes posPagoEntrada {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-
-/* VISTA PREVIA DE FACTURA */
+// VISTA PREVIA Y DOCUMENTOS
 
 .pos-preview-modal {
   width: min(1100px, 95vw);
@@ -776,20 +610,6 @@
   max-width: 520px;
 }
 
-.pos-preview-cliente {
-  padding: 12px;
-  background: #fafafa;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
-
-.pos-preview-item {
-  padding: 9px 0;
-  border-bottom: 1px dashed #ddd;
-}
-
 .pos-preview-derecha {
   min-width: 0;
   min-height: 0;
@@ -828,27 +648,175 @@
     max-height: 95vh;
     overflow-y: auto;
   }
-
   .pos-preview-encabezado {
     padding: 18px;
   }
-
   .pos-preview-contenido {
     grid-template-columns: 1fr;
     overflow: visible;
   }
-
   .pos-preview-izquierda,
   .pos-preview-derecha {
     padding: 18px;
     overflow: visible;
   }
-
   .pos-preview-documento {
     padding: 18px;
   }
-
   .pos-preview-total {
     font-size: 27px;
+  }
+}
+
+.pos-doc-fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  span:last-child {
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+}
+
+.pos-doc-ticket-header,
+
+.pos-doc-ticket-footer {
+  text-align: center;
+  h3 {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+  p {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+}
+
+.pos-doc-titulo {
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+  margin: 14px 0;
+}
+
+.pos-doc-producto {
+  padding: 9px 0;
+  strong {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
+}
+
+.pos-doc-ticket-footer {
+  padding: 12px 0;
+  font-size: 12px;
+}
+
+.pos-doc-aviso {
+  text-align: center;
+  font-size: 10px;
+  color: #777;
+  margin: 16px 0 0;
+  line-height: 1.5;
+}
+
+.pos-doc-ccf-encabezado {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 20px;
+}
+
+.pos-doc-ccf-numero {
+  border: 2px solid #333;
+  border-radius: 12px;
+  padding: 12px 6px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+}
+
+.pos-doc-pendiente {
+  font-size: 14px;
+  font-weight: 800;
+  color: #a92323;
+}
+
+.pos-doc-ccf-cliente {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  font-size: 11px;
+  margin-bottom: 18px;
+}
+
+.pos-doc-tabla-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.pos-doc-tabla {
+  width: 100%;
+  min-width: 430px;
+  border-collapse: collapse;
+  font-size: 10px;
+  th,
+  td {
+    border: 1px solid #444;
+    padding: 8px 5px;
+    vertical-align: top;
+  }
+  th {
+    background: #f0f0f0;
+    text-align: center;
+    font-weight: 700;
+  }
+  td:nth-child(1),
+  td:nth-child(n + 3) {
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
+.pos-doc-ccf-pie {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid #444;
+  border-top: none;
+}
+
+.pos-doc-entregado {
+  padding: 12px;
+  border-right: 1px solid #444;
+  font-size: 11px;
+  p {
+    margin-top: 10px;
+    margin-bottom: 6px;
+  }
+}
+
+.pos-doc-totales {
+  padding: 12px 8px;
+}
+
+@media (max-width: 600px) {
+  .pos-doc-ccf-encabezado,
+  .pos-doc-ccf-cliente {
+    grid-template-columns: 1fr;
+  }
+  .pos-doc-ccf-pie {
+    grid-template-columns: 1fr;
+  }
+  .pos-doc-entregado {
+    border-right: none;
+    border-bottom: 1px solid #444;
   }
 }
