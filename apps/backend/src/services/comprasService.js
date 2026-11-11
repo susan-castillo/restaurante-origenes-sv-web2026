@@ -41,12 +41,19 @@ export async function registrarCompra(
         },
       });
 
-      await tx.inventario_sucursal.updateMany({
+      await tx.inventario_sucursal.upsert({
         where: {
+          sucursal_id_insumo_id: {
+            sucursal_id: sucursalId,
+            insumo_id: item.insumo_id,
+          },
+        },
+        create: {
           sucursal_id: sucursalId,
           insumo_id: item.insumo_id,
+          stock_actual: item.cantidad,
         },
-        data: {
+        update: {
           stock_actual: { increment: item.cantidad },
         },
       });

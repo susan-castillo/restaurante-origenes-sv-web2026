@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Alert, Button, Card, CardBody, Col, Form, FormGroup, Input, Label, Row } from 'reactstrap';
 import { getResumenCompras } from '../services/comprasService.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import CompraForm from '../components/compras/CompraForm.jsx';
 
 const moneda = new Intl.NumberFormat('es-SV', { style: 'currency', currency: 'USD' });
 const conteo = new Intl.NumberFormat('es-SV');
@@ -11,6 +13,9 @@ const campos = [
 ];
 
 export default function ComprasPage() {
+    const { usuario } = useAuth();
+    const [formularioAbierto, setFormularioAbierto] = useState(false);
+    const [confirmacion, setConfirmacion] = useState('');
     const [fin, setFin] = useState(() => new Date().toISOString().slice(0, 10));
     const [inicio, setInicio] = useState(() => `${fin.slice(0, 7)}-01`);
     const [resultado, setResultado] = useState(null);
@@ -44,11 +49,37 @@ export default function ComprasPage() {
 
     return (
         <section aria-labelledby="compras-titulo">
-            <header className="mb-4">
-                <h1 id="compras-titulo" className="font-origenes mb-2">Compras</h1>
-                <p className="text-muted mb-0">Consulta los costos y las cuentas por pagar de un período.</p>
+            <header className="mb-4 d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div>
+                    <h1 id="compras-titulo" className="font-origenes mb-2">Compras</h1>
+                    <p className="text-muted mb-0">Registra compras y consulta los costos de un período.</p>
+                </div>
+                {!formularioAbierto && (
+                    <Button color="primary" disabled={!usuario?.sucursal_id || cargando}
+                        onClick={() => {
+                            setConfirmacion('');
+                            setFormularioAbierto(true);
+                        }}>
+                        Nueva compra
+                    </Button>
+                )}
             </header>
 
+            {!usuario?.sucursal_id && (
+                <Alert color="info">Para registrar una compra, inicia sesión con una cuenta que tenga una sucursal asignada.</Alert>
+            )}
+            {confirmacion && <Alert color="success" role="status">{confirmacion}</Alert>}
+
+            {formularioAbierto ? (
+                <CompraForm usuario={usuario} onCancel={() => setFormularioAbierto(false)}
+                    onSaved={(compra) => {
+                        setResultado(null);
+                        setError('');
+                        setConfirmacion(`Factura ${compra.numero_factura} registrada. Quedó pendiente de pago y se actualizó el inventario.`);
+                        setFormularioAbierto(false);
+                    }} />
+            ) : (
+            <>
             <Card className="mb-4">
                 <CardBody>
                     <h2 className="h5 mb-3">Resumen de costos y gastos</h2>
@@ -106,6 +137,8 @@ export default function ComprasPage() {
                         ))}
                     </Row>
                 </section>
+            )}
+            </>
             )}
         </section>
     );
