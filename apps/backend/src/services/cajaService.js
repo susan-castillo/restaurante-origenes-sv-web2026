@@ -42,18 +42,22 @@ export async function aperturaCaja(sucursalId, usuarioId, montoInicial) {
   }, { isolationLevel: "Serializable" });
 }
 
-export async function cierreCaja(idTurno, efectivoContado) {
-  const turnoActualizado = await prisma.turnos_caja.update({
-    where: {
-      id: idTurno,
-    },
-    data: {
-      estado: "CERRADO",
-      cerrado_en: new Date(), // Ponemos hora y fecha exacta del cierre
-      efectivo_contado: efectivoContado,
-    },
+export async function cierreCaja(idTurno, efectivoContado, usuarioId, sucursalId) {
+  return prisma.$transaction(async (tx) => {
+    const alcance = { id: idTurno, usuario_id: usuarioId, sucursal_id: sucursalId };
+    const cambio = await tx.turnos_caja.updateMany({
+      where: { ...alcance, estado: "ABIERTO", cerrado_en: null },
+      data: { estado: "CERRADO", cerrado_en: new Date(), efectivo_contado: efectivoContado },
+    });
+    const turno = await tx.turnos_caja.findFirst({ where: alcance });
+    if (!turno) throw new Error("TURNO_NO_ENCONTRADO");
+    // Si se perdió la respuesta, repetir el mismo importe recupera el cuadre original.
+    if (!cambio.count && (turno.estado !== "CERRADO" || turno.efectivo_contado === null
+      || Number(turno.efectivo_contado) !== efectivoContado)) {
+      throw new Error("TURNO_YA_CERRADO");
+    }
+    return { turno, reporte: await calcularCuadre(idTurno, tx) };
   });
-  return turnoActualizado;
 }
 
 export async function obtenerTurnoAbierto(sucursalId, usuarioId) {
@@ -69,9 +73,9 @@ export async function obtenerTurnoAbierto(sucursalId, usuarioId) {
   return turno;
 }
 
-export async function calcularCuadre(turnoId) {
+export async function calcularCuadre(turnoId, cliente = prisma) {
   // Obtener informacion del turno
-  const turno = await prisma.turnos_caja.findUnique({
+  const turno = await cliente.turnos_caja.findUnique({
     where: { id: turnoId },
   });
 
@@ -80,7 +84,7 @@ export async function calcularCuadre(turnoId) {
   }
 
   // Obtenemos todas las ventas de este turno
-  const ventas = await prisma.ventas.findMany({
+  const ventas = await cliente.ventas.findMany({
     where: { turno_id: turnoId },
   });
 
@@ -89,7 +93,7 @@ export async function calcularCuadre(turnoId) {
   let totalBitcoin = 0;
 
   ventas.forEach((venta) => {
-    const monto = Number(venta.total);
+    const monto = Math.round(Number(venta.total) * 100);
 
     if (venta.metodo_pago === "EFECTIVO") {
       totalEfectivo += monto;
@@ -106,25 +110,25 @@ export async function calcularCuadre(turnoId) {
 
   // Calculamos el total general esperado (total efectivo + fondo_inicial) (lo que hay en la caja fisicamente)
   const montoInicial = Number(turno.monto_inicial);
-  const efectivoEsperado = montoInicial + totalEfectivo;
+  const efectivoEsperado = Math.round(montoInicial * 100) + totalEfectivo;
 
   const efectivoContado =
     turno.efectivo_contado !== null ? Number(turno.efectivo_contado) : null;
 
   const diferencia =
-    efectivoContado !== null ? efectivoContado - efectivoEsperado : null;
+    efectivoContado !== null ? (Math.round(efectivoContado * 100) - efectivoEsperado) / 100 : null;
 
   return {
     turno_id: turnoId,
     monto_inicial: montoInicial,
     ventas: {
-      efectivo: totalEfectivo,
-      tarjeta: totalTarjeta,
-      bitcoin: totalBitcoin,
-      total_general: totalEfectivo + totalTarjeta + totalBitcoin,
+      efectivo: totalEfectivo / 100,
+      tarjeta: totalTarjeta / 100,
+      bitcoin: totalBitcoin / 100,
+      total_general: (totalEfectivo + totalTarjeta + totalBitcoin) / 100,
     },
     cuadre_efectivo: {
-      esperado_en_caja: efectivoEsperado,
+      esperado_en_caja: efectivoEsperado / 100,
       reportado_por_cajero: efectivoContado,
       diferencia: diferencia,
     },

@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { obtenerPlatillosPOS, crearVentaPOS, obtenerPlatilloPOS } from "../services/posService.js";
-import { getMiTurno } from "../services/cajasService.js";
+import { abrirCaja, cerrarCaja, getMiTurno } from "../services/cajasService.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import PlatilloCard from "../components/pos/PlatilloCard.jsx";
 import CobroModal from "../components/pos/CobroModal.jsx";
 import VentaCompletadaModal from "../components/pos/VentaCompletadaModal.jsx";
 import { generarComprobantePDF } from "../utils/generarComprobantePDF.js";
 import PlatilloDetalleModal from "../components/pos/PlatilloDetalleModal.jsx";
-import AperturaCajaModal from "../components/pos/AperturaCajaModal.jsx";
+import CajaMontoModal from "../components/pos/CajaMontoModal.jsx";
 import "../styles/pos.scss";
 //Import para poder obtener la sucursal seleccionada
 import {useOutletContext} from "react-router-dom";
@@ -44,6 +44,8 @@ export default function PosPage() {
   const [errorCaja, setErrorCaja] = useState("");
   const [revisionCaja, setRevisionCaja] = useState(0);
   const [aperturaVisible, setAperturaVisible] = useState(false);
+  const [cierreVisible, setCierreVisible] = useState(false);
+  const [reporteCierre, setReporteCierre] = useState(null);
   const actualizarCaja = () => setRevisionCaja((actual) => actual + 1);
 
   // Cargar catálogo
@@ -144,7 +146,7 @@ export default function PosPage() {
   }, [platillos, busqueda, categoria]);
 
   const habilitado =
-    !cargandoAuth && !cargandoCaja && cajaAbierta && !errorCaja;
+    !cargandoAuth && !cargandoCaja && cajaAbierta && !errorCaja && !cierreVisible;
 
   // Agregar un producto al carrito
   function agregarProducto(platillo) {
@@ -318,9 +320,33 @@ export default function PosPage() {
         </div>
       )}
       {!cargandoCaja && cajaAbierta && (
-        <div className="alert alert-success" role="status">
-          Turno #{turnoCaja.id} abierto · Fondo inicial {moneda(turnoCaja.monto_inicial)}
+        <div className="alert alert-success d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <div>
+            <span role="status">Turno #{turnoCaja.id} abierto · Fondo inicial {moneda(turnoCaja.monto_inicial)}</span>
+            {carrito.length > 0 && <small className="d-block">Completa o vacía el carrito para cerrar caja.</small>}
+          </div>
+          <button type="button" className="btn btn-outline-dark" disabled={carrito.length > 0 || modalCobroAbierto}
+            onClick={() => setCierreVisible(true)}>Cerrar caja</button>
         </div>
+      )}
+      {reporteCierre && (
+        <section className="alert alert-light border" aria-labelledby="cuadre-caja-titulo">
+          <div className="d-flex flex-wrap justify-content-between align-items-start gap-2">
+            <h2 id="cuadre-caja-titulo" className="h5">Cuadre del turno #{reporteCierre.turno_id}</h2>
+            <button type="button" className="btn-close" aria-label="Ocultar cuadre" onClick={() => setReporteCierre(null)} />
+          </div>
+          <p role="status" className="mb-2">Turno cerrado.</p>
+          <dl className="row mb-0">
+            <dt className="col-sm-7">Efectivo esperado</dt>
+            <dd className="col-sm-5">{moneda(reporteCierre.cuadre_efectivo.esperado_en_caja)}</dd>
+            <dt className="col-sm-7">Efectivo contado</dt>
+            <dd className="col-sm-5">{moneda(reporteCierre.cuadre_efectivo.reportado_por_cajero)}</dd>
+            <dt className="col-sm-7">Diferencia de efectivo</dt>
+            <dd className={reporteCierre.cuadre_efectivo.diferencia === 0 ? "col-sm-5" : "col-sm-5 text-danger fw-bold"}>
+              {moneda(reporteCierre.cuadre_efectivo.diferencia)}
+            </dd>
+          </dl>
+        </section>
       )}
       <div className="row g-4">
         {/* Catálogo */}
@@ -531,11 +557,31 @@ export default function PosPage() {
         </aside>
       </div>
       {aperturaVisible && (
-        <AperturaCajaModal
+        <CajaMontoModal
+          titulo="Abrir caja"
+          etiqueta="Fondo inicial (USD)"
+          accion="Confirmar apertura"
           onCerrar={() => setAperturaVisible(false)}
-          onAbrir={(turno) => {
+          onConfirmar={async (monto) => {
+            const { turno } = await abrirCaja(monto);
             setTurnoCaja(turno);
+            setReporteCierre(null);
             setAperturaVisible(false);
+            refrescarEstadoCaja?.();
+          }}
+        />
+      )}
+      {cierreVisible && turnoCaja && (
+        <CajaMontoModal
+          titulo="Cerrar caja"
+          etiqueta="Efectivo contado (USD)"
+          accion="Confirmar cierre"
+          onCerrar={() => setCierreVisible(false)}
+          onConfirmar={async (efectivo) => {
+            const { reporte } = await cerrarCaja(turnoCaja.id, efectivo);
+            setReporteCierre(reporte);
+            setTurnoCaja(null);
+            setCierreVisible(false);
             refrescarEstadoCaja?.();
           }}
         />

@@ -10,7 +10,7 @@ router.get("/estado", verifyToken, cajaController.getEstadoCaja);
 const operador = requireRole("ADMIN", "EMPLEADO");
 router.get("/mi-turno", verifyToken, operador, cajaController.getMiTurno);
 router.post("/apertura", verifyToken, operador, cajaController.aperturaCaja);
-router.put("/cierre/:id", verifyToken, cajaController.cierreCaja);
+router.put("/cierre/:id", verifyToken, operador, cajaController.cierreCaja);
 router.get("/cuadre/:id", verifyToken, cajaController.getCuadreTurno);
 
 export default router;
