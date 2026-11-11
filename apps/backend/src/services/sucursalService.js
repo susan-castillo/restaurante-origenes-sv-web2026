@@ -66,12 +66,29 @@ export async function obtenerEstadisticasDashboard() {
     select: { id: true, nombre: true },
   });
 
+  const fechaSV = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/El_Salvador",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
+  // Armamos desde las 00:00:00 hasta las 23:59:59 con el offset -06:00
+  const inicioDiaSV = new Date(`${fechaSV}T00:00:00.000-06:00`);
+  const finDiaSV = new Date(`${fechaSV}T23:59:59.999-06:00`);
+
   let totalGlobalVentas = 0;
   let totalGlobalCompras = 0;
 
   // Iteramos para sacar la sumatoria de ventas y compras por sucursal
   const rendimientoSucursales = await Promise.all(
     sucursales.map(async (sucursal) => {
+      // Empleados asignados
+
+      const empleadosAsignados = await prisma.usuarios.count({
+        where: { sucursal_id: sucursal.id, activo: true },
+      });
+
       // Sumar todas las compras asociadas a esta sucursal
       const compras = await prisma.compras.aggregate({
         where: { sucursal_id: sucursal.id },
@@ -84,14 +101,30 @@ export async function obtenerEstadisticasDashboard() {
         _sum: { total: true },
       });
 
+      // Ventas del dia de hoy
+
+      const ventasHoy = await prisma.ventas.aggregate({
+        where: {
+          sucursal_id: sucursal.id,
+          creado_en: {
+            gte: inicioDiaSV,
+            lte: finDiaSV,
+          },
+        },
+        _sum: { total: true },
+      });
+
       const totalVentas = Number(ventas._sum.total || 0);
       const totalCompras = Number(compras._sum.total || 0);
+      const totalVentasDia = Number(ventasHoy._sum.total || 0);
 
       totalGlobalVentas += totalVentas;
       totalGlobalCompras += totalCompras;
 
       return {
         nombre: sucursal.nombre,
+        empleados_asignados: empleadosAsignados,
+        ventas_del_dia: totalVentasDia,
         ventas: totalVentas,
         compras: totalCompras,
         rentabilidad: totalVentas - totalCompras,
