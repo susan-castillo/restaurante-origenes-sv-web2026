@@ -1,4 +1,5 @@
 import { apiFetch } from './api.js';
+import { avisarCambioInventario } from './inventarioEventos.js';
 
 export function getResumenCompras(inicio, fin) {
     const parametros = new URLSearchParams({ fecha_inicio: inicio, fecha_fin: fin });
@@ -9,6 +10,8 @@ export function getProveedores() {
     return apiFetch('/proveedores');
 }
 
-export function registrarCompra(datos) {
-    return apiFetch('/compras', { method: 'POST', body: JSON.stringify(datos) });
+export async function registrarCompra(datos) {
+    const resultado = await apiFetch('/compras', { method: 'POST', body: JSON.stringify(datos) });
+    avisarCambioInventario();
+    return resultado;
 }
