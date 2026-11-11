@@ -15,3 +15,11 @@ export const cerrarCaja = (turnoId, efectivoContado) => apiFetch(`/caja/cierre/$
     method: 'PUT',
     body: JSON.stringify({ efectivo_contado: efectivoContado }),
 });
+
+export function getHistorialCaja(filtros) {
+    const parametros = new URLSearchParams();
+    Object.entries(filtros).forEach(([clave, valor]) => {
+        if (valor !== '' && valor != null) parametros.set(clave, valor);
+    });
+    return apiFetch(`/caja/historial?${parametros}`);
+}

@@ -15,6 +15,7 @@ import InventarioPage from './pages/InventarioPage.jsx';
 import SucursalesPage from './pages/SucursalesPage.jsx';
 import SucursalDetallePage from './pages/SucursalDetallePage.jsx';
 import ComprasPage from './pages/ComprasPage.jsx';
+import CajaHistorialPage from './pages/CajaHistorialPage.jsx';
 import PosPage from "./pages/PosPage.jsx";
 import { useEffect, useState } from "react";
 import { getEstadoCaja } from "./services/cajasService.js";
@@ -151,7 +152,7 @@ function AppRoutes() {
                         <Route path="/admin/sucursales" element={<SucursalesPage />} />
                         <Route path="/admin/sucursales/:id" element={<SucursalDetallePage />} />
                         <Route path="/admin/compras" element={<ComprasPage />} />
-                        <Route path="/admin/caja" element={<EnConstruccionPage titulo="Historial de caja" responsable="Frontend 4" />} />
+                        <Route path="/admin/caja" element={<CajaHistorialPage />} />
                     </Route>
 
                     {/* Recursos humanos: RRHH y ADMIN */}
