@@ -41,12 +41,19 @@ export async function registrarCompra(
         },
       });
 
-      await tx.inventario_sucursal.updateMany({
+      await tx.inventario_sucursal.upsert({
         where: {
+          sucursal_id_insumo_id: {
+            sucursal_id: sucursalId,
+            insumo_id: item.insumo_id,
+          },
+        },
+        create: {
           sucursal_id: sucursalId,
           insumo_id: item.insumo_id,
+          stock_actual: item.cantidad,
         },
-        data: {
+        update: {
           stock_actual: { increment: item.cantidad },
         },
       });
@@ -57,7 +64,7 @@ export async function registrarCompra(
   return compraRegistrada;
 }
 
-export async function obtenerResumenCostos(fechaInicio, fechaFinal) {
+export async function obtenerResumenCostos(fechaInicio, fechaFinal, sucursalId) {
   // Buscamos las compras en ese rango de fechas
   // Aseguramos que el inicio sea a las 00:00:00 y el fin a las 23:59:59
 
@@ -66,6 +73,7 @@ export async function obtenerResumenCostos(fechaInicio, fechaFinal) {
 
   const compras = await prisma.compras.findMany({
     where: {
+      ...(sucursalId !== null && { sucursal_id: sucursalId }),
       creado_en: {
         gte: inicio,
         lte: fin,

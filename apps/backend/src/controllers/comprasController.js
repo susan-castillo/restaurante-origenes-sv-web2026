@@ -1,5 +1,6 @@
 import * as comprasService from "../services/comprasService.js";
 import * as sucursalService from "../services/sucursalService.js";
+import { esAdminCentral } from "../middlewares/sucursalAccess.js";
 
 export async function crearCompra(req, res) {
   const sucursalId = req.usuario?.sucursal_id;
@@ -97,6 +98,7 @@ export async function getResumenCostos(req, res) {
     const resumen = await comprasService.obtenerResumenCostos(
       fecha_inicio,
       fecha_fin,
+      esAdminCentral(req.usuario) ? null : req.usuario.sucursal_id,
     );
     return res.json(resumen);
   } catch (error) {
