@@ -63,7 +63,7 @@ export const ajustarInventario = async (sucursalId, insumoId, datos) => {
     });
 
     return {
-        insumo_id: insumo.id,
+        insumo_id: insumBo.id,
         nombre: insumo.nombre,
         unidad: insumo.unidad,
         stock_actual: fila.stock_actual,

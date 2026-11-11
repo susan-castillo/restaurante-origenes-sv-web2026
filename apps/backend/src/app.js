@@ -9,6 +9,8 @@ import inventarioRoutes from "./routes/inventarioRoutes.js";
 import sucursalRoutes from "./routes/sucursalRoutes.js";
 import cajaRoutes from "./routes/cajaRoutes.js";
 import comprasRoutes from "./routes/comprasRoutes.js";
+import rrhhRoutes from "./routes/rrhhRoutes.js";
+import nominaRoutes from "./routes/nominaRoutes.js";
 
 const app = express();
 
@@ -74,6 +76,14 @@ app.use("/api/caja", cajaRoutes);
 
 // Rutas del módulo de compras e inventario
 app.use("/api/compras", comprasRoutes);
+
+//Rutas del módulo de RRHH. 
+
+app.use('/api/rrhh', rrhhRoutes);
+app.use('/api/nomina', nominaRoutes);
+
+app.use("/api", inventarioRoutes);
+
 // ----------------------------------------------------
 // MIDDLEWARES DE MANEJO DE ERRORES Y RUTAS NO ENCONTRADAS
 // ----------------------------------------------------
