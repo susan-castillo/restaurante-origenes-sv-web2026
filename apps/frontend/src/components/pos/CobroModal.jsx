@@ -7,6 +7,12 @@ const clienteInicial = {
   nrc: "",
 };
 
+// Tarjetas ficticias para la demostración
+const TARJETAS_PRUEBA = {
+  "1111111111111111": "APROBADA",
+  "0000000000000000": "FONDOS_INSUFICIENTES",
+};
+
 export default function CobroModal({
   abierto,
   onCerrar,
@@ -16,18 +22,20 @@ export default function CobroModal({
   const [tipoDocumento, setTipoDocumento] = useState("FACTURA");
   const [metodoPago, setMetodoPago] = useState("EFECTIVO");
   const [cliente, setCliente] = useState(clienteInicial);
+  const [numeroTarjeta, setNumeroTarjeta] = useState("");
   const [cobrando, setCobrando] = useState(false);
   const [error, setError] = useState("");
 
   const enviandoRef = useRef(false);
 
-  // Reiniciar el formulario cada vez que se abre
+  // Reiniciar formulario
   useEffect(() => {
     if (!abierto) return;
 
     setTipoDocumento("FACTURA");
     setMetodoPago("EFECTIVO");
     setCliente({ ...clienteInicial });
+    setNumeroTarjeta("");
     setError("");
   }, [abierto]);
 
@@ -43,23 +51,28 @@ export default function CobroModal({
 
     window.addEventListener("keydown", manejarTecla);
 
-    return () => {
+    return () =>
       window.removeEventListener("keydown", manejarTecla);
-    };
   }, [abierto, onCerrar]);
 
   if (!abierto) return null;
 
   function cerrarModal() {
-    if (enviandoRef.current) return;
-    onCerrar();
+    if (!enviandoRef.current) onCerrar();
   }
 
-  function actualizarCliente(campo, valor) {
-    setCliente((anterior) => ({
-      ...anterior,
-      [campo]: valor,
-    }));
+  function seleccionarMetodo(metodo) {
+    setMetodoPago(metodo);
+    setNumeroTarjeta("");
+    setError("");
+  }
+
+  function actualizarTarjeta(valor) {
+    const digitos = valor.replace(/\D/g, "").slice(0, 16);
+    const formateado = digitos.match(/.{1,4}/g)?.join(" ") ?? "";
+
+    setNumeroTarjeta(formateado);
+    setError("");
   }
 
   async function confirmarCobro(evento) {
@@ -69,26 +82,42 @@ export default function CobroModal({
 
     setError("");
 
+    // Validar crédito fiscal
     if (tipoDocumento === "CCF") {
-      if (
-        !cliente.nombre.trim() ||
-        !cliente.nit.trim() ||
-        !cliente.nrc.trim()
-      ) {
+      const { nombre, nit, nrc } = cliente;
+
+      if (!nombre.trim() || !nit.trim() || !nrc.trim()) {
         setError("Completa los datos del cliente para emitir el CCF.");
         return;
       }
 
       if (
-        cliente.nombre.trim().length > 150 ||
-        cliente.nit.trim().length > 20 ||
-        cliente.nrc.trim().length > 20
+        nombre.trim().length > 150 ||
+        nit.trim().length > 20 ||
+        nrc.trim().length > 20
       ) {
         setError("Uno de los datos del cliente supera la longitud permitida.");
         return;
       }
     }
 
+    // Validar tarjeta ficticia al confirmar
+    if (metodoPago === "TARJETA") {
+      const numero = numeroTarjeta.replace(/\s/g, "");
+      const resultado = TARJETAS_PRUEBA[numero];
+
+      if (resultado === "FONDOS_INSUFICIENTES") {
+        setError("Pago denegado: fondos insuficientes.");
+        return;
+      }
+
+      if (resultado !== "APROBADA") {
+        setError("Tarjeta no reconocida.");
+        return;
+      }
+    }
+
+    // Registrar venta solamente si las validaciones pasan
     enviandoRef.current = true;
     setCobrando(true);
 
@@ -110,9 +139,7 @@ export default function CobroModal({
     <div
       className="pos-modal-overlay"
       onMouseDown={(evento) => {
-        if (evento.target === evento.currentTarget) {
-          cerrarModal();
-        }
+        if (evento.target === evento.currentTarget) cerrarModal();
       }}
     >
       <div
@@ -130,6 +157,7 @@ export default function CobroModal({
         </p>
 
         <form onSubmit={confirmarCobro}>
+          {/* DOCUMENTO */}
           <h3 className="pos-modal-seccion">1. DOCUMENTO</h3>
 
           <div className="row g-2 mb-3">
@@ -153,6 +181,7 @@ export default function CobroModal({
             ))}
           </div>
 
+          {/* CRÉDITO FISCAL */}
           {tipoDocumento === "CCF" && (
             <div className="mb-4">
               <input
@@ -164,7 +193,7 @@ export default function CobroModal({
                 required
                 disabled={cobrando}
                 onChange={(e) =>
-                  actualizarCliente("nombre", e.target.value)
+                  setCliente({ ...cliente, nombre: e.target.value })
                 }
               />
 
@@ -179,7 +208,7 @@ export default function CobroModal({
                     required
                     disabled={cobrando}
                     onChange={(e) =>
-                      actualizarCliente("nit", e.target.value)
+                      setCliente({ ...cliente, nit: e.target.value })
                     }
                   />
                 </div>
@@ -194,7 +223,7 @@ export default function CobroModal({
                     required
                     disabled={cobrando}
                     onChange={(e) =>
-                      actualizarCliente("nrc", e.target.value)
+                      setCliente({ ...cliente, nrc: e.target.value })
                     }
                   />
                 </div>
@@ -202,9 +231,10 @@ export default function CobroModal({
             </div>
           )}
 
+          {/* FORMA DE PAGO */}
           <h3 className="pos-modal-seccion">2. FORMA DE PAGO</h3>
 
-          <div className="row g-2 mb-4">
+          <div className="row g-2 mb-3">
             {["EFECTIVO", "TARJETA", "BITCOIN"].map((metodo) => (
               <div className="col-4" key={metodo}>
                 <button
@@ -214,7 +244,7 @@ export default function CobroModal({
                   className={`pos-modal-opcion w-100 ${
                     metodoPago === metodo ? "seleccionado" : ""
                   }`}
-                  onClick={() => setMetodoPago(metodo)}
+                  onClick={() => seleccionarMetodo(metodo)}
                 >
                   {metodo.charAt(0) + metodo.slice(1).toLowerCase()}
                 </button>
@@ -222,12 +252,70 @@ export default function CobroModal({
             ))}
           </div>
 
+          {/* TARJETA */}
+          {metodoPago === "TARJETA" && (
+            <div className="pos-pago-extra mb-4">
+              <h4 className="fs-6 fw-bold mb-2">
+                Pago con tarjeta
+              </h4>
+
+              <p className="text-muted small">
+                Ingresa los numeros de delante de la tarjeta.
+              </p>
+
+              <label
+                htmlFor="numero-tarjeta"
+                className="form-label small fw-semibold"
+              >
+                Número de tarjeta
+              </label>
+
+              <input
+                id="numero-tarjeta"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                className="form-control pos-modal-input"
+                placeholder="0000 0000 0000 0000"
+                maxLength={19}
+                value={numeroTarjeta}
+                disabled={cobrando}
+                onChange={(e) => actualizarTarjeta(e.target.value)}
+              />
+            </div>
+          )}
+
+          {/* BITCOIN */}
+          {metodoPago === "BITCOIN" && (
+            <div className="pos-pago-extra text-center mb-4">
+              <h4 className="fs-6 fw-bold mb-3">
+                Pago con Bitcoin
+              </h4>
+
+              <p className="text-muted small">
+                Escanea el siguiente código QR para visualizar el pago.
+              </p>
+
+              <img
+                src="/qrBitcoin.png"
+                alt="Código QR de Bitcoin"
+                className="pos-bitcoin-qr"
+              />
+
+              <p className="text-muted small mt-3 mb-0">
+                Pago de demostración. No se verifican transacciones reales.
+              </p>
+            </div>
+          )}
+
+          {/* ERRORES */}
           {error && (
             <div className="alert alert-danger" role="alert">
               {error}
             </div>
           )}
 
+          {/* CONFIRMAR */}
           <button
             type="submit"
             className="btn pos-btn-cobrar w-100 py-3 fw-bold"
