@@ -1,7 +1,7 @@
 // =====================================================================
 // App.jsx — mapa de rutas de TODA la aplicación.
 // =====================================================================
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -12,6 +12,8 @@ import NotFound from './pages/NotFound.jsx';
 import NoAutorizadoPage from "./pages/NoAutorizados.jsx";
 import EnConstruccionPage from "./pages/EnConstruccion.jsx";
 import InventarioPage from './pages/InventarioPage.jsx';
+import SucursalesPage from './pages/SucursalesPage.jsx';
+import SucursalDetallePage from './pages/SucursalDetallePage.jsx';
 import PosPage from "./pages/PosPage.jsx";
 import { useEffect, useState } from "react";
 import { getEstadoCaja } from "./services/cajasService.js";
@@ -21,6 +23,8 @@ import { getSucursales } from "./services/sucursales.js";
 function DashboardLayout() {
     const { usuario, logout } = useAuth();
     const navigate = useNavigate();
+    const { pathname } = useLocation();
+    const esSucursales = pathname === '/admin/sucursales' || pathname.startsWith('/admin/sucursales/');
 
     // Estados dinámicos traídos de la base de datos
     const [sucursales, setSucursales] = useState([]);
@@ -35,7 +39,7 @@ function DashboardLayout() {
                 setSucursales(data);
 
                 // Asignar por defecto la sucursal asignada al usuario
-                const sucursalInicial = usuario?.sucursal || data[0];
+                const sucursalInicial = data.find((sucursal) => sucursal.id === usuario.sucursal_id) || data[0] || null;
                 setSucursalSeleccionada(sucursalInicial);
             } catch (err) {
                 console.error("Error al obtener sucursales:", err);
@@ -49,25 +53,42 @@ function DashboardLayout() {
 
     // 2. Verificar si la caja de la sucursal seleccionada está abierta
     useEffect(() => {
-        const consultarCaja = async () => {
-            if (!sucursalSeleccionada?.id && !usuario?.sucursal_id) return;
+        let vigente = true;
+        const targetId = sucursalSeleccionada?.id;
+        if (!targetId) {
+            setCajaAbierta(false);
+            return;
+        }
 
-            const targetId = sucursalSeleccionada?.id || usuario?.sucursal_id;
+        const consultarCaja = async () => {
             try {
                 const res = await getEstadoCaja(targetId);
                 // backend suele responder: { abierta: true/false } o { estado: "ABIERTA" }
-                setCajaAbierta(res?.abierta ?? res?.estado === "ABIERTA");
+                if (vigente) setCajaAbierta(res?.abierta ?? res?.estado === "ABIERTA");
             } catch {
-                setCajaAbierta(false);
+                if (vigente) setCajaAbierta(false);
             }
         };
 
-        consultarCaja().then(r => {}).catch(err => console.error(err));
-    }, [sucursalSeleccionada, usuario]);
+        consultarCaja();
+        return () => { vigente = false; };
+    }, [sucursalSeleccionada?.id]);
 
     // 3. Cambiar sucursal
     const handleCambiarSucursal = (sucursal) => {
         setSucursalSeleccionada(sucursal);
+    };
+
+    const sincronizarSucursal = (sucursal) => {
+        setSucursales((actuales) => {
+            const actualizadas = actuales.filter((sede) => sede.id !== sucursal.id);
+            if (!sucursal.activa) return actualizadas;
+            return [...actualizadas, sucursal].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+        });
+        setSucursalSeleccionada((actual) => {
+            if (actual?.id !== sucursal.id) return actual;
+            return sucursal.activa ? sucursal : null;
+        });
     };
 
     // Una sola forma de cerrar sesión, usada por el Navbar y por el Sidebar.
@@ -80,6 +101,7 @@ function DashboardLayout() {
     return (
         <div className="app-shell d-flex flex-column min-vh-100">
             <Navbar usuario={usuario}
+                    {...(esSucursales ? { titulo: 'Sucursales', subtitulo: 'Consulta de sedes' } : {})}
                     sucursales={sucursales}
                     sucursalActual={sucursalSeleccionada}
                     cajaAbierta={cajaAbierta}
@@ -89,7 +111,7 @@ function DashboardLayout() {
                 <Sidebar onLogout={cerrarSesion} />
                 <main className="flex-grow-1 p-4 bg-light">
                     {/* Aquí se dibuja la página que corresponde a la ruta */}
-                    <Outlet context={{sucursalSeleccionada, sucursales, handleCambiarSucursal}} />
+                    <Outlet context={{sucursalSeleccionada, sucursales, handleCambiarSucursal, sincronizarSucursal}} />
                 </main>
             </div>
         </div>
@@ -123,6 +145,8 @@ function AppRoutes() {
                     <Route element={<ProtectedRoute roles={['ADMIN']} />}>
                         <Route path="/admin" element={<Navigate replace to="/admin/inventario" />} />
                         <Route path="/admin/inventario" element={<InventarioPage />} />
+                        <Route path="/admin/sucursales" element={<SucursalesPage />} />
+                        <Route path="/admin/sucursales/:id" element={<SucursalDetallePage />} />
                         <Route path="/admin/compras" element={<EnConstruccionPage titulo="Compras" responsable="Frontend 4" />} />
                         <Route path="/admin/caja" element={<EnConstruccionPage titulo="Historial de caja" responsable="Frontend 4" />} />
                     </Route>

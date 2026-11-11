@@ -37,7 +37,7 @@ SELECT (SELECT s.id FROM sucursales s WHERE s.nombre = v.sucursal),
        v.rol, v.cargo, v.salario, v.activo,
        now() - interval '9 months'
 FROM (VALUES
-    ('Administrador General', 'admin@origenes.sv',               'ADMIN',    'GERENTE', 1500.00, 'Sucursal Central',     true),
+    ('Administrador General', 'admin@origenes.sv',               'ADMIN',    'GERENTE', 1500.00, NULL,                   true),
     ('Laura Martínez',        'rrhh@origenes.sv',                'RRHH',     'RRHH',           900.00, 'Sucursal Central',     true),
     ('Roberto Hernández',     'gerente.central@origenes.sv',     'ADMIN',    'GERENTE',       1100.00, 'Sucursal Central',     true),
     ('Patricia Villalta',     'gerente.escalon@origenes.sv',     'ADMIN',    'GERENTE',       1100.00, 'Sucursal Escalón',     true),
