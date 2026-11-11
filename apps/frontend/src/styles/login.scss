@@ -1,0 +1,119 @@
+/* Estilos de inspiración Haute Pâtisserie / Café */
+
+.card-patisserie {
+  background: rgba(159, 140, 140, 0.25) !important;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(253, 253, 253, 0.51) !important;
+  border-radius: 15px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25) !important;
+}
+
+.input-patisserie {
+  background-color: rgb(255, 220, 195) !important;
+  border: 1px solid rgb(255, 255, 255) !important;
+  color: #050505 !important;
+  border-radius: 15px;
+
+  &:focus {
+    background-color: rgb(237, 186, 143) !important;
+    border-color: #DE8332 !important;
+    box-shadow: 0 0 0 0.25rem rgba(222, 131, 50, 0.25) !important;
+  }
+
+  /* 2. Anula el fondo amarillo/azul del autofill del navegador */
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
+  &:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px rgb(246, 227, 203) inset !important;
+    -webkit-text-fill-color: #200303 !important;
+    font-size: 0.95rem !important;
+    font-family: 'Poppins', sans-serif !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+}
+
+.bg-pinky-degrade {
+  background: linear-gradient(135deg, #DE8332 0%, #b33443 100%) !important;
+  border: none !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(50, 24, 5, 0.53) !important;
+  }
+}
+
+/* Efecto de resplandor para el logo PNG */
+.logo-glow {
+  /* Múltiples capas de luz: una blanca intensa pegada al contorno y auras rosa/dorado potentes */
+  filter: drop-shadow(0 0 4px #ffffff)
+  drop-shadow(0 0 1px #ff6b8b)
+  drop-shadow(0 0 5px rgba(255, 140, 0, 0.9));
+
+  transition: filter 0.3s ease-in-out, transform 0.3s ease;
+  animation: intense-pulse 2.5s infinite alternate ease-in-out;
+
+  &:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 6px #ffffff)
+    drop-shadow(0 0 18px #ff4071)
+    drop-shadow(0 0 35px #ff9100);
+  }
+}
+
+/* Animación para hacer palpitar el brillo */
+@keyframes intense-pulse {
+  0% {
+    filter: drop-shadow(0 0 3px #ffffff)
+    drop-shadow(0 0 5px #ff6b8b)
+    drop-shadow(0 0 8px rgba(255, 140, 0, 0.7));
+  }
+  100% {
+    filter: drop-shadow(0 0 8px #ffffff)
+    drop-shadow(0 0 5px #ff2a5f)
+    drop-shadow(0 0 8px #ff9100);
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/* Estilos para activar las capas de imagen de fondo */
+.login-container {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.bg-slide {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 3.0s ease-in-out;
+  z-index: 0;
+
+  &.active {
+    opacity: 1;
+  }
+}
+
+/* Restaurado con tu degradado rosa-café y opacidad original */
+.bg-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, rgba(225, 78, 103, 0.85) 0%, rgba(0, 0, 0, 0.84) 100%);
+  z-index: 1;
+}
+
+.login-content {
+  position: relative;
+  z-index: 2;
+}

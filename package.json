@@ -1,0 +1,37 @@
+{
+  "name": "restaurante-origenes-sv-web2026",
+  "description": "Sistema desacoplado full-stack con arquitectura monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "setup": "npm run setup:be && npm run setup:fe",
+    "setup:fe": "npm install --prefix apps/frontend",
+    "setup:be": "npm install --prefix apps/backend",
+    "dev:fe": "npm run dev --prefix apps/frontend",
+    "dev:be": "npm run dev --prefix apps/backend",
+    "prisma:generate": "npm run prisma generate --prefix apps/backend",
+    "prisma:push": "npx prisma db push --schema=apps/backend/prisma/schema.prisma",
+    "db:init": "node scripts/db-init.mjs",
+    "db:seed": "node scripts/db-seed.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build:fe": "npm run build --prefix apps/frontend",
+    "build:be": "npm run build --prefix apps/backend",
+    "start:be": "npm start --prefix apps/backend",
+    "audit": "npm audit --prefix apps/backend && npm audit --prefix apps/frontend"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/susan-castillo/restaurante-origenes-sv-web2026.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/susan-castillo/restaurante-origenes-sv-web2026/issues"
+  },
+  "homepage": "https://github.com/susan-castillo/restaurante-origenes-sv-web2026#readme",
+  "devDependencies": {
+    "sass-embedded": "^1.108.1"
+  }
+}

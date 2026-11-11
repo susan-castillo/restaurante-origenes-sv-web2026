@@ -1,0 +1,30 @@
+{
+  "name": "origenes-frontend",
+  "description": "Frontend del sistema desacoplado full-stack con arquitectura monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "bootstrap": "5.3.8",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^1.70.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-icons": "^5.7.0",
+    "react-router-dom": "7.18.5",
+    "reactstrap": "9.2.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.2.1",
+    "sass-embedded": "^1.108.1",
+    "vite": "8.3.5"
+  }
+}

@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model compras {
+  id                Int              @id @default(autoincrement())
+  sucursal_id       Int
+  proveedor_id      Int
+  numero_factura    String           @db.VarChar(30)
+  total             Decimal          @db.Decimal(10, 2)
+  estado_pago       String           @default("PENDIENTE") @db.VarChar(10)
+  fecha_vencimiento DateTime?        @db.Date
+  creado_en         DateTime?        @default(now()) @db.Timestamp(6)
+  fecha_pago        DateTime?        @db.Date
+  proveedores       proveedores      @relation(fields: [proveedor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sucursales        sucursales       @relation(fields: [sucursal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  detalle_compra    detalle_compra[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model detalle_compra {
+  id             Int     @id @default(autoincrement())
+  compra_id      Int
+  insumo_id      Int
+  cantidad       Decimal @db.Decimal(12, 3)
+  costo_unitario Decimal @db.Decimal(10, 4)
+  compras        compras @relation(fields: [compra_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  insumos        insumos @relation(fields: [insumo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model detalle_venta {
+  id              Int       @id @default(autoincrement())
+  venta_id        Int
+  platillo_id     Int
+  cantidad        Int
+  precio_unitario Decimal   @db.Decimal(8, 2)
+  platillos       platillos @relation(fields: [platillo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ventas          ventas    @relation(fields: [venta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model insumos {
+  id                  Int                   @id @default(autoincrement())
+  nombre              String                @unique @db.VarChar(100)
+  unidad              String                @db.VarChar(10)
+  activo              Boolean               @default(true)
+  detalle_compra      detalle_compra[]
+  inventario_sucursal inventario_sucursal[]
+  recetas             recetas[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model inventario_sucursal {
+  sucursal_id  Int
+  insumo_id    Int
+  stock_actual Decimal    @default(0) @db.Decimal(12, 3)
+  stock_minimo Decimal    @default(0) @db.Decimal(12, 3)
+  insumos      insumos    @relation(fields: [insumo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sucursales   sucursales @relation(fields: [sucursal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([sucursal_id, insumo_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model pagos_planilla {
+  id            Int       @id @default(autoincrement())
+  usuario_id    Int
+  anio          Int
+  mes           Int
+  quincena      Int
+  salario_bruto Decimal   @db.Decimal(8, 2)
+  isss          Decimal   @db.Decimal(6, 2)
+  afp           Decimal   @db.Decimal(6, 2)
+  renta         Decimal   @db.Decimal(6, 2)
+  salario_neto  Decimal   @db.Decimal(8, 2)
+  fecha_pago    DateTime? @default(now()) @db.Timestamp(6)
+  usuarios      usuarios  @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([usuario_id, anio, mes, quincena])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model platillos {
+  id            Int             @id @default(autoincrement())
+  nombre        String          @db.VarChar(100)
+  categoria     String?         @db.VarChar(50)
+  precio        Decimal         @db.Decimal(8, 2)
+  activo        Boolean         @default(true)
+  tipo          String          @default("ELABORADO") @db.VarChar(10)
+  imagen        String?         @db.VarChar(255)
+  detalle_venta detalle_venta[]
+  recetas       recetas[]
+}
+
+model proveedores {
+  id      Int       @id @default(autoincrement())
+  nombre  String    @db.VarChar(100)
+  nit     String?   @db.VarChar(20)
+  compras compras[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model recetas {
+  platillo_id Int
+  insumo_id   Int
+  cantidad    Decimal   @db.Decimal(12, 3)
+  insumos     insumos   @relation(fields: [insumo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  platillos   platillos @relation(fields: [platillo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([platillo_id, insumo_id])
+}
+
+model sucursales {
+  id                  Int                   @id @default(autoincrement())
+  nombre              String                @db.VarChar(100)
+  direccion           String?               @db.VarChar(200)
+  activa              Boolean               @default(true)
+  compras             compras[]
+  inventario_sucursal inventario_sucursal[]
+  turnos_caja         turnos_caja[]
+  usuarios            usuarios[]
+  ventas              ventas[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model turnos_caja {
+  id               Int        @id @default(autoincrement())
+  sucursal_id      Int
+  usuario_id       Int
+  monto_inicial    Decimal    @db.Decimal(10, 2)
+  abierto_en       DateTime?  @default(now()) @db.Timestamp(6)
+  cerrado_en       DateTime?  @db.Timestamp(6)
+  efectivo_contado Decimal?   @db.Decimal(10, 2)
+  estado           String     @default("ABIERTO") @db.VarChar(10)
+  sucursales       sucursales @relation(fields: [sucursal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios         usuarios   @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ventas           ventas[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model usuarios {
+  id             Int              @id @default(autoincrement())
+  sucursal_id    Int?
+  nombre         String           @db.VarChar(100)
+  email          String           @unique @db.VarChar(100)
+  password_hash  String           @db.VarChar(255)
+  rol            String           @default("EMPLEADO") @db.VarChar(20)
+  cargo          String           @default("BARISTA") @db.VarChar(20)
+  salario_base   Decimal          @default(600.00) @db.Decimal(8, 2)
+  activo         Boolean          @default(true)
+  creado_en      DateTime?        @default(now()) @db.Timestamp(6)
+  pagos_planilla pagos_planilla[]
+  turnos_caja    turnos_caja[]
+  sucursales     sucursales?      @relation(fields: [sucursal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ventas         ventas[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ventas {
+  id             Int             @id @default(autoincrement())
+  sucursal_id    Int
+  turno_id       Int
+  usuario_id     Int
+  tipo_doc       String          @db.VarChar(10)
+  numero         Int
+  metodo_pago    String          @db.VarChar(10)
+  cliente_nombre String?         @db.VarChar(150)
+  cliente_nit    String?         @db.VarChar(20)
+  cliente_nrc    String?         @db.VarChar(20)
+  subtotal       Decimal         @db.Decimal(10, 2)
+  iva            Decimal         @db.Decimal(10, 2)
+  total          Decimal         @db.Decimal(10, 2)
+  creado_en      DateTime?       @default(now()) @db.Timestamp(6)
+  detalle_venta  detalle_venta[]
+  sucursales     sucursales      @relation(fields: [sucursal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  turnos_caja    turnos_caja     @relation(fields: [turno_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios       usuarios        @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([sucursal_id, tipo_doc, numero])
+}

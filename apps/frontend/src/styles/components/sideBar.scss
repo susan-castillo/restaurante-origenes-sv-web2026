@@ -1,0 +1,178 @@
+
+/* ============================================================================ */
+/* Estilos del Sidebar - Restaurante Orígenes SV */
+/* ============================================================================ */
+
+.sidebar-origenes {
+  width: 260px;
+  min-width: 260px;
+  flex: 0 0 260px;
+  box-sizing: border-box;
+
+  min-height: 100vh;
+  background: rgba(38, 28, 20, 0.92); // Tono marrón oscuro ($dark) con opacidad
+  backdrop-filter: blur(12px);
+  border-right: 1px solid rgba(204, 166, 121, 0.25);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  position: relative;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+
+  // Estado colapsado (compacto)
+  &.collapsed {
+    width: 80px;
+    min-width: 80px;
+    flex-basis: 80px;
+
+    .sidebar-header {
+      justify-content: center;
+    }
+
+    .sidebar-link, .logout-button {
+      justify-content: center;
+      padding: 0.75rem;
+    }
+  }
+}
+
+// Botón circular para abrir/cerrar
+.btn-toggle-sidebar {
+  position: absolute;
+  top: 24px;
+  right: -14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #CCA679;
+  color: #261C14;
+  border: 2px solid #261C14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, background 0.2s ease;
+
+  &:hover {
+    background: #DE8332;
+    color: #FFF;
+    transform: scale(1.1);
+  }
+}
+
+// Header con Logo y Marca
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.5rem 0.25rem;
+
+  .sidebar-logo {
+    width: 62px;
+    height: 62px;
+    object-fit: contain;
+  }
+
+  .brand-title {
+    color: #FAEADB;
+    font-size: 1.35rem;
+    margin: 0;
+    line-height: 1.1;
+    letter-spacing: 0.5px;
+  }
+
+  .brand-subtitle {
+    color: #CCA679;
+    font-size: 0.82rem;
+    letter-spacing: 1.5px;
+    font-weight: 300;
+  }
+}
+
+.sidebar-divider {
+  border-color: rgba(248, 171, 206, 0.4);
+  margin: 1.25rem 0;
+}
+
+// Navegación
+.sidebar-nav {
+  flex: 1;
+
+  .nav-item-container {
+    margin-bottom: 0.4rem;
+  }
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  color: #FAEADB;
+  text-decoration: none;
+  border-radius: 12px;
+  font-size: 0.93rem;
+  font-weight: 400;
+  transition: all 0.25s ease;
+
+  .link-icon {
+    font-size: 1.2rem;
+    color: #CCA679;
+    display: flex;
+    align-items: center;
+    transition: color 0.25s ease, transform 0.25s ease;
+  }
+
+  &:hover {
+    background: rgba(204, 166, 121, 0.15);
+    color: #FFF;
+
+    .link-icon {
+      color: #DE8332;
+      transform: translateX(2px);
+    }
+  }
+
+  &.active {
+    background: linear-gradient(135deg, #DE8332 0%, #8e0365 100%);
+    color: #FFF;
+    box-shadow: 0 4px 15px rgba(222, 131, 50, 0.35);
+
+    .link-icon {
+      color: #FFF;
+    }
+  }
+}
+
+// Footer y Botón de Salir
+.sidebar-footer {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(204, 166, 121, 0.2);
+}
+
+.logout-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: #b54343;
+  color: #ffffff;
+  border-radius: 12px;
+  border: transparent;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+
+  .link-icon {
+    font-size: 1.1rem;
+  }
+
+  &:hover {
+    background: #e83f56;
+    color: #FFF;
+    box-shadow: 0 4px 12px rgba(232, 63, 86, 0.3);
+  }
+}
