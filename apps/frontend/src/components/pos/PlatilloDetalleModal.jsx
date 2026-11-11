@@ -1,5 +1,5 @@
-
 import { useEffect } from "react";
+import Feedback from "../Common/Feedback.jsx";
 
 const formatoCantidad = (valor) =>
   Number(valor ?? 0).toLocaleString("es-SV", {
@@ -57,17 +57,14 @@ export default function PlatilloDetalleModal({
             <p className="mt-3 mb-0">Cargando ingredientes...</p>
           </div>
         ) : error ? (
-          <div className="alert alert-danger m-0">{error}</div>
+          <Feedback color="danger">{error}</Feedback>
         ) : platillo ? (
           <>
             <header className="pos-detalle-encabezado">
               <div className="d-flex justify-content-between align-items-start gap-3">
                 <span className="pos-detalle-tipo">
-                  {platillo.tipo === "ELABORADO"
-                    ? "ELABORADO"
-                    : "REVENTA"}
+                  {platillo.tipo === "ELABORADO" ? "ELABORADO" : "REVENTA"}
                 </span>
-
                 <strong className="pos-detalle-precio">
                   ${Number(platillo.precio).toFixed(2)}
                 </strong>
@@ -76,7 +73,6 @@ export default function PlatilloDetalleModal({
               <h2 id="pos-detalle-titulo" className="pos-detalle-nombre">
                 {platillo.nombre}
               </h2>
-
               <p className="pos-detalle-categoria">
                 {platillo.categoria || "Sin categoría"}
               </p>
@@ -89,10 +85,7 @@ export default function PlatilloDetalleModal({
               </div>
 
               {ingredientes.map((ingrediente) => (
-                <div
-                  className="pos-detalle-fila"
-                  key={ingrediente.insumo_id}
-                >
+                <div className="pos-detalle-fila" key={ingrediente.insumo_id}>
                   <div className="pos-detalle-receta">
                     <span>{ingrediente.nombre}</span>
                     <strong>
@@ -130,7 +123,6 @@ export default function PlatilloDetalleModal({
                   ? "Ingredientes suficientes"
                   : "⚠ Ingredientes insuficientes"}
               </span>
-
               <span
                 className={`pos-detalle-estado ${
                   disponible ? "" : "no-disponible"
