@@ -1,6 +1,6 @@
 # Diagrama de clases del dominio
 
-El diagrama representa las entidades persistidas de Orígenes SV. Los atributos muestran sus tipos y nulabilidad. Las asociaciones siguen las claves foráneas de Prisma.
+El diagrama representa las entidades persistidas de Orígenes SV. Los atributos muestran sus tipos y si admiten valores nulos. Las asociaciones siguen las claves foráneas de Prisma.
 
 ```mermaid
 classDiagram
@@ -158,4 +158,4 @@ usuarios "1" -- "0..*" ventas
 - inventario_sucursal y recetas utilizan claves primarias compuestas.
 - El correlativo de una venta es único por sucursal y tipo de documento.
 
-El esquema Prisma conserva las claves y restricciones completas. El diagrama se generó con apoyo de Codex a partir de ese esquema.
+El esquema Prisma conserva las claves y restricciones completas. 
