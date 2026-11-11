@@ -35,7 +35,7 @@ export async function getSucursalPorId(req, res) {
   }
 
   try {
-    const sucursal = await sucursalService.obtenerSucursalPorId(sucursalId);
+    const sucursal = await sucursalService.obtenerSucursalPorId(sucursalId, true);
 
     if (!sucursal) {
       return res

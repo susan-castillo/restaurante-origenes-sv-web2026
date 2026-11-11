@@ -1,6 +1,7 @@
 import { Button, Card, CardBody, CardTitle } from 'reactstrap';
 import { MapPin, Store } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SucursalMetricas from './SucursalMetricas.jsx';
 
 export default function SucursalCard({ sucursal, puedeGestionar }) {
     return (
@@ -17,6 +18,7 @@ export default function SucursalCard({ sucursal, puedeGestionar }) {
                     <MapPin size={17} aria-hidden="true" />
                     {sucursal.direccion || 'Dirección no registrada'}
                 </p>
+                <SucursalMetricas resumen={sucursal.resumen} />
                 <div className="sucursal-card__acciones d-flex flex-wrap gap-2">
                     <Button tag={Link} to={`/admin/sucursales/${sucursal.id}`} color="primary" outline
                         aria-label={`Ver sede: ${sucursal.nombre}`}>

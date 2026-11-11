@@ -53,6 +53,14 @@
   }
 
   &__detalle { max-width: 760px; }
+  .sucursal-metricas {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e4d7c9;
+    dl > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    dt { font-weight: 400; }
+    dd { margin: 0; font-weight: 600; }
+  }
   &__detalle-con-estado {
     display: grid;
     grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);

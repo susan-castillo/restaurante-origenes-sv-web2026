@@ -1,5 +1,23 @@
 import { prisma } from "../models/db.js";
 import { esAdminCentral } from "../middlewares/sucursalAccess.js";
+import { rangoDiaSV } from "../utils/fechaSV.js";
+
+async function obtenerResumenSucursal(id, rango = rangoDiaSV()) {
+  const [empleados, ventas] = await Promise.all([
+    prisma.usuarios.count({ where: { sucursal_id: id, activo: true } }),
+    prisma.ventas.aggregate({
+      where: { sucursal_id: id, creado_en: { gte: rango.inicio, lt: rango.fin } },
+      _sum: { total: true },
+      _count: { _all: true },
+    }),
+  ]);
+  return {
+    fecha: rango.fecha,
+    empleados_activos: empleados,
+    ventas_hoy: String(ventas._sum.total ?? "0"),
+    transacciones_hoy: ventas._count._all,
+  };
+}
 
 export const getSucursales = async (usuario, incluirInactivas = false) => {
   const central = esAdminCentral(usuario);
@@ -12,11 +30,17 @@ export const getSucursales = async (usuario, incluirInactivas = false) => {
     where.activa = true;
   }
 
-  return prisma.sucursales.findMany({
+  const sucursales = await prisma.sucursales.findMany({
     where,
     select: { id: true, nombre: true, direccion: true, activa: true },
     orderBy: { nombre: "asc" },
   });
+  if (!incluirInactivas || usuario.rol !== "ADMIN") return sucursales;
+  const rango = rangoDiaSV();
+  return Promise.all(sucursales.map(async (sucursal) => ({
+    ...sucursal,
+    resumen: await obtenerResumenSucursal(sucursal.id, rango),
+  })));
 };
 
 export async function crearSucursal(nombre, direccion) {
@@ -30,12 +54,13 @@ export async function crearSucursal(nombre, direccion) {
   return nuevaSucursal;
 }
 
-export async function obtenerSucursalPorId(id) {
+export async function obtenerSucursalPorId(id, incluirResumen = false) {
   const sucursal = await prisma.sucursales.findUnique({
     where: { id: id },
   });
 
-  return sucursal;
+  if (!sucursal || !incluirResumen) return sucursal;
+  return { ...sucursal, resumen: await obtenerResumenSucursal(id) };
 }
 
 export async function actualizarSucursal(id, { nombre, direccion, activa }) {
@@ -65,16 +90,7 @@ export async function obtenerEstadisticasDashboard() {
     select: { id: true, nombre: true },
   });
 
-  const fechaSV = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/El_Salvador",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-
-  // Armamos desde las 00:00:00 hasta las 23:59:59 con el offset -06:00
-  const inicioDiaSV = new Date(`${fechaSV}T00:00:00.000-06:00`);
-  const finDiaSV = new Date(`${fechaSV}T23:59:59.999-06:00`);
+  const { inicio: inicioDiaSV, fin: finDiaSV } = rangoDiaSV();
 
   let totalGlobalVentas = 0;
   let totalGlobalCompras = 0;
@@ -107,7 +123,7 @@ export async function obtenerEstadisticasDashboard() {
           sucursal_id: sucursal.id,
           creado_en: {
             gte: inicioDiaSV,
-            lte: finDiaSV,
+            lt: finDiaSV,
           },
         },
         _sum: { total: true },

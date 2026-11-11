@@ -4,6 +4,7 @@ import { Alert, Button, Card, CardBody, CardTitle, Spinner } from 'reactstrap';
 import { ArrowLeft } from 'lucide-react';
 import SucursalForm from '../components/sucursales/SucursalForm.jsx';
 import SucursalEstadoConfirmacion from '../components/sucursales/SucursalEstadoConfirmacion.jsx';
+import SucursalMetricas from '../components/sucursales/SucursalMetricas.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { esAdminCentral } from '../config/navegacion.js';
 import { getSucursalPorId } from '../services/sucursales.js';
@@ -46,7 +47,7 @@ export default function SucursalDetallePage() {
 
     const guardarResultado = (sedeActualizada, mensaje) => {
         sincronizarSucursal(sedeActualizada);
-        setResultado({ id, intento, sucursal: sedeActualizada, mensaje });
+        setResultado({ id, intento, sucursal: { ...sedeActualizada, resumen: sucursal.resumen }, mensaje });
         cerrarAccion();
     };
 
@@ -88,6 +89,7 @@ export default function SucursalDetallePage() {
                                 <div><dt>Dirección</dt><dd>{sucursal.direccion || 'Dirección no registrada'}</dd></div>
                                 <div><dt>Estado actual</dt><dd>{sucursal.activa ? 'Activa' : 'Inactiva'}</dd></div>
                             </dl>
+                            <SucursalMetricas resumen={sucursal.resumen} detalle />
                             {puedeGestionar && !confirmandoEstado && (
                                 <div className="d-flex flex-wrap gap-2 mt-3">
                                     <Button tag={Link} to="?editar=1" color="primary" outline>Editar sede</Button>
