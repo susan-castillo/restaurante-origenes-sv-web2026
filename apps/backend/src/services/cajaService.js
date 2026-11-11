@@ -25,30 +25,21 @@ export const getEstadoCaja = async (sucursalId) => {
 };
 
 export async function aperturaCaja(sucursalId, usuarioId, montoInicial) {
-  const turnoActivo = await prisma.turnos_caja.findFirst({
-    where: {
-      sucursal_id: sucursalId,
-      usuario_id: usuarioId,
-      estado: "ABIERTO",
-    },
-  });
+  return prisma.$transaction(async (tx) => {
+    const turnoActivo = await tx.turnos_caja.findFirst({
+      where: { sucursal_id: sucursalId, usuario_id: usuarioId, estado: "ABIERTO", cerrado_en: null },
+    });
+    if (turnoActivo) throw new Error("TURNO_YA_ABIERTO");
 
-  // Verificamos si hay turno activo
-  if (turnoActivo) {
-    throw new Error(
-      "El usuario ya tiene un turno de caja abierto en esta sucursal",
-    );
-  }
-
-  const nuevoTurno = await prisma.turnos_caja.create({
-    data: {
-      sucursal_id: sucursalId,
-      usuario_id: usuarioId,
-      monto_inicial: montoInicial,
-      estado: "ABIERTO",
-    },
-  });
-  return nuevoTurno;
+    return tx.turnos_caja.create({
+      data: {
+        sucursal_id: sucursalId,
+        usuario_id: usuarioId,
+        monto_inicial: montoInicial,
+        estado: "ABIERTO",
+      },
+    });
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function cierreCaja(idTurno, efectivoContado) {

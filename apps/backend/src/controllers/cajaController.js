@@ -23,33 +23,24 @@ export const getEstadoCaja = async (req, res) => {
   }
 };
 
+export async function getMiTurno(req, res) {
+  const { id, sucursal_id: sucursalId } = req.usuario;
+  if (!sucursalId) {
+    return res.status(403).json({ error: "Tu cuenta necesita una sucursal asignada." });
+  }
+  const turno = await cajaService.obtenerTurnoAbierto(sucursalId, id);
+  return res.json({ turno });
+}
+
 export async function aperturaCaja(req, res) {
-  const sucursalId = req.query.sucursal_id || req.usuario?.sucursal_id;
-  const usuarioId = req.usuario?.id || req.body.usuario_id;
-  const monto_inicial = req.body.monto_inicial;
+  const { id: idUsuario, sucursal_id: idSucursal } = req.usuario;
+  const montoInicial = req.body?.monto_inicial;
 
-  if (!sucursalId || !usuarioId || monto_inicial === undefined) {
-    return res
-      .status(400)
-      .json({ error: "Faltan datos obligatorios para abrir la caja." });
+  if (!idSucursal) {
+    return res.status(403).json({ error: "Tu cuenta necesita una sucursal asignada para abrir caja." });
   }
-
-  const idSucursal = Number(sucursalId);
-  const idUsuario = Number(usuarioId);
-  const montoInicial = Number(monto_inicial);
-
-  if (!Number.isInteger(idSucursal) || idSucursal <= 0) {
-    return res.status(400).json({ error: "El ID de la sucursal es inválido." });
-  }
-
-  if (!Number.isInteger(idUsuario) || idUsuario <= 0) {
-    return res.status(400).json({ error: "El ID del usuario es inválido." });
-  }
-
-  if (isNaN(montoInicial) || montoInicial < 0) {
-    return res
-      .status(400)
-      .json({ error: "El monto inicial no puede ser negativo." });
+  if (typeof montoInicial !== "number" || !/^\d{1,8}(\.\d{1,2})?$/.test(String(montoInicial))) {
+    return res.status(400).json({ error: "Ingresa un monto inicial entre $0.00 y $99,999,999.99, con hasta dos decimales." });
   }
 
   try {
@@ -80,6 +71,9 @@ export async function aperturaCaja(req, res) {
       turno: cajaAbierta,
     });
   } catch (error) {
+    if (error.message === "TURNO_YA_ABIERTO" || error.code === "P2034") {
+      return res.status(409).json({ error: "Ya existe un turno abierto o hay otra apertura en curso. Actualiza el estado de caja." });
+    }
     return res.status(500).json({ error: "Error interno al abrir la caja." });
   }
 }

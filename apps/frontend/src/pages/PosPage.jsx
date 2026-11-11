@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { obtenerPlatillosPOS, crearVentaPOS, obtenerPlatilloPOS } from "../services/posService.js";
-import { getEstadoCaja } from "../services/cajasService.js";
+import { getMiTurno } from "../services/cajasService.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import PlatilloCard from "../components/pos/PlatilloCard.jsx";
 import CobroModal from "../components/pos/CobroModal.jsx";
 import VentaCompletadaModal from "../components/pos/VentaCompletadaModal.jsx";
 import { generarComprobantePDF } from "../utils/generarComprobantePDF.js";
 import PlatilloDetalleModal from "../components/pos/PlatilloDetalleModal.jsx";
+import AperturaCajaModal from "../components/pos/AperturaCajaModal.jsx";
 import "../styles/pos.scss";
 //Import para poder obtener la sucursal seleccionada
 import {useOutletContext} from "react-router-dom";
@@ -16,11 +17,9 @@ const moneda = (valor) => `$${Number(valor ?? 0).toFixed(2)}`;
 export default function PosPage() {
   const { usuario, cargando: cargandoAuth } = useAuth();
 
-  // Obtenemos la sucursal seleccionada actualmente en la barra superior
-  const {sucursalSeleccionada} = useOutletContext() || {};
-
-  // Determinamos el ID de la sucursal (Prioridad a la seleccionada en NavBar)
-  const sucursalId = sucursalSeleccionada?.id || usuario?.sucursal_id;
+  const { refrescarEstadoCaja } = useOutletContext() || {};
+  // Las ventas y los turnos de POS se registran en la sucursal de la sesión.
+  const sucursalId = usuario?.sucursal_id;
 
   // Estados del catálogo
   const [platillos, setPlatillos] = useState([]);
@@ -39,9 +38,13 @@ export default function PosPage() {
   const [ventaCompletada, setVentaCompletada] = useState(null);
 
   // Estados de caja
-  const [cajaAbierta, setCajaAbierta] = useState(false);
+  const [turnoCaja, setTurnoCaja] = useState(null);
+  const cajaAbierta = Boolean(turnoCaja);
   const [cargandoCaja, setCargandoCaja] = useState(true);
   const [errorCaja, setErrorCaja] = useState("");
+  const [revisionCaja, setRevisionCaja] = useState(0);
+  const [aperturaVisible, setAperturaVisible] = useState(false);
+  const actualizarCaja = () => setRevisionCaja((actual) => actual + 1);
 
   // Cargar catálogo
   useEffect(() => {
@@ -83,7 +86,7 @@ export default function PosPage() {
       if (cargandoAuth) return;
 
       if (!sucursalId) {
-        setCajaAbierta(false);
+        setTurnoCaja(null);
         setCargandoCaja(false);
         setErrorCaja("El usuario no tiene una sucursal asignada.");
         return;
@@ -91,15 +94,14 @@ export default function PosPage() {
 
       try {
         setCargandoCaja(true);
-        setCajaAbierta(false);
+        setTurnoCaja(null);
         setErrorCaja("");
 
-        const estado = await getEstadoCaja(sucursalId);
-
-        if (activo) setCajaAbierta(estado.abierta === true);
+        const { turno } = await getMiTurno();
+        if (activo) setTurnoCaja(turno);
       } catch (err) {
         if (activo) {
-          setCajaAbierta(false);
+          setTurnoCaja(null);
           setErrorCaja(
             err.message || "No se pudo consultar el estado de caja."
           );
@@ -114,7 +116,7 @@ export default function PosPage() {
     return () => {
       activo = false;
     };
-  }, [sucursalId, cargandoAuth]);
+  }, [sucursalId, usuario?.id, cargandoAuth, revisionCaja]);
 
   // Categorías disponibles
   const categorias = useMemo(
@@ -300,13 +302,24 @@ export default function PosPage() {
       )}
 
       {!cargandoCaja && errorCaja && (
-        <div className="alert alert-danger">{errorCaja}</div>
+        <div className="alert alert-danger d-flex align-items-center justify-content-between gap-3" role="alert">
+          <span>{errorCaja}</span>
+          {sucursalId && <button type="button" className="btn btn-outline-danger" onClick={actualizarCaja}>Reintentar</button>}
+        </div>
       )}
 
       {!cargandoCaja && !errorCaja && !cajaAbierta && (
-        <div className="alert alert-warning">
-          No hay una caja abierta en la sucursal.
-          Debes abrir una caja para realizar ventas.
+        <div className="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <span>Abre tu turno de caja para realizar ventas.</span>
+          <div className="d-flex flex-wrap gap-2">
+            <button type="button" className="btn btn-outline-dark" onClick={actualizarCaja}>Actualizar estado</button>
+            <button type="button" className="btn btn-primary" onClick={() => setAperturaVisible(true)}>Abrir caja</button>
+          </div>
+        </div>
+      )}
+      {!cargandoCaja && cajaAbierta && (
+        <div className="alert alert-success" role="status">
+          Turno #{turnoCaja.id} abierto · Fondo inicial {moneda(turnoCaja.monto_inicial)}
         </div>
       )}
       <div className="row g-4">
@@ -517,6 +530,17 @@ export default function PosPage() {
           </div>
         </aside>
       </div>
+      {aperturaVisible && (
+        <AperturaCajaModal
+          onCerrar={() => setAperturaVisible(false)}
+          onAbrir={(turno) => {
+            setTurnoCaja(turno);
+            setAperturaVisible(false);
+            refrescarEstadoCaja?.();
+          }}
+        />
+      )}
+
       {/* Modal de detalles del los ingredientes del platillo */}
       <PlatilloDetalleModal
         abierto={detalleAbierto}

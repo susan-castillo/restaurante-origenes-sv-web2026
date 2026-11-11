@@ -31,6 +31,8 @@ function DashboardLayout() {
     const [sucursales, setSucursales] = useState([]);
     const [sucursalSeleccionada, setSucursalSeleccionada] = useState(null);
     const [cajaAbierta, setCajaAbierta] = useState(false);
+    const [revisionCaja, setRevisionCaja] = useState(0);
+    const refrescarEstadoCaja = () => setRevisionCaja((actual) => actual + 1);
 
     // 1. Cargar la lista de sucursales desde la API
     useEffect(() => {
@@ -73,7 +75,7 @@ function DashboardLayout() {
 
         consultarCaja();
         return () => { vigente = false; };
-    }, [sucursalSeleccionada?.id]);
+    }, [sucursalSeleccionada?.id, revisionCaja]);
 
     // 3. Cambiar sucursal
     const handleCambiarSucursal = (sucursal) => {
@@ -112,7 +114,7 @@ function DashboardLayout() {
                 <Sidebar onLogout={cerrarSesion} />
                 <main className="flex-grow-1 p-4 bg-light">
                     {/* Aquí se dibuja la página que corresponde a la ruta */}
-                    <Outlet context={{sucursalSeleccionada, sucursales, handleCambiarSucursal, sincronizarSucursal}} />
+                    <Outlet context={{sucursalSeleccionada, sucursales, handleCambiarSucursal, sincronizarSucursal, refrescarEstadoCaja}} />
                 </main>
             </div>
         </div>
