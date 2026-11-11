@@ -8,3 +8,7 @@ export const crearSucursal = (nombre, direccion) => apiFetch('/sucursales', {
     method: 'POST',
     body: JSON.stringify({ nombreSucursal: nombre, direccionSucursal: direccion }),
 });
+export const actualizarSucursal = (id, cambios) => apiFetch(`/sucursales/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(cambios),
+});
