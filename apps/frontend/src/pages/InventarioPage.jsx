@@ -47,7 +47,7 @@ import Tabs from "../components/Common/Tabs.jsx";
 
 import StatusBadge from "../components/Common/StatusBadge.jsx";
 
-import { Pencil, Ban, BookOpen, RotateCcw } from "lucide-react";
+import {Pencil, Ban, BookOpen, RotateCcw, Trash2} from "lucide-react";
 
 import Modal from "../components/Common/Modal.jsx";
 
