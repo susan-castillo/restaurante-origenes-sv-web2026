@@ -17,6 +17,8 @@ import EnConstruccionPage from "./pages/EnConstruccion.jsx";
 import InventarioPage from './pages/InventarioPage.jsx';
 import SucursalesPage from './pages/SucursalesPage.jsx';
 import SucursalDetallePage from './pages/SucursalDetallePage.jsx';
+import ComprasPage from './pages/ComprasPage.jsx';
+import CajaHistorialPage from './pages/CajaHistorialPage.jsx';
 import PosPage from "./pages/PosPage.jsx";
 import EmpleadosPage from "./pages/EmpleadosPage.jsx";
 import PlanillaPage from "./pages/PlanillaPage.jsx";
@@ -35,6 +37,9 @@ function DashboardLayout() {
     const [sucursales, setSucursales] = useState([]);
     const [sucursalSeleccionada, setSucursalSeleccionada] = useState(null);
     const [cajaAbierta, setCajaAbierta] = useState(false);
+    const [revisionCaja, setRevisionCaja] = useState(0);
+    const refrescarEstadoCaja = () => setRevisionCaja((actual) => actual + 1);
+    const sucursalCajaId = sucursalSeleccionada?.id ?? usuario?.sucursal_id;
 
     // 1. Cargar la lista de sucursales desde la API
     useEffect(() => {
@@ -59,16 +64,14 @@ function DashboardLayout() {
     // 2. Verificar si la caja de la sucursal seleccionada está abierta
     useEffect(() => {
         let vigente = true;
-        const targetId = sucursalSeleccionada?.id || usuario?.sucursal_id;
-
-        if (!targetId) {
+        if (!sucursalCajaId) {
             setCajaAbierta(false);
             return;
         }
 
         const consultarCaja = async () => {
             try {
-                const res = await getEstadoCaja(targetId);
+                const res = await getEstadoCaja(sucursalCajaId);
                 if (vigente) setCajaAbierta(res?.abierta ?? res?.estado === "ABIERTA");
             } catch {
                 if (vigente) setCajaAbierta(false);
@@ -77,7 +80,7 @@ function DashboardLayout() {
 
         consultarCaja();
         return () => { vigente = false; };
-    }, [sucursalSeleccionada, usuario]);
+    }, [sucursalCajaId, revisionCaja]);
 
     // 3. Handlers para sucursales
     const handleCambiarSucursal = (sucursal) => {
@@ -86,7 +89,7 @@ function DashboardLayout() {
 
     const sincronizarSucursal = (sucursal) => {
         setSucursales((actuales) => {
-            const actualizadas = me.filter((sede) => sede.id !== sucursal.id);
+            const actualizadas = actuales.filter((sede) => sede.id !== sucursal.id);
             if (!sucursal.activa) return actualizadas;
             return [...actualizadas, sucursal].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
         });
@@ -114,8 +117,7 @@ function DashboardLayout() {
             <div className="d-flex flex-grow-1">
                 <Sidebar onLogout={cerrarSesion} />
                 <main className="flex-grow-1 p-4 bg-light">
-                    {/* Inyección del contexto para subpáginas que lo requieran */}
-                    <Outlet context={{ sucursalSeleccionada, sucursales, handleCambiarSucursal, sincronizarSucursal }} />
+                    <Outlet context={{ sucursalSeleccionada, sucursales, handleCambiarSucursal, sincronizarSucursal, refrescarEstadoCaja }} />
                 </main>
             </div>
         </div>
@@ -151,8 +153,8 @@ function AppRoutes() {
                         <Route path="/admin/inventario" element={<InventarioPage />} />
                         <Route path="/admin/sucursales" element={<SucursalesPage />} />
                         <Route path="/admin/sucursales/:id" element={<SucursalDetallePage />} />
-                        <Route path="/admin/compras" element={<EnConstruccionPage titulo="Compras" responsable="Frontend 4" />} />
-                        <Route path="/admin/caja" element={<EnConstruccionPage titulo="Historial de caja" responsable="Frontend 4" />} />
+                        <Route path="/admin/compras" element={<ComprasPage />} />
+                        <Route path="/admin/caja" element={<CajaHistorialPage />} />
                     </Route>
 
                     {/* Recursos humanos: RRHH y ADMIN */}

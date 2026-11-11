@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { obtenerPlatillosPOS, crearVentaPOS, obtenerPlatilloPOS } from "../services/posService.js";
-import { getEstadoCaja } from "../services/cajasService.js";
+import { abrirCaja, cerrarCaja, getMiTurno } from "../services/cajasService.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import PlatilloCard from "../components/pos/PlatilloCard.jsx";
 import Button from "../components/Common/Button.jsx";
@@ -9,6 +9,7 @@ import CobroModal from "../components/pos/CobroModal.jsx";
 import VentaCompletadaModal from "../components/pos/VentaCompletadaModal.jsx";
 import { generarComprobantePDF } from "../utils/generarComprobantePDF.js";
 import PlatilloDetalleModal from "../components/pos/PlatilloDetalleModal.jsx";
+import CajaMontoModal from "../components/pos/CajaMontoModal.jsx";
 import VistaPreviaFacturaModal from "../components/pos/VistaPreviaFacturaModal.jsx";
 import "../styles/pos.scss";
 
@@ -20,11 +21,10 @@ const moneda = (valor) => `$${Number(valor ?? 0).toFixed(2)}`;
 export default function PosPage() {
   const { usuario, cargando: cargandoAuth } = useAuth();
 
-  //* Obtenemos la sucursal seleccionada actualmente en la barra superior**
-  const { sucursalSeleccionada } = useOutletContext() || {};
-
-  //* Determinamos el ID de la sucursal (Prioridad a la seleccionada en NavBar)**
-  const sucursalId = sucursalSeleccionada?.id || usuario?.sucursal_id;
+  const { refrescarEstadoCaja, sucursales = [] } = useOutletContext() || {};
+  // Las ventas y los turnos de POS se registran en la sucursal de la sesión.
+  const sucursalId = usuario?.sucursal_id;
+  const sucursalTurno = sucursales.find((sucursal) => sucursal.id === sucursalId);
 
   //* Estados del catálogo**
   const [platillos, setPlatillos] = useState([]);
@@ -44,10 +44,16 @@ export default function PosPage() {
   const [vistaPreviaAbierta, setVistaPreviaAbierta] = useState(false);
   const [datosCobroPendientes, setDatosCobroPendientes] = useState(null);
 
-  //* Estados de caja**
-  const [cajaAbierta, setCajaAbierta] = useState(false);
+  // Estados de caja
+  const [turnoCaja, setTurnoCaja] = useState(null);
+  const cajaAbierta = Boolean(turnoCaja);
   const [cargandoCaja, setCargandoCaja] = useState(true);
   const [errorCaja, setErrorCaja] = useState("");
+  const [revisionCaja, setRevisionCaja] = useState(0);
+  const [aperturaVisible, setAperturaVisible] = useState(false);
+  const [cierreVisible, setCierreVisible] = useState(false);
+  const [reporteCierre, setReporteCierre] = useState(null);
+  const actualizarCaja = () => setRevisionCaja((actual) => actual + 1);
 
   //* Cargar catálogo**
   useEffect(() => {
@@ -84,20 +90,21 @@ export default function PosPage() {
     async function verificarCaja() {
       if (cargandoAuth) return;
       if (!sucursalId) {
-        setCajaAbierta(false);
+        setTurnoCaja(null);
         setCargandoCaja(false);
         setErrorCaja("El usuario no tiene una sucursal asignada.");
         return;
       }
       try {
         setCargandoCaja(true);
-        setCajaAbierta(false);
+        setTurnoCaja(null);
         setErrorCaja("");
-        const estado = await getEstadoCaja(sucursalId);
-        if (activo) setCajaAbierta(estado.abierta === true);
+
+        const { turno } = await getMiTurno();
+        if (activo) setTurnoCaja(turno);
       } catch (err) {
         if (activo) {
-          setCajaAbierta(false);
+          setTurnoCaja(null);
           setErrorCaja(
             err.message || "No se pudo consultar el estado de caja."
           );
@@ -111,7 +118,7 @@ export default function PosPage() {
     return () => {
       activo = false;
     };
-  }, [sucursalId, cargandoAuth]);
+  }, [sucursalId, usuario?.id, cargandoAuth, revisionCaja]);
 
   //* Categorías disponibles**
   const categorias = useMemo(
@@ -136,7 +143,7 @@ export default function PosPage() {
   }, [platillos, busqueda, categoria]);
 
   const habilitado =
-    !cargandoAuth && !cargandoCaja && cajaAbierta && !errorCaja;
+    !cargandoAuth && !cargandoCaja && cajaAbierta && !errorCaja && !cierreVisible;
 
   //* Agregar un producto al carrito**
   function agregarProducto(platillo) {
@@ -294,13 +301,59 @@ export default function PosPage() {
         </div>
       )}
       {!cargandoCaja && errorCaja && (
-        <Feedback color="danger">{errorCaja}</Feedback>
+        <div className="alert alert-danger d-flex align-items-center justify-content-between gap-3" role="alert">
+          <span>{errorCaja}</span>
+          {sucursalId && <button type="button" className="btn btn-outline-danger" onClick={actualizarCaja}>Reintentar</button>}
+        </div>
       )}
       {!cargandoCaja && !errorCaja && !cajaAbierta && (
-        <div className="alert alert-warning">
-          No hay una caja abierta en la sucursal.
-          Debes abrir una caja para realizar ventas.
+        <div className="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <span>Abre tu turno de caja para realizar ventas.</span>
+          <div className="d-flex flex-wrap gap-2">
+            <button type="button" className="btn btn-outline-dark" onClick={actualizarCaja}>Actualizar estado</button>
+            <button type="button" className="btn btn-primary" onClick={() => setAperturaVisible(true)}>Abrir caja</button>
+          </div>
         </div>
+      )}
+      {!cargandoCaja && cajaAbierta && (
+        <div className="alert alert-success d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <div>
+            <span role="status">Turno #{turnoCaja.id} abierto · Fondo inicial {moneda(turnoCaja.monto_inicial)}</span>
+            {carrito.length > 0 && <small className="d-block">Completa o vacía el carrito para cerrar caja.</small>}
+          </div>
+          <button type="button" className="btn btn-outline-dark" disabled={carrito.length > 0 || modalCobroAbierto || vistaPreviaAbierta}
+            onClick={() => setCierreVisible(true)}>Cerrar caja</button>
+        </div>
+      )}
+      {reporteCierre && (
+        <section className="alert alert-light border" aria-labelledby="cuadre-caja-titulo">
+          <div className="d-flex flex-wrap justify-content-between align-items-start gap-2">
+            <h2 id="cuadre-caja-titulo" className="h5">Cuadre del turno #{reporteCierre.turno_id}</h2>
+            <button type="button" className="btn-close" aria-label="Ocultar cuadre" onClick={() => setReporteCierre(null)} />
+          </div>
+          <p role="status" className="mb-2">Turno cerrado.</p>
+          <dl className="row mb-0">
+            <dt className="col-sm-7">Efectivo esperado</dt>
+            <dd className="col-sm-5">{moneda(reporteCierre.cuadre_efectivo.esperado_en_caja)}</dd>
+            <dt className="col-sm-7">Efectivo contado</dt>
+            <dd className="col-sm-5">{moneda(reporteCierre.cuadre_efectivo.reportado_por_cajero)}</dd>
+            <dt className="col-sm-7">Diferencia de efectivo</dt>
+            <dd className={reporteCierre.cuadre_efectivo.diferencia === 0 ? "col-sm-5" : "col-sm-5 text-danger fw-bold"}>
+              {moneda(reporteCierre.cuadre_efectivo.diferencia)}
+            </dd>
+            {[
+              ["Tarjeta", reporteCierre.cuadre_tarjeta],
+              ["Bitcoin", reporteCierre.cuadre_bitcoin],
+            ].map(([medio, cuadre]) => (
+              <div key={medio} className="row mx-0 px-0">
+                <dt className="col-sm-7">Diferencia de {medio}</dt>
+                <dd className={cuadre?.diferencia ? "col-sm-5 text-danger fw-bold" : "col-sm-5"}>
+                  {cuadre?.diferencia == null ? "Sin conciliar" : moneda(cuadre.diferencia)}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
       )}
       <div className="row g-4">
         {/*** Catálogo ***/}
@@ -495,7 +548,39 @@ export default function PosPage() {
           </div>
         </aside>
       </div>
-      {/*** Modal de detalles del los ingredientes del platillo ***/}
+      {aperturaVisible && (
+        <CajaMontoModal
+          titulo="Abrir caja"
+          etiqueta="Fondo inicial (USD)"
+          accion="Confirmar apertura"
+          onCerrar={() => setAperturaVisible(false)}
+          onConfirmar={async (monto) => {
+            const { turno } = await abrirCaja(monto);
+            setTurnoCaja(turno);
+            setReporteCierre(null);
+            setAperturaVisible(false);
+            refrescarEstadoCaja?.();
+          }}
+        />
+      )}
+      {cierreVisible && turnoCaja && (
+        <CajaMontoModal
+          titulo="Cerrar caja"
+          etiqueta="Efectivo contado (USD)"
+          accion="Confirmar cierre"
+          conciliacion
+          onCerrar={() => setCierreVisible(false)}
+          onConfirmar={async (efectivo, importesReportados) => {
+            const { reporte } = await cerrarCaja(turnoCaja.id, efectivo, importesReportados);
+            setReporteCierre(reporte);
+            setTurnoCaja(null);
+            setCierreVisible(false);
+            refrescarEstadoCaja?.();
+          }}
+        />
+      )}
+
+      {/* Modal de detalles del los ingredientes del platillo */}
       <PlatilloDetalleModal
         abierto={detalleAbierto}
         platillo={platilloDetalle}
@@ -516,7 +601,7 @@ export default function PosPage() {
         abierto={vistaPreviaAbierta}
         carrito={carrito}
         datosCobro={datosCobroPendientes}
-        sucursal={sucursalSeleccionada}
+        sucursal={sucursalTurno}
         onConfirmar={confirmarCobro}
         onVolver={() => {
           setVistaPreviaAbierta(false);
