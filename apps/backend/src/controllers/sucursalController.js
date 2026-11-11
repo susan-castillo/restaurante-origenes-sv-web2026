@@ -1,4 +1,5 @@
 import * as sucursalService from "../services/sucursalService.js";
+import { esAdminCentral } from "../middlewares/sucursalAccess.js";
 
 // Controlador para listar sucursales
 export const getSucursales = async (req, res) => {
@@ -29,8 +30,12 @@ export async function getSucursalPorId(req, res) {
     return res.status(400).json({ error: "El id de la sucursal es invalido" });
   }
 
+  if (!esAdminCentral(req.usuario) && req.usuario.sucursal_id !== sucursalId) {
+    return res.status(403).json({ error: "Solo puedes consultar tu sucursal asignada." });
+  }
+
   try {
-    const sucursal = await sucursalService.obtenerSucursalPorId(sucursalId);
+    const sucursal = await sucursalService.obtenerSucursalPorId(sucursalId, true);
 
     if (!sucursal) {
       return res
@@ -79,14 +84,18 @@ export async function registrarSucursal(req, res) {
 
 export async function actualizarSucursal(req, res) {
   const idSucursal = Number(req.params.id);
-  const { nombre, direccion } = req.body;
+  const { nombre, direccion, activa } = req.body ?? {};
 
   if (!Number.isInteger(idSucursal) || idSucursal <= 0) {
     return res.status(400).json({ error: "ID de sucursal invalido" });
   }
 
-  if (nombre === undefined && direccion === undefined) {
+  if (nombre === undefined && direccion === undefined && activa === undefined) {
     return res.status(400).json({ error: "Se debe enviar al menos un campo" });
+  }
+
+  if (activa !== undefined && typeof activa !== "boolean") {
+    return res.status(400).json({ error: "El estado activa debe ser booleano" });
   }
 
   if (nombre !== undefined) {
@@ -100,8 +109,7 @@ export async function actualizarSucursal(req, res) {
   try {
     const sucursal = await sucursalService.actualizarSucursal(
       idSucursal,
-      nombre,
-      direccion,
+      { nombre, direccion, activa },
     );
 
     return res.status(200).json({

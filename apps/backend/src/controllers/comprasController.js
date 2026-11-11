@@ -1,4 +1,5 @@
 import * as comprasService from "../services/comprasService.js";
+import * as sucursalService from "../services/sucursalService.js";
 
 export async function crearCompra(req, res) {
   const sucursalId = req.usuario?.sucursal_id;
@@ -40,6 +41,21 @@ export async function crearCompra(req, res) {
   }
 
   try {
+    const sucursalInfo = await sucursalService.obtenerSucursalPorId(sucursalId);
+
+    if (!sucursalInfo) {
+      return res
+        .status(404)
+        .json({ error: "La sucursal especificada no existe." });
+    }
+
+    if (sucursalInfo.activa === false) {
+      return res.status(403).json({
+        error:
+          "Acceso denegado: No se pueden registrar compras en una sucursal inactiva",
+      });
+    }
+
     const compra = await comprasService.registrarCompra(
       sucursalId,
       idProveedor,
