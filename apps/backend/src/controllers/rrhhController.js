@@ -1,7 +1,7 @@
 import * as rrhhService from '../services/rrhhService.js';
 import { idValido, aNumero } from '../utils/validaciones.js';
 
-const ROLES = ['ADMIN', 'EMPLEADO'];
+const ROLES = ['ADMIN', 'RRHH', 'EMPLEADO'];
 const CARGOS = ['BARISTA', 'CAJERO', 'GERENTE'];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -16,8 +16,13 @@ const errorPassword = (password) => {
 const validarUsuario = (body, { parcial = false } = {}) => {
     const datos = {};
 
+    // Al crear, estos tres campos son obligatorios
+    if (!parcial && (body.nombre === undefined || body.email === undefined || body.password === undefined)) {
+        return { error: 'Nombre, email y contraseña son requeridos.' };
+    }
+
     if (body.nombre !== undefined) {
-        const nombre = String(body.nombre).trim();
+        const nombre = typeof body.nombre === 'string' ? body.nombre.trim() : '';
         if (!nombre || nombre.length > 100) {
             return { error: 'El nombre es requerido y no puede superar 100 caracteres.' };
         }
@@ -25,7 +30,7 @@ const validarUsuario = (body, { parcial = false } = {}) => {
     }
 
     if (body.email !== undefined) {
-        const email = String(body.email).trim();
+        const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
         if (!EMAIL_REGEX.test(email) || email.length > 100) {
             return { error: 'El email debe ser un correo electrónico válido.' };
         }
@@ -43,7 +48,7 @@ const validarUsuario = (body, { parcial = false } = {}) => {
     if (body.rol !== undefined) {
         const rol = String(body.rol).trim().toUpperCase();
         if (!ROLES.includes(rol)) {
-            return { error: 'El rol debe ser ADMIN o EMPLEADO.' };
+            return { error: 'El rol debe ser ADMIN, RRHH o EMPLEADO.' };
         }
         datos.rol = rol;
     }
@@ -61,7 +66,7 @@ const validarUsuario = (body, { parcial = false } = {}) => {
         if (!Number.isFinite(salario) || salario < 0 || salario > 999999.99) {
             return { error: 'El salario base debe ser un número entre 0 y 999999.99.' };
         }
-        datos.salario_base = salario;
+        datos.salario_base = Math.round(salario * 100) / 100;
     }
 
     // null = usuario sin sucursal (por ejemplo, administración central)
@@ -77,12 +82,8 @@ const validarUsuario = (body, { parcial = false } = {}) => {
         }
     }
 
-    if (parcial) {
-        if (Object.keys(datos).length === 0) {
-            return { error: 'Envía al menos un campo para actualizar.' };
-        }
-    } else if (datos.nombre === undefined || datos.email === undefined) {
-        return { error: 'Nombre, email y contraseña son requeridos.' };
+    if (parcial && Object.keys(datos).length === 0) {
+        return { error: 'Envía al menos un campo para actualizar.' };
     }
 
     return { datos };
@@ -98,6 +99,10 @@ const validarId = (valor) => {
 };
 
 const manejarError = (error, res, mensajeGenerico) => {
+    // Errores de negocio lanzados desde el service (traen su propio código HTTP)
+    if (error.status) {
+        return res.status(error.status).json({ error: error.message });
+    }
     if (error.code === 'P2002') {
         return res.status(409).json({ error: 'Ya existe un usuario con ese email.' });
     }
@@ -160,7 +165,8 @@ export const desactivarUsuario = async (req, res) => {
         if (errorId) {
             return res.status(400).json({ error: errorId });
         }
-        const usuario = await rrhhService.desactivarUsuario(id);
+        // req.usuario.id = quién hace la acción (lo pone verifyToken)
+        const usuario = await rrhhService.desactivarUsuario(id, req.usuario.id);
         return res.status(200).json({ mensaje: 'Usuario desactivado exitosamente.', usuario });
     } catch (error) {
         return manejarError(error, res, 'Error al desactivar el usuario.');

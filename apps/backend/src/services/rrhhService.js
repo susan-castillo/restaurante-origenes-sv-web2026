@@ -17,6 +17,9 @@ const usuario = {
     activo: true
 };
 
+//Error de negocio. 
+const errorNegocio = (mensaje, status) => Object.assign(new Error(mensaje), { status });
+
 // Crear un nuevo usuario en la base de datos
 export const agregarUsuario = async (datosUsuario) => {
     const passwordHash = await bcrypt.hash(datosUsuario.password, saltRounds);
@@ -91,9 +94,28 @@ export const actualizarPassword = async (id, password) => {
 };
 
 // Desactivar un usuario de la base de datos.
-export const desactivarUsuario = async (id) => {
+export const desactivarUsuario = async (id, actorId) => {
+    const idUsuario = Number(id);
+
+    // Evita desactivarse el mismo usuario a sí mismo
+    if (idUsuario === actorId) {
+        throw errorNegocio('No puedes desactivar tu propio usuario.', 409);
+    }
+
+    // Debe de existir siempre un administrador
+    const objetivo = await prisma.usuarios.findUnique({
+        where: { id: idUsuario },
+        select: { rol: true }
+    });
+    if (objetivo?.rol === 'ADMIN') {
+        const admins = await prisma.usuarios.count({ where: { rol: 'ADMIN', activo: true } });
+        if (admins <= 1) {
+            throw errorNegocio('No puedes desactivar al único administrador.', 409);
+        }
+    }
+
     return prisma.usuarios.update({
-        where: { id: Number(id) },
+        where: { id: idUsuario },
         data: { activo: false },
         select: usuario
     });
