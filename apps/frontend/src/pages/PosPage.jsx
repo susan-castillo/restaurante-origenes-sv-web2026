@@ -21,9 +21,10 @@ const moneda = (valor) => `$${Number(valor ?? 0).toFixed(2)}`;
 export default function PosPage() {
   const { usuario, cargando: cargandoAuth } = useAuth();
 
-  const { refrescarEstadoCaja } = useOutletContext() || {};
+  const { refrescarEstadoCaja, sucursales = [] } = useOutletContext() || {};
   // Las ventas y los turnos de POS se registran en la sucursal de la sesión.
   const sucursalId = usuario?.sucursal_id;
+  const sucursalTurno = sucursales.find((sucursal) => sucursal.id === sucursalId);
 
   //* Estados del catálogo**
   const [platillos, setPlatillos] = useState([]);
@@ -588,7 +589,7 @@ export default function PosPage() {
         abierto={vistaPreviaAbierta}
         carrito={carrito}
         datosCobro={datosCobroPendientes}
-        sucursal={sucursalSeleccionada}
+        sucursal={sucursalTurno}
         onConfirmar={confirmarCobro}
         onVolver={() => {
           setVistaPreviaAbierta(false);
