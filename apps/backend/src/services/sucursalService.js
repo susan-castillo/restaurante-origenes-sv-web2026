@@ -1,24 +1,21 @@
 import { prisma } from "../models/db.js";
+import { esAdminCentral } from "../middlewares/sucursalAccess.js";
 
 export const getSucursales = async (usuario, incluirInactivas = false) => {
-  // 1. Si es ADMIN o su sucursal_id es null, devuelve TODAS las sucursales activas
-  if (usuario.rol === "ADMIN" || !usuario.sucursal_id) {
-    const condicionWhere = incluirInactivas ? {} : { activa: true };
-
-    return prisma.sucursales.findMany({
-      where: condicionWhere,
-      select: { id: true, nombre: true, direccion: true, activa: true },
-      orderBy: { nombre: "asc" },
-    });
+  const central = esAdminCentral(usuario);
+  if (!central && !usuario.sucursal_id) {
+    return [];
   }
 
-  // 2. Si es EMPLEADO o RRHH asignado a un local específico, devuelve SOLO su sucursal
+  const where = central ? {} : { id: usuario.sucursal_id };
+  if (!incluirInactivas || usuario.rol !== "ADMIN") {
+    where.activa = true;
+  }
+
   return prisma.sucursales.findMany({
-    where: {
-      id: usuario.sucursal_id,
-      activa: true,
-    },
-    select: { id: true, nombre: true, direccion: true },
+    where,
+    select: { id: true, nombre: true, direccion: true, activa: true },
+    orderBy: { nombre: "asc" },
   });
 };
 

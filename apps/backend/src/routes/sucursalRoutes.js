@@ -2,24 +2,24 @@ import { Router } from "express";
 import * as sucursalController from "../controllers/sucursalController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 import { requireRole } from "../middlewares/roleMiddleware.js";
+import { cargarAccesoSucursales, requireAdminCentral } from "../middlewares/sucursalAccess.js";
 const router = Router();
+router.use(verifyToken, cargarAccesoSucursales);
 
-// GET /api/sucursales/dashboard/estadisticas - Vista solo para ADMIN
+// GET /api/sucursales/dashboard/estadisticas - Resumen global de Administración central
 
 router.get(
   "/dashboard/estadisticas",
-  verifyToken,
-  requireRole("ADMIN"),
+  requireAdminCentral,
   sucursalController.getEstadisticasDashboard,
 );
 
 // GET /api/sucursales — Obtener la lista de sucursales activas
-router.get("/", verifyToken, sucursalController.getSucursales);
-router.get("/:id", verifyToken, sucursalController.getSucursalPorId);
-const requiereAdmin = [verifyToken, requireRole("ADMIN")];
-router.post("/", requiereAdmin, sucursalController.registrarSucursal);
-router.patch("/:id", requiereAdmin, sucursalController.actualizarSucursal);
-router.put("/:id", requiereAdmin, sucursalController.actualizarSucursal);
-router.delete("/:id", requiereAdmin, sucursalController.desactivarSucursal);
+router.get("/", sucursalController.getSucursales);
+router.get("/:id", requireRole("ADMIN"), sucursalController.getSucursalPorId);
+router.post("/", requireAdminCentral, sucursalController.registrarSucursal);
+router.patch("/:id", requireAdminCentral, sucursalController.actualizarSucursal);
+router.put("/:id", requireAdminCentral, sucursalController.actualizarSucursal);
+router.delete("/:id", requireAdminCentral, sucursalController.desactivarSucursal);
 
 export default router;

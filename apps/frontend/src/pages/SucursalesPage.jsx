@@ -4,6 +4,8 @@ import { Alert, Button, Input, Label, Spinner } from 'reactstrap';
 import { Plus, Search, Store } from 'lucide-react';
 import SucursalCard from '../components/sucursales/SucursalCard.jsx';
 import SucursalForm from '../components/sucursales/SucursalForm.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { esAdminCentral } from '../config/navegacion.js';
 import { getSucursalesAdministracion } from '../services/sucursales.js';
 import '../styles/sucursales.scss';
 
@@ -12,6 +14,8 @@ const normalizar = (texto) => String(texto ?? '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim();
 
 export default function SucursalesPage() {
+    const { usuario } = useAuth();
+    const puedeGestionar = esAdminCentral(usuario);
     const { sincronizarSucursal } = useOutletContext();
     const botonAgregar = useRef(null);
     const [sucursales, setSucursales] = useState([]);
@@ -76,14 +80,14 @@ export default function SucursalesPage() {
                     <h1 id="sucursales-titulo" className="font-origenes">Un mismo origen, distintas sedes</h1>
                     <p>Consulta las sucursales, sus direcciones y su estado.</p>
                 </div>
-                <Button color="primary" innerRef={botonAgregar} aria-expanded={formularioAbierto}
+                {puedeGestionar && <Button color="primary" innerRef={botonAgregar} aria-expanded={formularioAbierto}
                     className="d-inline-flex align-items-center gap-2"
                     onClick={() => {
                         setConfirmacion('');
                         setFormularioAbierto(true);
                     }}>
                     <Plus size={18} aria-hidden="true" /> Agregar sucursal
-                </Button>
+                </Button>}
             </header>
 
             {confirmacion && <Alert color="success" role="status">{confirmacion}</Alert>}
@@ -134,7 +138,9 @@ export default function SucursalesPage() {
                     </p>
                     {filtradas.length > 0 ? (
                         <div className="sucursales-page__grid">
-                            {filtradas.map((sucursal) => <SucursalCard key={sucursal.id} sucursal={sucursal} />)}
+                            {filtradas.map((sucursal) => (
+                                <SucursalCard key={sucursal.id} sucursal={sucursal} puedeGestionar={puedeGestionar} />
+                            ))}
                         </div>
                     ) : (
                         <div className="sucursales-page__mensaje">
@@ -146,7 +152,9 @@ export default function SucursalesPage() {
                     )}
                 </>
             )}
-            {formularioAbierto && <SucursalForm onCancel={cerrarFormulario} onSaved={confirmarCreacion} />}
+            {puedeGestionar && formularioAbierto && (
+                <SucursalForm onCancel={cerrarFormulario} onSaved={confirmarCreacion} />
+            )}
         </section>
     );
 }

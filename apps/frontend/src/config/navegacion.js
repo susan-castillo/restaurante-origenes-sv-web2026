@@ -39,3 +39,6 @@ export const menuPermitido = (usuario) =>
     MENU.filter(
         (item) => item.roles.includes(usuario.rol) && (!item.requiereSucursal || usuario.sucursal_id)
     );
+
+export const esAdminCentral = (usuario) =>
+    usuario?.rol === 'ADMIN' && usuario.sucursal_id === null;

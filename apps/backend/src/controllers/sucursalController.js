@@ -1,4 +1,5 @@
 import * as sucursalService from "../services/sucursalService.js";
+import { esAdminCentral } from "../middlewares/sucursalAccess.js";
 
 // Controlador para listar sucursales
 export const getSucursales = async (req, res) => {
@@ -27,6 +28,10 @@ export async function getSucursalPorId(req, res) {
 
   if (!Number.isInteger(sucursalId) || sucursalId <= 0) {
     return res.status(400).json({ error: "El id de la sucursal es invalido" });
+  }
+
+  if (!esAdminCentral(req.usuario) && req.usuario.sucursal_id !== sucursalId) {
+    return res.status(403).json({ error: "Solo puedes consultar tu sucursal asignada." });
   }
 
   try {

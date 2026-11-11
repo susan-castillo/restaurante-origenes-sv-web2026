@@ -2,7 +2,7 @@ import { Button, Card, CardBody, CardTitle } from 'reactstrap';
 import { MapPin, Store } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export default function SucursalCard({ sucursal }) {
+export default function SucursalCard({ sucursal, puedeGestionar }) {
     return (
         <Card tag="article" className="sucursal-card">
             <CardBody>
@@ -22,15 +22,19 @@ export default function SucursalCard({ sucursal }) {
                         aria-label={`Ver sede: ${sucursal.nombre}`}>
                         Ver sede
                     </Button>
-                    <Button tag={Link} to={`/admin/sucursales/${sucursal.id}?editar=1`} color="link"
-                        aria-label={`Editar sede: ${sucursal.nombre}`}>
-                        Editar
-                    </Button>
-                    <Button tag={Link} to={`/admin/sucursales/${sucursal.id}?estado=1`}
-                        color={sucursal.activa ? 'danger' : 'primary'} outline
-                        aria-label={`${sucursal.activa ? 'Desactivar' : 'Activar'} sede: ${sucursal.nombre}`}>
-                        {sucursal.activa ? 'Desactivar' : 'Activar'}
-                    </Button>
+                    {puedeGestionar && (
+                        <>
+                            <Button tag={Link} to={`/admin/sucursales/${sucursal.id}?editar=1`} color="link"
+                                aria-label={`Editar sede: ${sucursal.nombre}`}>
+                                Editar
+                            </Button>
+                            <Button tag={Link} to={`/admin/sucursales/${sucursal.id}?estado=1`}
+                                color={sucursal.activa ? 'danger' : 'primary'} outline
+                                aria-label={`${sucursal.activa ? 'Desactivar' : 'Activar'} sede: ${sucursal.nombre}`}>
+                                {sucursal.activa ? 'Desactivar' : 'Activar'}
+                            </Button>
+                        </>
+                    )}
                 </div>
             </CardBody>
         </Card>

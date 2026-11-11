@@ -4,15 +4,19 @@ import { Alert, Button, Card, CardBody, CardTitle, Spinner } from 'reactstrap';
 import { ArrowLeft } from 'lucide-react';
 import SucursalForm from '../components/sucursales/SucursalForm.jsx';
 import SucursalEstadoConfirmacion from '../components/sucursales/SucursalEstadoConfirmacion.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { esAdminCentral } from '../config/navegacion.js';
 import { getSucursalPorId } from '../services/sucursales.js';
 import '../styles/sucursales.scss';
 
 export default function SucursalDetallePage() {
     const { id } = useParams();
+    const { usuario } = useAuth();
+    const puedeGestionar = esAdminCentral(usuario);
     const [parametros, setParametros] = useSearchParams();
     const { sincronizarSucursal } = useOutletContext();
-    const editando = parametros.get('editar') === '1';
-    const confirmandoEstado = !editando && parametros.get('estado') === '1';
+    const editando = puedeGestionar && parametros.get('editar') === '1';
+    const confirmandoEstado = puedeGestionar && !editando && parametros.get('estado') === '1';
     const idValido = /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id));
     const [resultado, setResultado] = useState(null);
     const [intento, setIntento] = useState(0);
@@ -58,6 +62,8 @@ export default function SucursalDetallePage() {
 
             {!idValido || error?.status === 404 ? (
                 <Alert color="warning" role="alert">No se encontró la sucursal solicitada.</Alert>
+            ) : error?.status === 403 ? (
+                <Alert color="warning" role="alert">{error.message}</Alert>
             ) : error ? (
                 <Alert color="danger" role="alert">
                     <p>{error.message || 'No se pudo cargar la sucursal.'}</p>
@@ -82,7 +88,7 @@ export default function SucursalDetallePage() {
                                 <div><dt>Dirección</dt><dd>{sucursal.direccion || 'Dirección no registrada'}</dd></div>
                                 <div><dt>Estado actual</dt><dd>{sucursal.activa ? 'Activa' : 'Inactiva'}</dd></div>
                             </dl>
-                            {!confirmandoEstado && (
+                            {puedeGestionar && !confirmandoEstado && (
                                 <div className="d-flex flex-wrap gap-2 mt-3">
                                     <Button tag={Link} to="?editar=1" color="primary" outline>Editar sede</Button>
                                     <Button tag={Link} to="?estado=1" color={sucursal.activa ? 'danger' : 'primary'} outline>
