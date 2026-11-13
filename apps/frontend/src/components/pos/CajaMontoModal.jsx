@@ -1,7 +1,8 @@
+import Feedback from "../Common/Feedback.jsx";
 import Modal from '../Common/Modal.jsx';
 import Button from '../Common/Button.jsx';
 import { useId, useRef, useState } from 'react';
-import { Alert, Form, FormGroup, Input, Label } from 'reactstrap';
+import { Form, FormGroup, Input, Label } from 'reactstrap';
 
 const formatoImporte = /^\d{1,8}(\.\d{1,2})?$/;
 const medios = [
@@ -11,7 +12,6 @@ const medios = [
 
 export default function CajaMontoModal({ titulo, etiqueta, accion, onCerrar, onConfirmar, conciliacion = false }) {
     const id = useId();
-    const campoMonto = useRef(null);
     const seccionConciliacion = useRef(null);
     const [monto, setMonto] = useState('');
     const [reportados, setReportados] = useState({ tarjeta_reportada: '', bitcoin_reportado: '' });
@@ -57,7 +57,7 @@ export default function CajaMontoModal({ titulo, etiqueta, accion, onCerrar, onC
                     <FormGroup>
                         <Label for={`${id}-monto`}>{etiqueta}</Label>
                         <Input id={`${id}-monto`} type="number" min="0" max="99999999.99" step="0.01" required
-                            autoFocus innerRef={campoMonto} value={monto} disabled={guardando}
+                            autoFocus value={monto} disabled={guardando}
                             onChange={(evento) => setMonto(evento.target.value)} />
                     </FormGroup>
                     {conciliacion && (
@@ -77,7 +77,7 @@ export default function CajaMontoModal({ titulo, etiqueta, accion, onCerrar, onC
                             </div>
                         </details>
                     )}
-                    {error && <Alert color="danger" role="alert">{error}</Alert>}
+                    <Feedback>{error}</Feedback>
             </Form>
         </Modal>
     );
