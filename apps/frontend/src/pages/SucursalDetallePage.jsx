@@ -1,6 +1,8 @@
+import Button from '../components/Common/Button.jsx';
+import Card from '../components/Common/Card.jsx';
 import { useEffect, useState } from 'react';
 import { Link, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
-import { Alert, Button, Card, CardBody, CardTitle, Spinner } from 'reactstrap';
+import { Alert, CardTitle, Spinner } from 'reactstrap';
 import { ArrowLeft } from 'lucide-react';
 import SucursalForm from '../components/sucursales/SucursalForm.jsx';
 import SucursalEstadoConfirmacion from '../components/sucursales/SucursalEstadoConfirmacion.jsx';
@@ -68,7 +70,7 @@ export default function SucursalDetallePage() {
             ) : error ? (
                 <Alert color="danger" role="alert">
                     <p>{error.message || 'No se pudo cargar la sucursal.'}</p>
-                    <Button color="danger" outline onClick={() => setIntento((anterior) => anterior + 1)}>
+                    <Button variant="outline-danger" onClick={() => setIntento((anterior) => anterior + 1)}>
                         Reintentar
                     </Button>
                 </Alert>
@@ -82,23 +84,21 @@ export default function SucursalDetallePage() {
             ) : (
                 <div className={confirmandoEstado ? 'sucursales-page__detalle-con-estado' : 'sucursales-page__detalle'}>
                     <Card className="sucursal-card">
-                        <CardBody>
-                            <CardTitle tag="h2">Información de la sede</CardTitle>
-                            <dl className="sucursales-page__datos">
-                                <div><dt>Nombre</dt><dd>{sucursal.nombre}</dd></div>
-                                <div><dt>Dirección</dt><dd>{sucursal.direccion || 'Dirección no registrada'}</dd></div>
-                                <div><dt>Estado actual</dt><dd>{sucursal.activa ? 'Activa' : 'Inactiva'}</dd></div>
-                            </dl>
-                            <SucursalMetricas resumen={sucursal.resumen} detalle />
-                            {puedeGestionar && !confirmandoEstado && (
-                                <div className="d-flex flex-wrap gap-2 mt-3">
-                                    <Button tag={Link} to="?editar=1" color="primary" outline>Editar sede</Button>
-                                    <Button tag={Link} to="?estado=1" color={sucursal.activa ? 'danger' : 'primary'} outline>
-                                        {sucursal.activa ? 'Desactivar sede' : 'Activar sede'}
-                                    </Button>
-                                </div>
-                            )}
-                        </CardBody>
+                        <CardTitle tag="h2">Información de la sede</CardTitle>
+                        <dl className="sucursales-page__datos">
+                            <div><dt>Nombre</dt><dd>{sucursal.nombre}</dd></div>
+                            <div><dt>Dirección</dt><dd>{sucursal.direccion || 'Dirección no registrada'}</dd></div>
+                            <div><dt>Estado actual</dt><dd>{sucursal.activa ? 'Activa' : 'Inactiva'}</dd></div>
+                        </dl>
+                        <SucursalMetricas resumen={sucursal.resumen} detalle />
+                        {puedeGestionar && !confirmandoEstado && (
+                            <div className="d-flex flex-wrap gap-2 mt-3">
+                                <Button tag={Link} to="?editar=1" variant="outline-secondary">Editar sede</Button>
+                                <Button tag={Link} to="?estado=1" variant={`outline-${sucursal.activa ? 'danger' : 'secondary'}`}>
+                                    {sucursal.activa ? 'Desactivar sede' : 'Activar sede'}
+                                </Button>
+                            </div>
+                        )}
                     </Card>
                     {confirmandoEstado && (
                         <SucursalEstadoConfirmacion key={id} sucursal={sucursal} onCancel={cerrarAccion}
@@ -107,7 +107,7 @@ export default function SucursalDetallePage() {
                 </div>
             )}
 
-            <Button tag={Link} to="/admin/sucursales" color="primary" outline className="mt-4 d-inline-flex gap-2 align-items-center">
+            <Button tag={Link} to="/admin/sucursales" variant="outline-secondary" className="mt-4 d-inline-flex gap-2 align-items-center">
                 <ArrowLeft size={18} aria-hidden="true" /> Volver a sucursales
             </Button>
         </section>

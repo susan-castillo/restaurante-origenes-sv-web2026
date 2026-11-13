@@ -1,5 +1,7 @@
+import Button from '../Common/Button.jsx';
+import Card from '../Common/Card.jsx';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Card, CardBody, Col, Form, FormGroup, Input, Label, Row } from 'reactstrap';
+import { Alert, Col, Form, FormGroup, Input, Label, Row } from 'reactstrap';
 import { obtenerInsumos } from '../../services/insumosService.js';
 import { getProveedores, registrarCompra } from '../../services/comprasService.js';
 
@@ -85,14 +87,14 @@ export default function CompraForm({ usuario, onCancel, onSaved }) {
 
     return (
         <Card>
-            <CardBody>
+
                 <h2 className="h5">Registrar compra</h2>
                 <p className="text-muted">Sucursal: {usuario.sucursales?.nombre || usuario.sucursal || usuario.sucursal_id} · Pendiente de pago</p>
                 {cargando && <p role="status">Cargando proveedores e insumos…</p>}
                 {errorCarga && (
                     <Alert color="danger" role="alert">
                         <p>{errorCarga}</p>
-                        <Button outline color="danger" onClick={() => setIntento((actual) => actual + 1)}>Reintentar</Button>
+                        <Button variant="outline-danger" onClick={() => setIntento((actual) => actual + 1)}>Reintentar</Button>
                     </Alert>
                 )}
                 {!cargando && !errorCarga && !puedeGuardar && (
@@ -141,7 +143,7 @@ export default function CompraForm({ usuario, onCancel, onSaved }) {
                                 </Col>
                                 <Col md={2}><span className="d-block">Subtotal</span>{moneda.format(Number(fila.cantidad) * Number(fila.costo))}</Col>
                                 <Col md={2}>
-                                    <Button type="button" outline color="danger" disabled={filas.length === 1}
+                                    <Button type="button" variant="outline-danger" disabled={filas.length === 1}
                                         aria-label={`Quitar insumo ${indice + 1}`}
                                         onClick={() => setFilas((actuales) => actuales.filter((item) => item.id !== fila.id))}>
                                         Quitar
@@ -149,7 +151,7 @@ export default function CompraForm({ usuario, onCancel, onSaved }) {
                                 </Col>
                             </Row>
                         ))}
-                        <Button type="button" outline color="primary" onClick={() => {
+                        <Button type="button" variant="outline-secondary" onClick={() => {
                             const nueva = filaNueva(siguienteFila.current++);
                             setFilas((actuales) => [...actuales, nueva]);
                         }}>Agregar insumo</Button>
@@ -157,14 +159,14 @@ export default function CompraForm({ usuario, onCancel, onSaved }) {
                     <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4">
                         <strong>Total: {moneda.format(total)}</strong>
                         <div className="d-flex gap-2">
-                            <Button type="button" outline color="secondary" disabled={guardando} onClick={onCancel}>Cancelar</Button>
-                            <Button type="submit" color="primary" disabled={guardando || !puedeGuardar}>
+                            <Button type="button" variant="outline-secondary" disabled={guardando} onClick={onCancel}>Cancelar</Button>
+                            <Button type="submit" variant="secondary" disabled={guardando || !puedeGuardar}>
                                 {guardando ? 'Registrando…' : 'Registrar compra'}
                             </Button>
                         </div>
                     </div>
                 </Form>
-            </CardBody>
+
         </Card>
     );
 }

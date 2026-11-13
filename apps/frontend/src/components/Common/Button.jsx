@@ -1,5 +1,6 @@
 
 export default function Button({
+  tag: Component = "button",
   text,
   children,
   variant = "primary",
@@ -12,14 +13,14 @@ export default function Button({
   ...props
 }) {
   return (
-    <button
-      type={type}
+    <Component
+      type={Component === "button" ? type : undefined}
       className={`btn btn-${variant} btn-${size} app-button ${className}`}
       onClick={onClick}
       disabled={disabled || loading}
       {...props}
     >
       {loading ? "Cargando..." : children ?? text}
-    </button>
+    </Component>
   );
 }

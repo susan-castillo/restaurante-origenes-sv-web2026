@@ -1,5 +1,7 @@
+import Button from '../Common/Button.jsx';
+import Card from '../Common/Card.jsx';
 import { useEffect, useId, useRef, useState } from 'react';
-import { Alert, Button, Card, CardBody, CardTitle, Col, Form, FormGroup, Input, Label, Row } from 'reactstrap';
+import { Alert, CardTitle, Col, Form, FormGroup, Input, Label, Row } from 'reactstrap';
 import { actualizarSucursal, crearSucursal } from '../../services/sucursales.js';
 
 export default function SucursalForm({ sucursal, onCancel, onSaved }) {
@@ -55,42 +57,40 @@ export default function SucursalForm({ sucursal, onCancel, onSaved }) {
 
     return (
         <Card tag="section" className={`sucursal-card ${editando ? 'sucursales-page__detalle' : 'mt-4'}`} aria-labelledby={`${formId}-titulo`}>
-            <CardBody>
-                <CardTitle tag="h2" id={`${formId}-titulo`}>{editando ? 'Editar información de la sede' : 'Nueva sucursal'}</CardTitle>
-                <Form onSubmit={guardar} aria-busy={guardando}>
-                    {error && <Alert color="danger" role="alert">{error}</Alert>}
-                    <fieldset disabled={guardando}>
-                        <Row className="g-3">
-                            <Col md={editando ? 12 : 5}>
-                                <FormGroup>
-                                    <Label for={`${formId}-nombre`}>Nombre</Label>
-                                    <Input id={`${formId}-nombre`} innerRef={campoNombre} required
-                                        maxLength={100} value={nombre} onChange={(event) => setNombre(event.target.value)} />
-                                </FormGroup>
-                            </Col>
-                            <Col md={editando ? 12 : 5}>
-                                <FormGroup>
-                                    <Label for={`${formId}-direccion`}>Dirección</Label>
-                                    <Input id={`${formId}-direccion`} required maxLength={200}
-                                        value={direccion} onChange={(event) => setDireccion(event.target.value)} />
-                                </FormGroup>
-                            </Col>
-                            <Col md={editando ? 12 : 2}>
-                                <FormGroup>
-                                    <Label for={`${formId}-estado`}>{editando ? 'Estado actual' : 'Estado inicial'}</Label>
-                                    <Input id={`${formId}-estado`} value={sucursal?.activa === false ? 'Inactiva' : 'Activa'} readOnly />
-                                </FormGroup>
-                            </Col>
-                        </Row>
-                        <div className="d-flex flex-wrap justify-content-end gap-2">
-                            <Button type="button" color="secondary" outline onClick={onCancel}>Cancelar</Button>
-                            <Button type="submit" color="primary">
-                                {guardando ? 'Guardando…' : editando ? 'Guardar sede' : 'Crear sucursal'}
-                            </Button>
-                        </div>
-                    </fieldset>
-                </Form>
-            </CardBody>
+            <CardTitle tag="h2" id={`${formId}-titulo`}>{editando ? 'Editar información de la sede' : 'Nueva sucursal'}</CardTitle>
+            <Form onSubmit={guardar} aria-busy={guardando}>
+                {error && <Alert color="danger" role="alert">{error}</Alert>}
+                <fieldset disabled={guardando}>
+                    <Row className="g-3">
+                        <Col md={editando ? 12 : 5}>
+                            <FormGroup>
+                                <Label for={`${formId}-nombre`}>Nombre</Label>
+                                <Input id={`${formId}-nombre`} innerRef={campoNombre} required
+                                    maxLength={100} value={nombre} onChange={(event) => setNombre(event.target.value)} />
+                            </FormGroup>
+                        </Col>
+                        <Col md={editando ? 12 : 5}>
+                            <FormGroup>
+                                <Label for={`${formId}-direccion`}>Dirección</Label>
+                                <Input id={`${formId}-direccion`} required maxLength={200}
+                                    value={direccion} onChange={(event) => setDireccion(event.target.value)} />
+                            </FormGroup>
+                        </Col>
+                        <Col md={editando ? 12 : 2}>
+                            <FormGroup>
+                                <Label for={`${formId}-estado`}>{editando ? 'Estado actual' : 'Estado inicial'}</Label>
+                                <Input id={`${formId}-estado`} value={sucursal?.activa === false ? 'Inactiva' : 'Activa'} readOnly />
+                            </FormGroup>
+                        </Col>
+                    </Row>
+                    <div className="d-flex flex-wrap justify-content-end gap-2">
+                        <Button type="button" variant="outline-secondary" onClick={onCancel}>Cancelar</Button>
+                        <Button type="submit" variant="secondary">
+                            {guardando ? 'Guardando…' : editando ? 'Guardar sede' : 'Crear sucursal'}
+                        </Button>
+                    </div>
+                </fieldset>
+            </Form>
         </Card>
     );
 }

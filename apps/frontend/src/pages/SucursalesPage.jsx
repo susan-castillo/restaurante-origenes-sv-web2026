@@ -1,6 +1,7 @@
+import Button from '../components/Common/Button.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Alert, Button, Input, Label, Spinner } from 'reactstrap';
+import { Alert, Input, Label, Spinner } from 'reactstrap';
 import { Plus, Search, Store } from 'lucide-react';
 import SucursalCard from '../components/sucursales/SucursalCard.jsx';
 import SucursalForm from '../components/sucursales/SucursalForm.jsx';
@@ -80,7 +81,7 @@ export default function SucursalesPage() {
                     <h1 id="sucursales-titulo" className="font-origenes">Un mismo origen, distintas sedes</h1>
                     <p>Consulta las sucursales, sus direcciones y su estado.</p>
                 </div>
-                {puedeGestionar && <Button color="primary" innerRef={botonAgregar} aria-expanded={formularioAbierto}
+                {puedeGestionar && <Button variant="secondary" ref={botonAgregar} aria-expanded={formularioAbierto}
                     className="d-inline-flex align-items-center gap-2"
                     onClick={() => {
                         setConfirmacion('');
@@ -129,7 +130,7 @@ export default function SucursalesPage() {
             ) : error ? (
                 <Alert color="danger" role="alert">
                     <p>{error}</p>
-                    <Button color="danger" outline onClick={() => setIntento((actual) => actual + 1)}>Reintentar</Button>
+                    <Button variant="outline-danger" onClick={() => setIntento((actual) => actual + 1)}>Reintentar</Button>
                 </Alert>
             ) : (
                 <>
@@ -147,7 +148,7 @@ export default function SucursalesPage() {
                             <Store size={32} aria-hidden="true" />
                             <h2>{sucursales.length ? 'No hay coincidencias' : 'No hay sucursales registradas'}</h2>
                             <p>{sucursales.length ? 'Prueba con otros filtros.' : 'Las sucursales aparecerán aquí cuando estén disponibles.'}</p>
-                            {(busqueda || sucursalId || estado) && <Button color="primary" outline onClick={limpiarFiltros}>Limpiar filtros</Button>}
+                            {(busqueda || sucursalId || estado) && <Button variant="outline-secondary" onClick={limpiarFiltros}>Limpiar filtros</Button>}
                         </div>
                     )}
                 </>
