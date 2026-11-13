@@ -11,7 +11,7 @@ import { generarComprobantePDF } from "../utils/generarComprobantePDF.js";
 import PlatilloDetalleModal from "../components/pos/PlatilloDetalleModal.jsx";
 import CajaMontoModal from "../components/pos/CajaMontoModal.jsx";
 import VistaPreviaFacturaModal from "../components/pos/VistaPreviaFacturaModal.jsx";
-import "../styles/pos.scss";
+import "../styles/styles.scss";
 
 //**Import para poder obtener la sucursal seleccionada**
 import { useOutletContext } from "react-router-dom";
