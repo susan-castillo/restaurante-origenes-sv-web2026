@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Pencil, Ban } from "lucide-react";
 import { Alert, Col, Form, FormGroup, Input, Label, Row } from "reactstrap";
@@ -29,6 +28,18 @@ const vistas = [
     { value: "proveedores", label: "Proveedores" }
 ];
 
+function formatearNit(valor) {
+    const numeros = String(valor || "").replace(/\D/g, "").slice(0, 14);
+    const partes = [];
+
+    if (numeros.length > 0) partes.push(numeros.slice(0, 4));
+    if (numeros.length > 4) partes.push(numeros.slice(4, 10));
+    if (numeros.length > 10) partes.push(numeros.slice(10, 13));
+    if (numeros.length > 13) partes.push(numeros.slice(13, 14));
+
+    return partes.join("-");
+}
+
 export default function ComprasPage() {
     const { usuario } = useAuth();
 
@@ -44,7 +55,6 @@ export default function ComprasPage() {
     const [proveedores, setProveedores] = useState([]);
     const [cargandoProveedores, setCargandoProveedores] = useState(false);
     const [errorProveedores, setErrorProveedores] = useState("");
-    const [confirmacionProveedor, setConfirmacionProveedor] = useState("");
     const [busquedaProveedor, setBusquedaProveedor] = useState("");
 
     const [modalProveedor, setModalProveedor] = useState(false);
@@ -53,7 +63,10 @@ export default function ComprasPage() {
     const [nitProveedor, setNitProveedor] = useState("");
     const [errorProveedor, setErrorProveedor] = useState("");
     const [guardandoProveedor, setGuardandoProveedor] = useState(false);
+
+    const [proveedorEliminar, setProveedorEliminar] = useState(null);
     const [eliminandoProveedor, setEliminandoProveedor] = useState(null);
+    const [errorEliminar, setErrorEliminar] = useState("");
 
     async function consultar(evento) {
         evento.preventDefault();
@@ -139,7 +152,7 @@ export default function ComprasPage() {
     function abrirProveedor(proveedor = null) {
         setProveedorEditando(proveedor);
         setNombreProveedor(proveedor?.nombre || "");
-        setNitProveedor(proveedor?.nit || "");
+        setNitProveedor(formatearNit(proveedor?.nit || ""));
         setErrorProveedor("");
         setModalProveedor(true);
     }
@@ -158,14 +171,15 @@ export default function ComprasPage() {
 
         const nombre = nombreProveedor.trim();
         const nit = nitProveedor.trim();
+        const digitosNit = nit.replace(/\D/g, "");
 
         if (!nombre || nombre.length > 100) {
             setErrorProveedor("El nombre es obligatorio y admite hasta 100 caracteres.");
             return;
         }
 
-        if (nit.length > 20) {
-            setErrorProveedor("El NIT admite hasta 20 caracteres.");
+        if (nit && digitosNit.length !== 14) {
+            setErrorProveedor("El NIT debe contener exactamente 14 dígitos.");
             return;
         }
 
@@ -177,10 +191,8 @@ export default function ComprasPage() {
 
             if (proveedorEditando) {
                 await actualizarProveedor(proveedorEditando.id, datos);
-                setConfirmacionProveedor("Proveedor actualizado correctamente.");
             } else {
                 await crearProveedor(datos);
-                setConfirmacionProveedor("Proveedor registrado correctamente.");
             }
 
             setModalProveedor(false);
@@ -193,23 +205,30 @@ export default function ComprasPage() {
         }
     }
 
-    async function borrarProveedor(proveedor) {
+    function abrirEliminarProveedor(proveedor) {
+        setProveedorEliminar(proveedor);
+        setErrorEliminar("");
+    }
+
+    function cerrarEliminarProveedor() {
         if (eliminandoProveedor !== null) return;
 
-        if (!window.confirm(`¿Estás seguro de que deseas eliminar al proveedor "${proveedor.nombre}"?`)) {
-            return;
-        }
+        setProveedorEliminar(null);
+        setErrorEliminar("");
+    }
 
-        setEliminandoProveedor(proveedor.id);
-        setErrorProveedores("");
-        setConfirmacionProveedor("");
+    async function borrarProveedor() {
+        if (!proveedorEliminar || eliminandoProveedor !== null) return;
+
+        setEliminandoProveedor(proveedorEliminar.id);
+        setErrorEliminar("");
 
         try {
-            await eliminarProveedor(proveedor.id);
-            setConfirmacionProveedor("Proveedor eliminado correctamente.");
+            await eliminarProveedor(proveedorEliminar.id);
+            setProveedorEliminar(null);
             await cargarProveedores();
         } catch (err) {
-            setErrorProveedores(err.message || "No se pudo eliminar el proveedor.");
+            setErrorEliminar(err.message || "No se pudo eliminar el proveedor.");
         } finally {
             setEliminandoProveedor(null);
         }
@@ -246,7 +265,7 @@ export default function ComprasPage() {
                         </Button>
                     )
                 ) : (
-                    <Button variant="secondary" onClick={() => abrirProveedor()}>
+                    <Button variant="secondary" className="text-white" onClick={() => abrirProveedor()}>
                         Agregar proveedor
                     </Button>
                 )}
@@ -290,26 +309,14 @@ export default function ComprasPage() {
                                             <Col md={4}>
                                                 <FormGroup className="mb-0">
                                                     <Label for="compras-inicio">Fecha inicial</Label>
-                                                    <Input
-                                                        type="date"
-                                                        id="compras-inicio"
-                                                        required
-                                                        value={inicio}
-                                                        onChange={(e) => setInicio(e.target.value)}
-                                                    />
+                                                    <Input type="date" id="compras-inicio" required value={inicio} onChange={(e) => setInicio(e.target.value)} />
                                                 </FormGroup>
                                             </Col>
 
                                             <Col md={4}>
                                                 <FormGroup className="mb-0">
                                                     <Label for="compras-fin">Fecha final</Label>
-                                                    <Input
-                                                        type="date"
-                                                        id="compras-fin"
-                                                        required
-                                                        value={fin}
-                                                        onChange={(e) => setFin(e.target.value)}
-                                                    />
+                                                    <Input type="date" id="compras-fin" required value={fin} onChange={(e) => setFin(e.target.value)} />
                                                 </FormGroup>
                                             </Col>
 
@@ -359,12 +366,6 @@ export default function ComprasPage() {
                 </div>
             ) : (
                 <section className="compras-contenido" aria-label="Gestión de proveedores">
-                    {confirmacionProveedor && (
-                        <Alert color="success" role="status">
-                            {confirmacionProveedor}
-                        </Alert>
-                    )}
-
                     {errorProveedores && (
                         <Alert color="danger" role="alert">
                             {errorProveedores}
@@ -374,13 +375,7 @@ export default function ComprasPage() {
                     <div className="compras-filtros">
                         <Row>
                             <Col md={8}>
-                                <Input
-                                    type="search"
-                                    placeholder="Buscar proveedor por nombre o NIT..."
-                                    aria-label="Buscar proveedores"
-                                    value={busquedaProveedor}
-                                    onChange={(e) => setBusquedaProveedor(e.target.value)}
-                                />
+                                <Input type="search" placeholder="Buscar proveedor por nombre o NIT..." aria-label="Buscar proveedores" value={busquedaProveedor} onChange={(e) => setBusquedaProveedor(e.target.value)} />
                             </Col>
                         </Row>
                     </div>
@@ -421,25 +416,11 @@ export default function ComprasPage() {
 
                                             <td>
                                                 <div className="compras-acciones">
-                                                    <button
-                                                        type="button"
-                                                        className="compras-icono compras-icono--editar"
-                                                        title="Editar proveedor"
-                                                        aria-label={`Editar ${proveedor.nombre}`}
-                                                        disabled={eliminandoProveedor !== null}
-                                                        onClick={() => abrirProveedor(proveedor)}
-                                                    >
+                                                    <button type="button" className="compras-icono compras-icono--editar" title="Editar proveedor" aria-label={`Editar ${proveedor.nombre}`} disabled={eliminandoProveedor !== null} onClick={() => abrirProveedor(proveedor)}>
                                                         <Pencil />
                                                     </button>
 
-                                                    <button
-                                                        type="button"
-                                                        className="compras-icono compras-icono--eliminar"
-                                                        title="Eliminar proveedor"
-                                                        aria-label={`Eliminar ${proveedor.nombre}`}
-                                                        disabled={eliminandoProveedor !== null}
-                                                        onClick={() => borrarProveedor(proveedor)}
-                                                    >
+                                                    <button type="button" className="compras-icono compras-icono--eliminar" title="Eliminar proveedor" aria-label={`Eliminar ${proveedor.nombre}`} disabled={eliminandoProveedor !== null} onClick={() => abrirEliminarProveedor(proveedor)}>
                                                         <Ban />
                                                     </button>
                                                 </div>
@@ -459,20 +440,19 @@ export default function ComprasPage() {
                 onClose={guardandoProveedor ? undefined : cerrarModalProveedor}
                 footer={
                     <>
-                        <Button
-                            text="Cancelar"
-                            variant="outline-secondary"
-                            disabled={guardandoProveedor}
-                            onClick={cerrarModalProveedor}
-                        />
-                        <Button
-                            text={guardandoProveedor
-                                ? "Guardando…"
+                        <Button text="Cancelar" variant="outline-secondary" disabled={guardandoProveedor} onClick={cerrarModalProveedor}/>
+                        <Button text={guardandoProveedor? "Guardando…"
                                 : proveedorEditando
                                     ? "Guardar cambios"
                                     : "Agregar proveedor"}
                             variant="secondary"
-                            disabled={guardandoProveedor || !nombreProveedor.trim()}
+                            disabled={
+                                guardandoProveedor ||
+                                !nombreProveedor.trim() ||
+                                (nitProveedor.length > 0 &&
+                                    nitProveedor.replace(/\D/g, "").length !== 14)
+                            }
+                            className="text-white"
                             onClick={guardarProveedor}
                         />
                     </>
@@ -481,35 +461,46 @@ export default function ComprasPage() {
                 <Form onSubmit={guardarProveedor}>
                     <FormGroup>
                         <Label for="proveedor-nombre">Nombre del proveedor *</Label>
-                        <Input
-                            id="proveedor-nombre"
-                            type="text"
-                            placeholder="Ej. Distribuidora Central"
-                            value={nombreProveedor}
-                            maxLength={100}
-                            required
-                            disabled={guardandoProveedor}
-                            onChange={(e) => setNombreProveedor(e.target.value)}
-                        />
+                        <Input id="proveedor-nombre" type="text" placeholder="Ej. Distribuidora Central" value={nombreProveedor} maxLength={100} required disabled={guardandoProveedor} onChange={(e) => setNombreProveedor(e.target.value)} />
                     </FormGroup>
 
                     <FormGroup>
                         <Label for="proveedor-nit">NIT</Label>
-                        <Input
-                            id="proveedor-nit"
-                            type="text"
-                            placeholder="Número de identificación tributaria"
-                            value={nitProveedor}
-                            maxLength={20}
-                            disabled={guardandoProveedor}
-                            onChange={(e) => setNitProveedor(e.target.value)}
-                        />
+                        <Input id="proveedor-nit" type="text" inputMode="numeric" placeholder="0000-000000-000-0" value={nitProveedor} maxLength={17} disabled={guardandoProveedor} onChange={(e) => setNitProveedor(formatearNit(e.target.value))} />
                     </FormGroup>
 
                     {errorProveedor && (
                         <Alert color="danger" role="alert">{errorProveedor}</Alert>
                     )}
                 </Form>
+            </Modal>
+
+            <Modal
+                show={proveedorEliminar !== null}
+                title="Eliminar proveedor"
+                onClose={eliminandoProveedor !== null ? undefined : cerrarEliminarProveedor}
+                footer={
+                    <>
+                        <Button text="Cancelar" variant="outline-secondary" disabled={eliminandoProveedor !== null} onClick={cerrarEliminarProveedor} />
+                        <Button text={eliminandoProveedor !== null ? "Eliminando..." : "Eliminar"} variant="danger" disabled={eliminandoProveedor !== null} onClick={borrarProveedor} />
+                    </>
+                }
+            >
+                <p className="mb-3">
+                    ¿Estás seguro de que deseas eliminar al proveedor{" "}
+                    <strong>{proveedorEliminar?.nombre}</strong>?
+                </p>
+
+                <Alert color="warning" className="mb-0">
+                    El proveedor se eliminará permanentemente de la base de datos.
+                    Si tiene compras asociadas, no podrá eliminarse.
+                </Alert>
+
+                {errorEliminar && (
+                    <Alert color="danger" className="mt-3 mb-0" role="alert">
+                        {errorEliminar}
+                    </Alert>
+                )}
             </Modal>
         </section>
     );
