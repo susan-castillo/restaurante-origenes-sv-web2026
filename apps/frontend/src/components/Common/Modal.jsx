@@ -1,4 +1,3 @@
-
 import { useEffect, useId, useRef } from "react";
 
 export default function Modal({
@@ -8,6 +7,8 @@ export default function Modal({
   footer,
   onClose,
   size = "md",
+  closeOnBackdrop = false,
+  showCloseButton = true,
 }) {
   const titleId = useId();
   const dialogRef = useRef(null);
@@ -65,7 +66,12 @@ export default function Modal({
   if (!show) return null;
 
   return (
-    <div className="app-modal-overlay">
+    <div
+      className="app-modal-overlay"
+      onMouseDown={(event) => {
+        if (closeOnBackdrop && event.target === event.currentTarget) onClose?.();
+      }}
+    >
       <div
         className={`modal-dialog modal-${size} app-modal-dialog`}
         ref={dialogRef}
@@ -80,13 +86,15 @@ export default function Modal({
               {title}
             </h5>
 
-            <button
-              type="button"
-              className="btn-close"
-              aria-label="Cerrar"
-              onClick={onClose}
-              disabled={!onClose}
-            />
+            {showCloseButton && (
+              <button
+                type="button"
+                className="btn-close"
+                aria-label="Cerrar"
+                onClick={onClose}
+                disabled={!onClose}
+              />
+            )}
           </div>
 
           <div className="modal-body">

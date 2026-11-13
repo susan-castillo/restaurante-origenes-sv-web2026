@@ -1,3 +1,4 @@
+import Modal from "../Common/Modal.jsx";
 import Button from "../Common/Button.jsx";
 
 const moneda = (valor) => `$${Number(valor ?? 0).toFixed(2)}`;
@@ -12,13 +13,8 @@ export default function VentaCompletadaModal({
   const documento = venta.tipo_doc === "CCF" ? "CCF" : "Factura";
 
   return (
-    <div className="pos-modal-overlay">
-      <div
-        className="pos-venta-completada bg-white rounded-4 shadow-lg"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="pos-venta-completada-titulo"
-      >
+    <Modal show title="¡Venta completada!" showCloseButton={false}>
+      <div className="text-center">
         <div className="pos-venta-exito-icono">
           <svg
             width="38"
@@ -35,9 +31,6 @@ export default function VentaCompletadaModal({
           </svg>
         </div>
 
-        <h2 id="pos-venta-completada-titulo" className="font-origenes mb-2">
-          ¡Venta completada!
-        </h2>
         <p className="text-muted mb-4">
           La venta se registró correctamente.
         </p>
@@ -70,6 +63,6 @@ export default function VentaCompletadaModal({
           Nueva venta
         </Button>
       </div>
-    </div>
+    </Modal>
   );
 }
