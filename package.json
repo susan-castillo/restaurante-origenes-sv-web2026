@@ -33,5 +33,8 @@
   "homepage": "https://github.com/susan-castillo/restaurante-origenes-sv-web2026#readme",
   "devDependencies": {
     "sass-embedded": "^1.108.1"
+  },
+  "dependencies": {
+    "jspdf": "^4.2.1"
   }
 }
