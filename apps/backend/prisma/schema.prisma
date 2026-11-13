@@ -130,19 +130,19 @@ model sucursales {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model turnos_caja {
-  id               Int        @id @default(autoincrement())
-  sucursal_id      Int
-  usuario_id       Int
-  monto_inicial    Decimal    @db.Decimal(10, 2)
-  abierto_en       DateTime?  @default(now()) @db.Timestamp(6)
-  cerrado_en       DateTime?  @db.Timestamp(6)
-  efectivo_contado Decimal?   @db.Decimal(10, 2)
-  tarjeta_reportada Decimal?  @db.Decimal(10, 2)
-  bitcoin_reportado Decimal?  @db.Decimal(10, 2)
-  estado           String     @default("ABIERTO") @db.VarChar(10)
-  sucursales       sucursales @relation(fields: [sucursal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  usuarios         usuarios   @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  ventas           ventas[]
+  id                Int        @id @default(autoincrement())
+  sucursal_id       Int
+  usuario_id        Int
+  monto_inicial     Decimal    @db.Decimal(10, 2)
+  abierto_en        DateTime?  @default(now()) @db.Timestamp(6)
+  cerrado_en        DateTime?  @db.Timestamp(6)
+  efectivo_contado  Decimal?   @db.Decimal(10, 2)
+  estado            String     @default("ABIERTO") @db.VarChar(10)
+  tarjeta_reportada Decimal?   @db.Decimal(10, 2)
+  bitcoin_reportado Decimal?   @db.Decimal(10, 2)
+  sucursales        sucursales @relation(fields: [sucursal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios          usuarios   @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ventas            ventas[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
