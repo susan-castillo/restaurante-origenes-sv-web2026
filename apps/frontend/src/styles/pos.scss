@@ -818,3 +818,43 @@
     border-bottom: 1px solid #444;
   }
 }
+
+.pos-preview-modal {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.app-modal-overlay .modal-content:has(.pos-preview-contenido) {
+  max-height: calc(100dvh - 32px);
+
+  > .modal-header {
+    flex-shrink: 0;
+  }
+
+  > .modal-body {
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+.pos-preview-contenido {
+  flex: 0 0 auto;
+  overflow: visible;
+
+  &.container-fluid {
+    display: block;
+
+    > .row.h-100 {
+      height: auto !important;
+    }
+  }
+
+  .pos-preview-izquierda,
+  .pos-preview-derecha {
+    overflow: visible;
+  }
+
+  .pos-preview-derecha {
+    justify-content: flex-start;
+  }
+}
