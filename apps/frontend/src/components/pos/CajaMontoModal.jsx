@@ -1,5 +1,7 @@
+import Modal from '../Common/Modal.jsx';
+import Button from '../Common/Button.jsx';
 import { useId, useRef, useState } from 'react';
-import { Alert, Button, Form, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
+import { Alert, Form, FormGroup, Input, Label } from 'reactstrap';
 
 const formatoImporte = /^\d{1,8}(\.\d{1,2})?$/;
 const medios = [
@@ -43,15 +45,19 @@ export default function CajaMontoModal({ titulo, etiqueta, accion, onCerrar, onC
     }
 
     return (
-        <Modal isOpen toggle={cerrar} backdrop={guardando ? 'static' : true} keyboard={!guardando}
-            labelledBy={`${id}-titulo`} onOpened={() => campoMonto.current?.focus()}>
-            <ModalHeader id={`${id}-titulo`} toggle={cerrar}>{titulo}</ModalHeader>
-            <Form onSubmit={confirmar} aria-busy={guardando}>
-                <ModalBody>
+        <Modal show title={titulo} onClose={cerrar} footer={
+            <>
+                <Button variant="outline-secondary" disabled={guardando} onClick={onCerrar}>Cancelar</Button>
+                <Button type="submit" form={`${id}-form`} variant="secondary" disabled={guardando}>
+                    {guardando ? 'Guardando…' : accion}
+                </Button>
+            </>
+        }>
+            <Form id={`${id}-form`} onSubmit={confirmar} aria-busy={guardando}>
                     <FormGroup>
                         <Label for={`${id}-monto`}>{etiqueta}</Label>
                         <Input id={`${id}-monto`} type="number" min="0" max="99999999.99" step="0.01" required
-                            innerRef={campoMonto} value={monto} disabled={guardando}
+                            autoFocus innerRef={campoMonto} value={monto} disabled={guardando}
                             onChange={(evento) => setMonto(evento.target.value)} />
                     </FormGroup>
                     {conciliacion && (
@@ -72,13 +78,6 @@ export default function CajaMontoModal({ titulo, etiqueta, accion, onCerrar, onC
                         </details>
                     )}
                     {error && <Alert color="danger" role="alert">{error}</Alert>}
-                </ModalBody>
-                <ModalFooter>
-                    <Button type="button" outline color="secondary" disabled={guardando} onClick={onCerrar}>Cancelar</Button>
-                    <Button type="submit" color="primary" disabled={guardando}>
-                        {guardando ? 'Guardando…' : accion}
-                    </Button>
-                </ModalFooter>
             </Form>
         </Modal>
     );

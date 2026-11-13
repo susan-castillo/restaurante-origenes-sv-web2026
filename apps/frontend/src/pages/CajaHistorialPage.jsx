@@ -1,5 +1,6 @@
+import Button from '../components/Common/Button.jsx';
 import { useEffect, useState } from 'react';
-import { Alert, Button, Form, Input, Label, Spinner, Table } from 'reactstrap';
+import { Alert, Form, Input, Label, Spinner, Table } from 'reactstrap';
 import { esAdminCentral } from '../config/navegacion.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { getHistorialCaja } from '../services/cajasService.js';
@@ -90,8 +91,8 @@ export default function CajaHistorialPage() {
                             </Input>
                         </div>
                     )}
-                    <Button type="submit" color="primary">Consultar</Button>
-                    <Button type="button" color="secondary" outline onClick={limpiar}>Limpiar</Button>
+                    <Button type="submit" variant="secondary">Consultar</Button>
+                    <Button type="button" variant="outline-secondary" onClick={limpiar}>Limpiar</Button>
                 </div>
                 {errorRango && <p role="alert" className="text-danger mt-2 mb-0">{errorRango}</p>}
                 {central && errorSedes && <p role="status" className="mt-2 mb-0">{errorSedes}</p>}
@@ -103,7 +104,7 @@ export default function CajaHistorialPage() {
             ) : error ? (
                 <Alert color="danger">
                     <p>{error}</p>
-                    <Button color="danger" outline onClick={() => setConsulta({ ...consulta })}>Reintentar</Button>
+                    <Button variant="outline-danger" onClick={() => setConsulta({ ...consulta })}>Reintentar</Button>
                 </Alert>
             ) : (
                 <>
@@ -145,10 +146,10 @@ export default function CajaHistorialPage() {
                     ) : <p>No hay turnos cerrados para esta consulta.</p>}
                     {(consulta.cursores.length > 1 || pagina.siguiente !== null) && (
                         <nav aria-label="Páginas del historial de caja" className="d-flex gap-2 align-items-center">
-                            <Button outline disabled={consulta.cursores.length === 1}
+                            <Button variant="outline-secondary" disabled={consulta.cursores.length === 1}
                                 onClick={() => setConsulta({ ...consulta, cursores: consulta.cursores.slice(0, -1) })}>Anterior</Button>
                             <span>Página {consulta.cursores.length}</span>
-                            <Button outline disabled={pagina.siguiente === null}
+                            <Button variant="outline-secondary" disabled={pagina.siguiente === null}
                                 onClick={() => setConsulta({ ...consulta, cursores: [...consulta.cursores, pagina.siguiente] })}>Siguiente</Button>
                         </nav>
                     )}

@@ -1,5 +1,6 @@
 
 export default function Card({
+  tag: Component = "div",
   title,
   subtitle,
   children,
@@ -9,8 +10,9 @@ export default function Card({
   ...props
 }) {
   return (
-    <div
+    <Component
       className={`card app-card h-100 ${className}`}
+      onClick={onClick}
       {...props}
     >
       <div className="card-body">
@@ -30,6 +32,6 @@ export default function Card({
           {footer}
         </div>
       )}
-    </div>
+    </Component>
   );
 }

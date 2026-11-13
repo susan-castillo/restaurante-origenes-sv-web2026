@@ -1,5 +1,7 @@
+import Button from '../components/Common/Button.jsx';
+import Card from '../components/Common/Card.jsx';
 import { useState } from 'react';
-import { Alert, Button, Card, CardBody, Col, Form, FormGroup, Input, Label, Row } from 'reactstrap';
+import { Alert, Col, Form, FormGroup, Input, Label, Row } from 'reactstrap';
 import { getResumenCompras } from '../services/comprasService.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import CompraForm from '../components/compras/CompraForm.jsx';
@@ -55,7 +57,7 @@ export default function ComprasPage() {
                     <p className="text-muted mb-0">Registra compras y consulta los costos de un período.</p>
                 </div>
                 {!formularioAbierto && (
-                    <Button color="primary" disabled={!usuario?.sucursal_id || cargando}
+                    <Button variant="secondary" disabled={!usuario?.sucursal_id || cargando}
                         onClick={() => {
                             setConfirmacion('');
                             setFormularioAbierto(true);
@@ -81,34 +83,32 @@ export default function ComprasPage() {
             ) : (
             <>
             <Card className="mb-4">
-                <CardBody>
-                    <h2 className="h5 mb-3">Resumen de costos y gastos</h2>
-                    <Form onSubmit={consultar} aria-busy={cargando}>
-                        <fieldset disabled={cargando}>
-                            <Row className="align-items-end g-3">
-                                <Col md={4}>
-                                    <FormGroup className="mb-0">
-                                        <Label for="compras-inicio">Fecha inicial</Label>
-                                        <Input type="date" id="compras-inicio" required value={inicio}
-                                            onChange={(evento) => setInicio(evento.target.value)} />
-                                    </FormGroup>
-                                </Col>
-                                <Col md={4}>
-                                    <FormGroup className="mb-0">
-                                        <Label for="compras-fin">Fecha final</Label>
-                                        <Input type="date" id="compras-fin" required value={fin}
-                                            onChange={(evento) => setFin(evento.target.value)} />
-                                    </FormGroup>
-                                </Col>
-                                <Col md="auto">
-                                    <Button color="primary" type="submit">
-                                        {cargando ? 'Consultando…' : 'Consultar resumen'}
-                                    </Button>
-                                </Col>
-                            </Row>
-                        </fieldset>
-                    </Form>
-                </CardBody>
+                <h2 className="h5 mb-3">Resumen de costos y gastos</h2>
+                <Form onSubmit={consultar} aria-busy={cargando}>
+                    <fieldset disabled={cargando}>
+                        <Row className="align-items-end g-3">
+                            <Col md={4}>
+                                <FormGroup className="mb-0">
+                                    <Label for="compras-inicio">Fecha inicial</Label>
+                                    <Input type="date" id="compras-inicio" required value={inicio}
+                                        onChange={(evento) => setInicio(evento.target.value)} />
+                                </FormGroup>
+                            </Col>
+                            <Col md={4}>
+                                <FormGroup className="mb-0">
+                                    <Label for="compras-fin">Fecha final</Label>
+                                    <Input type="date" id="compras-fin" required value={fin}
+                                        onChange={(evento) => setFin(evento.target.value)} />
+                                </FormGroup>
+                            </Col>
+                            <Col md="auto">
+                                <Button variant="secondary" type="submit">
+                                    {cargando ? 'Consultando…' : 'Consultar resumen'}
+                                </Button>
+                            </Col>
+                        </Row>
+                    </fieldset>
+                </Form>
             </Card>
 
             {error && <Alert color="danger" role="alert">{error}</Alert>}
@@ -128,10 +128,8 @@ export default function ComprasPage() {
                         {campos.map(({ clave, titulo }) => (
                             <Col md={4} key={clave}>
                                 <Card className="h-100">
-                                    <CardBody>
-                                        <h3 className="h6 text-muted">{titulo}</h3>
-                                        <p className="fs-4 fw-semibold mb-0">{moneda.format(resultado.resumen[clave])}</p>
-                                    </CardBody>
+                                    <h3 className="h6 text-muted">{titulo}</h3>
+                                    <p className="fs-4 fw-semibold mb-0">{moneda.format(resultado.resumen[clave])}</p>
                                 </Card>
                             </Col>
                         ))}
