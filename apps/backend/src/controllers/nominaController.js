@@ -1,5 +1,20 @@
 import * as nominaService from '../services/nominaService.js';
-import { aNumero } from '../utils/validaciones.js';
+import { aNumero, idValido } from '../utils/validaciones.js';
+
+
+// Usuario de sede 
+// Admin Global (ADMIN con sucursal_id null)
+const resolverSucursal = async (req) => {
+    const { rol, sucursal_id } = await nominaService.obtenerAccesoUsuario(req.usuario.id);
+
+    if (sucursal_id != null) {
+        return idValido(sucursal_id);
+    }
+    if (rol !== 'ADMIN') {
+        return null; // sin sucursal y no es admin: responde 400
+    }
+    return idValido(req.query.sucursal_id ?? req.body?.sucursal_id);
+};
 
 // Valida el formato del período y lo convierte a números.
 const validarPeriodo = (valores = {}) => {
@@ -32,10 +47,13 @@ const manejarError = (error, res, mensajeGenerico) => {
 
 export const simularPlanilla = async (req, res) => {
     try {
+        const sucursalId = await resolverSucursal(req);
+        if (!sucursalId) return res.status(400).json({ error: MENSAJE_SIN_SUCURSAL });
+
         const { periodo, error } = validarPeriodo(req.body);
         if (error) return res.status(400).json({ error });
 
-        return res.status(200).json(await nominaService.simularPlanilla(periodo));
+        return res.status(200).json(await nominaService.simularPlanilla(periodo, sucursalId));
     } catch (error) {
         return manejarError(error, res, 'Error al simular la planilla.');
     }
@@ -43,21 +61,28 @@ export const simularPlanilla = async (req, res) => {
 
 export const generarPlanilla = async (req, res) => {
     try {
+        const sucursalId = await resolverSucursal(req);
+        if (!sucursalId) return res.status(400).json({ error: MENSAJE_SIN_SUCURSAL });
+
         const { periodo, error } = validarPeriodo(req.body);
         if (error) return res.status(400).json({ error });
 
-        return res.status(201).json(await nominaService.generarPlanilla(periodo));
+        return res.status(201).json(await nominaService.generarPlanilla(periodo, sucursalId));
     } catch (error) {
         return manejarError(error, res, 'Error al generar la planilla.');
     }
 };
 
+
 export const obtenerPlanilla = async (req, res) => {
     try {
+        const sucursalId = await resolverSucursal(req);
+        if (!sucursalId) return res.status(400).json({ error: MENSAJE_SIN_SUCURSAL });
+
         const { periodo, error } = validarPeriodo(req.params);
         if (error) return res.status(400).json({ error });
 
-        return res.status(200).json(await nominaService.obtenerPlanilla(periodo));
+        return res.status(200).json(await nominaService.obtenerPlanilla(periodo, sucursalId));
     } catch (error) {
         return manejarError(error, res, 'Error al consultar la planilla.');
     }
