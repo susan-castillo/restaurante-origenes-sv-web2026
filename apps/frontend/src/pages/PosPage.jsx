@@ -11,7 +11,7 @@ import { generarComprobantePDF } from "../utils/generarComprobantePDF.js";
 import PlatilloDetalleModal from "../components/pos/PlatilloDetalleModal.jsx";
 import CajaMontoModal from "../components/pos/CajaMontoModal.jsx";
 import VistaPreviaFacturaModal from "../components/pos/VistaPreviaFacturaModal.jsx";
-import "../styles/pos.scss";
+import "../styles/styles.scss";
 
 //**Import para poder obtener la sucursal seleccionada**
 import { useOutletContext } from "react-router-dom";
@@ -303,15 +303,15 @@ export default function PosPage() {
       {!cargandoCaja && errorCaja && (
         <div className="alert alert-danger d-flex align-items-center justify-content-between gap-3" role="alert">
           <span>{errorCaja}</span>
-          {sucursalId && <button type="button" className="btn btn-outline-danger" onClick={actualizarCaja}>Reintentar</button>}
+          {sucursalId && <Button variant="outline-danger" onClick={actualizarCaja}>Reintentar</Button>}
         </div>
       )}
       {!cargandoCaja && !errorCaja && !cajaAbierta && (
         <div className="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-3">
           <span>Abre tu turno de caja para realizar ventas.</span>
           <div className="d-flex flex-wrap gap-2">
-            <button type="button" className="btn btn-outline-dark" onClick={actualizarCaja}>Actualizar estado</button>
-            <button type="button" className="btn btn-primary" onClick={() => setAperturaVisible(true)}>Abrir caja</button>
+            <Button variant="outline-secondary" onClick={actualizarCaja}>Actualizar estado</Button>
+            <Button variant="secondary" onClick={() => setAperturaVisible(true)}>Abrir caja</Button>
           </div>
         </div>
       )}
@@ -321,8 +321,8 @@ export default function PosPage() {
             <span role="status">Turno #{turnoCaja.id} abierto · Fondo inicial {moneda(turnoCaja.monto_inicial)}</span>
             {carrito.length > 0 && <small className="d-block">Completa o vacía el carrito para cerrar caja.</small>}
           </div>
-          <button type="button" className="btn btn-outline-dark" disabled={carrito.length > 0 || modalCobroAbierto || vistaPreviaAbierta}
-            onClick={() => setCierreVisible(true)}>Cerrar caja</button>
+          <Button variant="outline-secondary" disabled={carrito.length > 0 || modalCobroAbierto || vistaPreviaAbierta}
+            onClick={() => setCierreVisible(true)}>Cerrar caja</Button>
         </div>
       )}
       {reporteCierre && (

@@ -1,19 +1,25 @@
 
 export default function Card({
+  tag: Component = "div",
   title,
   subtitle,
+  header,
   children,
   footer,
   className = "",
+  bodyClassName = "",
   onClick,
   ...props
 }) {
   return (
-    <div
+    <Component
       className={`card app-card h-100 ${className}`}
+      onClick={onClick}
       {...props}
     >
-      <div className="card-body">
+      {header}
+
+      <div className={`card-body ${bodyClassName}`}>
         {title && (
           <h3 className="card-title">{title}</h3>
         )}
@@ -30,6 +36,6 @@ export default function Card({
           {footer}
         </div>
       )}
-    </div>
+    </Component>
   );
 }
