@@ -1,9 +1,22 @@
+// Valida las entradas HTTP de RRHH por sucursal y responde con el código adecuado.
 import * as rrhhService from '../services/rrhhService.js';
 import { idValido, aNumero } from '../utils/validaciones.js';
 
 const ROLES = ['ADMIN', 'RRHH', 'EMPLEADO'];
 const CARGOS = ['BARISTA', 'CAJERO', 'GERENTE'];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const MENSAJE_SIN_SUCURSAL =
+    'Sucursal no válida o no asignada a tu usuario. Si eres Admin Global debes enviar sucursal_id.';
+
+// Usuario de sede (sucursal_id != null): siempre la suya, ignora query/body.
+// Admin Global (sucursal_id null): la que envía el front por query o body.
+const resolverSucursal = (req) => {
+    if (req.usuario.sucursal_id == null) {
+        return idValido(req.query.sucursal_id ?? req.body?.sucursal_id);
+    }
+    return idValido(req.usuario.sucursal_id);
+};
 
 const errorPassword = (password) => {
     if (typeof password !== 'string' || password.length < 8 || password.length > 72) {
@@ -69,17 +82,13 @@ const validarUsuario = (body, { parcial = false } = {}) => {
         datos.salario_base = Math.round(salario * 100) / 100;
     }
 
-    // null = usuario sin sucursal (por ejemplo, administración central)
+    // Solo para mover un empleado a otra sucursal (debe ser un id válido)
     if (body.sucursal_id !== undefined) {
-        if (body.sucursal_id === null) {
-            datos.sucursal_id = null;
-        } else {
-            const sucursalId = aNumero(body.sucursal_id);
-            if (!Number.isInteger(sucursalId) || sucursalId <= 0) {
-                return { error: 'La sucursal no es válida.' };
-            }
-            datos.sucursal_id = sucursalId;
+        const sucursalId = aNumero(body.sucursal_id);
+        if (!Number.isInteger(sucursalId) || sucursalId <= 0) {
+            return { error: 'La sucursal no es válida.' };
         }
+        datos.sucursal_id = sucursalId;
     }
 
     if (parcial && Object.keys(datos).length === 0) {
@@ -116,10 +125,15 @@ const manejarError = (error, res, mensajeGenerico) => {
     return res.status(500).json({ error: mensajeGenerico });
 };
 
-//Manejo de errores de validación de usuarios.
+//Listar usuarios de la sucursal.
 export const listarUsuarios = async (req, res) => {
     try {
-        const usuarios = await rrhhService.listarUsuarios();
+        const sucursalId = resolverSucursal(req);
+        if (!sucursalId) {
+            return res.status(400).json({ error: MENSAJE_SIN_SUCURSAL });
+        }
+        const buscar = typeof req.query.buscar === 'string' ? req.query.buscar.trim() : '';
+        const usuarios = await rrhhService.listarUsuarios(sucursalId, { buscar });
         return res.status(200).json(usuarios);
     } catch (error) {
         return manejarError(error, res, 'Error al listar los usuarios.');
@@ -129,11 +143,15 @@ export const listarUsuarios = async (req, res) => {
 //Validacion al crear un nuevo usuario.
 export const crearUsuario = async (req, res) => {
     try {
+        const sucursalId = resolverSucursal(req);
+        if (!sucursalId) {
+            return res.status(400).json({ error: MENSAJE_SIN_SUCURSAL });
+        }
         const { datos, error } = validarUsuario(req.body);
         if (error) {
             return res.status(400).json({ error });
         }
-        const usuario = await rrhhService.agregarUsuario(datos);
+        const usuario = await rrhhService.agregarUsuario(datos, sucursalId);
         return res.status(201).json({ mensaje: 'Usuario creado exitosamente.', usuario });
     } catch (error) {
         return manejarError(error, res, 'Error al crear el usuario.');
@@ -143,15 +161,24 @@ export const crearUsuario = async (req, res) => {
 //Validación al actualizar un usuario.
 export const actualizarUsuario = async (req, res) => {
     try {
+        const sucursalId = resolverSucursal(req);
+        if (!sucursalId) {
+            return res.status(400).json({ error: MENSAJE_SIN_SUCURSAL });
+        }
         const { id, error: errorId } = validarId(req.params.id);
         if (errorId) {
             return res.status(400).json({ error: errorId });
         }
-        const { datos, error } = validarUsuario(req.body, { parcial: true });
+
+        // Usuarios de sede no pueden mover empleados a otra sucursal
+        const body = { ...req.body };
+        if (req.usuario.sucursal_id != null) delete body.sucursal_id;
+
+        const { datos, error } = validarUsuario(body, { parcial: true });
         if (error) {
             return res.status(400).json({ error });
         }
-        const usuario = await rrhhService.actualizarUsuario(id, datos);
+        const usuario = await rrhhService.actualizarUsuario(id, datos, sucursalId);
         return res.status(200).json({ mensaje: 'Usuario actualizado exitosamente.', usuario });
     } catch (error) {
         return manejarError(error, res, 'Error al actualizar el usuario.');
@@ -161,21 +188,29 @@ export const actualizarUsuario = async (req, res) => {
 //Validación al desactivar un usuario.
 export const desactivarUsuario = async (req, res) => {
     try {
+        const sucursalId = resolverSucursal(req);
+        if (!sucursalId) {
+            return res.status(400).json({ error: MENSAJE_SIN_SUCURSAL });
+        }
         const { id, error: errorId } = validarId(req.params.id);
         if (errorId) {
             return res.status(400).json({ error: errorId });
         }
         // req.usuario.id = quién hace la acción (lo pone verifyToken)
-        const usuario = await rrhhService.desactivarUsuario(id, req.usuario.id);
+        const usuario = await rrhhService.desactivarUsuario(id, req.usuario.id, sucursalId);
         return res.status(200).json({ mensaje: 'Usuario desactivado exitosamente.', usuario });
     } catch (error) {
         return manejarError(error, res, 'Error al desactivar el usuario.');
     }
 };
 
-//Cambiar contraseaña de un usuario validaciones.
+//Cambiar contraseña de un usuario validaciones.
 export const cambiarPassword = async (req, res) => {
     try {
+        const sucursalId = resolverSucursal(req);
+        if (!sucursalId) {
+            return res.status(400).json({ error: MENSAJE_SIN_SUCURSAL });
+        }
         const { id, error: errorId } = validarId(req.params.id);
         if (errorId) {
             return res.status(400).json({ error: errorId });
@@ -184,7 +219,7 @@ export const cambiarPassword = async (req, res) => {
         if (error) {
             return res.status(400).json({ error });
         }
-        await rrhhService.actualizarPassword(id, req.body.password);
+        await rrhhService.actualizarPassword(id, req.body.password, sucursalId);
         return res.status(200).json({ mensaje: 'Contraseña cambiada exitosamente.' });
     } catch (error) {
         return manejarError(error, res, 'Error al cambiar la contraseña del usuario.');
@@ -194,11 +229,15 @@ export const cambiarPassword = async (req, res) => {
 //Buscar usuario por ID
 export const buscarUsuarioPorId = async (req, res) => {
     try {
+        const sucursalId = resolverSucursal(req);
+        if (!sucursalId) {
+            return res.status(400).json({ error: MENSAJE_SIN_SUCURSAL });
+        }
         const { id, error: errorId } = validarId(req.params.id);
         if (errorId) {
             return res.status(400).json({ error: errorId });
         }
-        const usuario = await rrhhService.buscarUsuarioPorId(id);
+        const usuario = await rrhhService.buscarUsuarioPorId(id, sucursalId);
         if (!usuario) {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
@@ -211,11 +250,15 @@ export const buscarUsuarioPorId = async (req, res) => {
 //Buscar usuario por nombre.
 export const buscarUsuarioPorNombre = async (req, res) => {
     try {
+        const sucursalId = resolverSucursal(req);
+        if (!sucursalId) {
+            return res.status(400).json({ error: MENSAJE_SIN_SUCURSAL });
+        }
         const nombre = typeof req.query.nombre === 'string' ? req.query.nombre.trim() : '';
         if (!nombre || nombre.length > 100) {
             return res.status(400).json({ error: 'El nombre del usuario es requerido (máximo 100 caracteres).' });
         }
-        const usuario = await rrhhService.buscarUsuarioPorNombre(nombre);
+        const usuario = await rrhhService.buscarUsuarioPorNombre(nombre, sucursalId);
         if (!usuario) {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }

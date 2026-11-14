@@ -23,6 +23,25 @@ const sumarNeto = (pagos) =>
 const errorNegocio = (mensaje, status = 400) =>
     Object.assign(new Error(mensaje), { status });
 
+export const obtenerAccesoUsuario = async (usuarioId) => {
+    const actual = await prisma.usuarios.findUnique({
+        where: { id: Number(usuarioId) },
+        select: { rol: true, sucursal_id: true, activo: true }
+    });
+    if (!actual || !actual.activo) {
+        throw errorNegocio('La cuenta no está disponible.', 401);
+    }
+    return actual;
+};
+
+const validarSucursalActiva = async (sucursalId) => {
+    const sucursal = await prisma.sucursales.findUnique({
+        where: { id: Number(sucursalId) },
+        select: { activa: true }
+    });
+    if (!sucursal) throw errorNegocio('La sucursal indicada no existe.', 400);
+    if (sucursal.activa !== true) throw errorNegocio('La sucursal seleccionada se encuentra inactiva', 400);
+};
 //Deducciones
 
 export function calcularDeducciones(saldoBruto) {
@@ -42,10 +61,10 @@ export function calcularDeducciones(saldoBruto) {
 
 //Calcular planilla (no guarda nada)
 
-async function calcularPlanilla({ anio, mes, quincena }) {
-    // Solo empleados activos con salario mayor a 0
+async function calcularPlanilla({ anio, mes, quincena }, sucursalId) {
+    // Solo empleados activos de la sucursal con salario mayor a 0
     const empleados = await prisma.usuarios.findMany({
-        where: { activo: true, salario_base: { gt: 0 } },
+        where: { activo: true, sucursal_id: sucursalId, salario_base: { gt: 0 } },
         orderBy: { id: 'asc' },
     });
 
@@ -64,19 +83,24 @@ async function calcularPlanilla({ anio, mes, quincena }) {
 }
 
 // Vista previa.
-
-export async function simularPlanilla(periodo) {
-    const pagos = await calcularPlanilla(periodo);
+export async function simularPlanilla(periodo, sucursalId) {
+    await validarSucursalActiva(sucursalId);
+    const pagos = await calcularPlanilla(periodo, sucursalId);
     return { pagos, totalNeto: sumarNeto(pagos) };
 }
 
 //Generar planilla y guardar
-export async function generarPlanilla(periodo) {
-    const yaExiste = await prisma.pagos_planilla.count({ where: periodo });
+export async function generarPlanilla(periodo, sucursalId) {
+    await validarSucursalActiva(sucursalId);
+
+    // pagos_planilla no tiene sucursal_id: se filtra por la sucursal del empleado
+    const yaExiste = await prisma.pagos_planilla.count({
+        where: { ...periodo, usuarios: { sucursal_id: sucursalId } },
+    });
     if (yaExiste) throw errorNegocio('La planilla de esta quincena ya fue generada.', 409);
 
-    const pagos = await calcularPlanilla(periodo);
-    if (!pagos.length) throw errorNegocio('No hay empleados activos con salario.', 400);
+    const pagos = await calcularPlanilla(periodo, sucursalId);
+    if (!pagos.length) throw errorNegocio('No hay empleados activos con salario en esta sucursal.', 400);
 
     await prisma.pagos_planilla.createMany({ data: pagos });
     return { pagos, totalNeto: sumarNeto(pagos) };
@@ -84,9 +108,9 @@ export async function generarPlanilla(periodo) {
 
 //Consultar planilla.
 
-export async function obtenerPlanilla(periodo) {
+export async function obtenerPlanilla(periodo, sucursalId) {
     const pagos = await prisma.pagos_planilla.findMany({
-        where: periodo,
+        where: { ...periodo, usuarios: { sucursal_id: sucursalId } },
         include: { usuarios: { select: { id: true, nombre: true, cargo: true } } },
         orderBy: { usuario_id: 'asc' },
     });
