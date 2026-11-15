@@ -166,7 +166,7 @@ export const crearUsuario = async (req, res) => {
     }
 };
 
-//Validación al actualizar un usuario.
+// Validación al actualizar un usuario.
 export const actualizarUsuario = async (req, res) => {
     try {
         const sucursalId = resolverSucursal(req);
@@ -178,14 +178,18 @@ export const actualizarUsuario = async (req, res) => {
             return res.status(400).json({ error: errorId });
         }
 
-        // Usuarios de sede no pueden mover empleados a otra sucursal
+        // Usuarios de sede no pueden mover empleados de sucursal ni cambiar roles de sistema
         const body = { ...req.body };
-        if (req.usuario.sucursal_id != null) delete body.sucursal_id;
+        if (req.usuario.sucursal_id != null) {
+            delete body.sucursal_id;
+            delete body.rol;
+        }
 
         const { datos, error } = validarUsuario(body, { parcial: true });
         if (error) {
             return res.status(400).json({ error });
         }
+
         const usuario = await rrhhService.actualizarUsuario(id, datos, sucursalId);
         return res.status(200).json({ mensaje: 'Usuario actualizado exitosamente.', usuario });
     } catch (error) {

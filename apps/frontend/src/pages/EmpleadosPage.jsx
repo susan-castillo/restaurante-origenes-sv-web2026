@@ -67,7 +67,9 @@ export default function EmpleadosPage() {
 
     // CAMPOS DEL FORMULARIO: EDITAR EMPLEADO
     const [nombreEdit, setNombreEdit] = useState("");
+    const [emailEdit, setEmailEdit] = useState("");
     const [cargoEdit, setCargoEdit] = useState("CAJERO");
+    const [rolEdit, setRolEdit] = useState("EMPLEADO");
     const [sucursalEditId, setSucursalEditId] = useState("");
     const [salarioEdit, setSalarioEdit] = useState("");
 
@@ -233,8 +235,10 @@ export default function EmpleadosPage() {
     // ==========================================
     function abrirModalEditar(item) {
         setEmpleadoSeleccionado(item);
-        setNombreEdit(item.nombre);
-        setCargoEdit(item.cargo);
+        setNombreEdit(item.nombre || "");
+        setEmailEdit(item.email || "");
+        setCargoEdit(item.cargo || "CAJERO");
+        setRolEdit(item.rol || "EMPLEADO");
         setSucursalEditId(String(item.sucursal_id || sucursalActivaId || ""));
         setSalarioEdit(obtenerSalario(item));
         setErrorModal("");
@@ -244,18 +248,27 @@ export default function EmpleadosPage() {
     async function handleGuardarEdicion() {
         if (!empleadoSeleccionado) return;
 
+        if (!nombreEdit.trim() || !emailEdit.trim()) {
+            setErrorModal("El nombre y el correo electrónico son obligatorios.");
+            return;
+        }
+
         try {
             setGuardando(true);
             setErrorModal("");
 
             const payload = {
                 nombre: nombreEdit.trim(),
+                email: emailEdit.trim().toLowerCase(),
                 cargo: cargoEdit,
                 salario_base: Number(salarioEdit),
             };
 
-            if (esAdminGlobal && sucursalEditId) {
-                payload.sucursal_id = Number(sucursalEditId);
+            if (esAdminGlobal) {
+                payload.rol = rolEdit;
+                if (sucursalEditId) {
+                    payload.sucursal_id = Number(sucursalEditId);
+                }
             }
 
             await actualizarEmpleado(empleadoSeleccionado.id, payload, sucursalActivaId);
@@ -472,7 +485,10 @@ export default function EmpleadosPage() {
                                             <div className="employee-avatar">{obtenerIniciales(item.nombre)}</div>
                                             <div>
                                                 <div className="inventario-nombre">{item.nombre}</div>
-                                                <span className="employee-role">Rol: {item.rol}</span>
+                                                <div className={"d-flex flex-column"}>
+                                                    <span className="employee-role">Rol: {item.rol}</span>
+                                                    <span className="employee-role">Email: {item.email}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -679,6 +695,7 @@ export default function EmpleadosPage() {
             </Modal>
 
             {/* MODAL 2: EDITAR EMPLEADO */}
+            {/* MODAL 2: EDITAR EMPLEADO */}
             <Modal
                 show={modalEditar}
                 title="Editar empleado"
@@ -696,14 +713,14 @@ export default function EmpleadosPage() {
                         <Button
                             text={guardando ? "Guardando..." : "Guardar cambios"}
                             variant="secondary"
-                            disabled={guardando}
+                            disabled={guardando || !nombreEdit.trim() || !emailEdit.trim()}
                             onClick={handleGuardarEdicion}
                         />
                     </>
                 }
             >
                 <div className="mb-3">
-                    <label className="form-label">Nombre del empleado</label>
+                    <label className="form-label fw-bold">Nombre completo *</label>
                     <input
                         type="text"
                         className="form-control"
@@ -713,45 +730,73 @@ export default function EmpleadosPage() {
                 </div>
 
                 <div className="mb-3">
-                    <label className="form-label">Cargo</label>
-                    <select
-                        className="form-select"
-                        value={cargoEdit}
-                        onChange={(e) => setCargoEdit(e.target.value)}
-                    >
-                        <option value="CAJERO">CAJERO</option>
-                        <option value="BARISTA">BARISTA</option>
-                        {esAdminGlobal && <option value="GERENTE">GERENTE</option>}
-                        {esAdminGlobal && <option value="RRHH">RRHH</option>}
-                    </select>
-                </div>
-
-                <div className="mb-3">
-                    <label className="form-label">Sucursal</label>
-                    <select
-                        className="form-select"
-                        value={sucursalEditId}
-                        onChange={(e) => setSucursalEditId(e.target.value)}
-                        disabled={!esAdminGlobal}
-                    >
-                        {sucursales.map((suc) => (
-                            <option key={suc.id} value={suc.id}>
-                                {suc.nombre}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="mb-3">
-                    <label className="form-label">Salario Base ($)</label>
+                    <label className="form-label fw-bold">Correo electrónico *</label>
                     <input
-                        type="number"
+                        type="email"
                         className="form-control"
-                        step="0.01"
-                        min="0"
-                        value={salarioEdit}
-                        onChange={(e) => setSalarioEdit(e.target.value)}
+                        value={emailEdit}
+                        onChange={(e) => setEmailEdit(e.target.value)}
                     />
+                </div>
+
+                <div className="row g-2 mb-3">
+                    <div className="col-12 col-md-6">
+                        <label className="form-label fw-bold">Cargo *</label>
+                        <select
+                            className="form-select"
+                            value={cargoEdit}
+                            onChange={(e) => setCargoEdit(e.target.value)}
+                        >
+                            <option value="CAJERO">CAJERO</option>
+                            <option value="BARISTA">BARISTA</option>
+                            {esAdminGlobal && <option value="GERENTE">GERENTE</option>}
+                            {esAdminGlobal && <option value="RRHH">RRHH</option>}
+                        </select>
+                    </div>
+
+                    <div className="col-12 col-md-6">
+                        <label className="form-label fw-bold">Rol de sistema *</label>
+                        <select
+                            className="form-select"
+                            value={rolEdit}
+                            onChange={(e) => setRolEdit(e.target.value)}
+                            disabled={!esAdminGlobal || empleadoSeleccionado?.id === usuario?.id}
+                        >
+                            <option value="EMPLEADO">EMPLEADO</option>
+                            {esAdminGlobal && <option value="RRHH">RRHH</option>}
+                            {esAdminGlobal && <option value="ADMIN">ADMIN</option>}
+                        </select>
+                    </div>
+                </div>
+
+                <div className="row g-2 mb-3">
+                    <div className="col-12 col-md-6">
+                        <label className="form-label fw-bold">Sucursal</label>
+                        <select
+                            className="form-select"
+                            value={sucursalEditId}
+                            onChange={(e) => setSucursalEditId(e.target.value)}
+                            disabled={!esAdminGlobal}
+                        >
+                            {sucursales.map((suc) => (
+                                <option key={suc.id} value={suc.id}>
+                                    {suc.nombre}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="col-12 col-md-6">
+                        <label className="form-label fw-bold">Salario Base ($)</label>
+                        <input
+                            type="number"
+                            className="form-control"
+                            step="0.01"
+                            min="0"
+                            value={salarioEdit}
+                            onChange={(e) => setSalarioEdit(e.target.value)}
+                        />
+                    </div>
                 </div>
 
                 {errorModal && (
