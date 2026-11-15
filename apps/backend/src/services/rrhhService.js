@@ -95,7 +95,8 @@ export const actualizarUsuario = async (id, datosUsuario, sucursalId) => {
             rol: datosUsuario.rol,
             cargo: datosUsuario.cargo,
             salario_base: datosUsuario.salario_base,
-            sucursal_id: datosUsuario.sucursal_id
+            sucursal_id: datosUsuario.sucursal_id,
+            activo: datosUsuario.activo
         },
         select: usuario
     });

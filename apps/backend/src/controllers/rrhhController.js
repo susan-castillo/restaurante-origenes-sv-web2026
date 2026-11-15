@@ -3,7 +3,7 @@ import * as rrhhService from '../services/rrhhService.js';
 import { idValido, aNumero } from '../utils/validaciones.js';
 
 const ROLES = ['ADMIN', 'RRHH', 'EMPLEADO'];
-const CARGOS = ['BARISTA', 'CAJERO', 'GERENTE'];
+const CARGOS = ['BARISTA', 'CAJERO', 'GERENTE', 'RRHH'];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const MENSAJE_SIN_SUCURSAL =
@@ -69,7 +69,7 @@ const validarUsuario = (body, { parcial = false } = {}) => {
     if (body.cargo !== undefined) {
         const cargo = String(body.cargo).trim().toUpperCase();
         if (!CARGOS.includes(cargo)) {
-            return { error: 'El cargo debe ser BARISTA, CAJERO o GERENTE.' };
+            return { error: 'El cargo debe ser BARISTA, CAJERO, GERENTE o RRHH.' };
         }
         datos.cargo = cargo;
     }
@@ -89,6 +89,14 @@ const validarUsuario = (body, { parcial = false } = {}) => {
             return { error: 'La sucursal no es válida.' };
         }
         datos.sucursal_id = sucursalId;
+    }
+
+    // Para permitir habilitar o deshabilitar el empleado
+    if (body.activo !== undefined) {
+        if (typeof body.activo !== 'boolean') {
+            return { error: 'El estado activo debe ser verdadero o falso.' };
+        }
+        datos.activo = body.activo;
     }
 
     if (parcial && Object.keys(datos).length === 0) {

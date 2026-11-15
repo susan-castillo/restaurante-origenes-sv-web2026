@@ -1,179 +1,345 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useOutletContext } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
+// Servicios
+import {
+    obtenerEmpleados,
+    crearEmpleado,
+    actualizarEmpleado,
+    desactivarEmpleado,
+    cambiarPasswordEmpleado,
+} from "../services/empleados.js";
+import { getSucursales } from "../services/sucursales.js";
 // Componentes generales de la UI del proyecto
 import Button from "../components/Common/Button.jsx";
 import StatusBadge from "../components/Common/StatusBadge.jsx";
 import Modal from "../components/Common/Modal.jsx";
 // Iconos de lucide-react
-import { Users, Store, BarChart3, Search, Pencil, Ban } from "lucide-react";
-
-// DATOS MOCK DE PRUEBA PARA EL DISEÑO
-const empleadosMock = [
-    {
-        id: 1,
-        iniciales: "AM",
-        nombre: "Ana Martínez",
-        email: "ana.martinez@origenes.sv",
-        rol: "EMPLEADO",
-        cargo: "CAJERO",
-        sucursal: "Escalón",
-        salarioBase: 700.0,
-        activo: true,
-    },
-    {
-        id: 2,
-        iniciales: "CH",
-        nombre: "Carlos Hernández",
-        email: "carlos.hernandez@origenes.sv",
-        rol: "EMPLEADO",
-        cargo: "BARISTA",
-        sucursal: "Escalón",
-        salarioBase: 650.0,
-        activo: true,
-    },
-    {
-        id: 3,
-        iniciales: "SR",
-        nombre: "Sofía Ramírez",
-        email: "sofia.ramirez@origenes.sv",
-        rol: "EMPLEADO",
-        cargo: "GERENTE",
-        sucursal: "Santa Elena",
-        salarioBase: 1450.0,
-        activo: true,
-    },
-    {
-        id: 4,
-        iniciales: "ML",
-        nombre: "María López",
-        email: "maria.lopez@origenes.sv",
-        rol: "RRHH",
-        cargo: "RRHH",
-        sucursal: "Oficina central",
-        salarioBase: 1200.0,
-        activo: true,
-    },
-    {
-        id: 5,
-        iniciales: "DF",
-        nombre: "Diego Flores",
-        email: "diego.flores@origenes.sv",
-        rol: "EMPLEADO",
-        cargo: "BARISTA",
-        sucursal: "San Benito",
-        salarioBase: 625.0,
-        activo: false,
-    },
-];
+import {
+    Users,
+    Store,
+    BarChart3,
+    Search,
+    Pencil,
+    Ban,
+    CheckCircle2,
+    KeyRound,
+} from "lucide-react";
 
 export default function EmpleadosPage() {
-    // Estado local para los registros visuales
-    const [empleados, setEmpleados] = useState(empleadosMock);
+    const { usuario } = useAuth();
+    const { sucursalSeleccionada } = useOutletContext() || {};
+
+    // Admin Global = rol ADMIN y sucursal_id null en su token
+    const esAdminGlobal = usuario?.rol === "ADMIN" && usuario?.sucursal_id == null;
+
+    // Estados principales de datos
+    const [empleados, setEmpleados] = useState([]);
+    const [sucursales, setSucursales] = useState([]);
+    const [cargando, setCargando] = useState(true);
+    const [errorGeneral, setErrorGeneral] = useState("");
     const [busqueda, setBusqueda] = useState("");
+
+    // ID de la sucursal activa
+    const sucursalActivaId = esAdminGlobal
+        ? (sucursalSeleccionada?.id ?? sucursales[0]?.id ?? null)
+        : (usuario?.sucursal_id ?? null);
 
     // ESTADOS CONTROLADORES DE MODALES
     const [modalAgregar, setModalAgregar] = useState(false);
     const [modalEditar, setModalEditar] = useState(false);
-    const [modalDeshabilitar, setModalDeshabilitar] = useState(false);
+    const [modalEstado, setModalEstado] = useState(false); // Sirve tanto para deshabilitar como para habilitar
+    const [modalPassword, setModalPassword] = useState(false);
     const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
+
+    // Estados de carga y error en modales
+    const [guardando, setGuardando] = useState(false);
+    const [errorModal, setErrorModal] = useState("");
 
     // CAMPOS DEL FORMULARIO: CREAR NUEVO EMPLEADO
     const [nombreNuevo, setNombreNuevo] = useState("");
     const [emailNuevo, setEmailNuevo] = useState("");
+    const [passwordNuevo, setPasswordNuevo] = useState("");
     const [cargoNuevo, setCargoNuevo] = useState("BARISTA");
     const [rolNuevo, setRolNuevo] = useState("EMPLEADO");
-    const [sucursalNuevo, setSucursalNuevo] = useState("Escalón");
+    const [sucursalNuevoId, setSucursalNuevoId] = useState("");
     const [salarioNuevo, setSalarioNuevo] = useState("");
 
     // CAMPOS DEL FORMULARIO: EDITAR EMPLEADO
     const [nombreEdit, setNombreEdit] = useState("");
     const [cargoEdit, setCargoEdit] = useState("CAJERO");
-    const [sucursalEdit, setSucursalEdit] = useState("Escalón");
+    const [sucursalEditId, setSucursalEditId] = useState("");
     const [salarioEdit, setSalarioEdit] = useState("");
 
-    // Métricas calculadas para las tarjetas superiores (KPIs)
-    const empleadosActivos = empleados.filter((e) => e.activo).length;
-    const empleadosInactivos = empleados.filter((e) => !e.activo).length;
+    // CAMPOS DEL FORMULARIO: CAMBIAR CONTRASEÑA
+    const [nuevaPassword, setNuevaPassword] = useState("");
+    const [confirmarPassword, setConfirmarPassword] = useState("");
 
-    // Filtrado de la lista en tiempo real por el término de búsqueda
-    const empleadosFiltrados = empleados.filter(
-        (emp) =>
-            emp.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-            emp.cargo.toLowerCase().includes(busqueda.toLowerCase()) ||
-            emp.sucursal.toLowerCase().includes(busqueda.toLowerCase())
-    );
+    // ==========================================
+    // 1. CARGAR SUCURSALES ACTIVAS
+    // ==========================================
+    useEffect(() => {
+        let activo = true;
+        getSucursales()
+            .then((data) => {
+                if (activo) {
+                    const lista = Array.isArray(data) ? data : data?.sucursales || [];
+                    setSucursales(lista);
+                }
+            })
+            .catch((err) => console.error("Error al cargar sucursales:", err));
 
-    // Generador auxiliar de iniciales para el avatar
-    function obtenerIniciales(nombreCompleto) {
+        return () => {
+            activo = false;
+        };
+    }, []);
+
+    // ==========================================
+    // 2. CARGAR EMPLEADOS SEGÚN LA SUCURSAL ACTIVA
+    // ==========================================
+    async function cargarEmpleados() {
+        if (!sucursalActivaId) return;
+
+        try {
+            setCargando(true);
+            setErrorGeneral("");
+            const data = await obtenerEmpleados(sucursalActivaId);
+            const lista = Array.isArray(data) ? data : data?.empleados || [];
+            setEmpleados(lista);
+        } catch (err) {
+            setErrorGeneral(err.message || "Error al cargar la lista de empleados.");
+        } finally {
+            setCargando(false);
+        }
+    }
+
+    useEffect(() => {
+        cargarEmpleados();
+    }, [sucursalActivaId]);
+
+    // ==========================================
+    // HELPERS DE FORMATO Y PERÍODO
+    // ==========================================
+    function obtenerIniciales(nombreCompleto = "") {
         const partes = nombreCompleto.trim().split(" ");
         if (partes.length >= 2) {
             return (partes[0][0] + partes[1][0]).toUpperCase();
         }
-        return nombreCompleto.substring(0, 2).toUpperCase();
+        return nombreCompleto.substring(0, 2).toUpperCase() || "EM";
     }
 
-    // ACCIÓN DE DISEÑO: AGREGAR EMPLEADO EN ESTADO LOCAL
-    function handleAgregarEmpleado() {
-        if (!nombreNuevo.trim() || !emailNuevo.trim() || !salarioNuevo) return;
-
-        const nuevo = {
-            id: Date.now(),
-            iniciales: obtenerIniciales(nombreNuevo),
-            nombre: nombreNuevo.trim(),
-            email: emailNuevo.trim(),
-            rol: rolNuevo,
-            cargo: cargoNuevo,
-            sucursal: sucursalNuevo,
-            salarioBase: parseFloat(salarioNuevo),
-            activo: true,
-        };
-
-        setEmpleados([nuevo, ...empleados]);
-        setModalAgregar(false);
+    function obtenerNombreSucursal(emp) {
+        if (emp.sucursales?.nombre) return emp.sucursales.nombre;
+        if (emp.sucursal?.nombre) return emp.sucursal.nombre;
+        if (typeof emp.sucursal === "string") return emp.sucursal;
+        const encontrada = sucursales.find((s) => s.id === emp.sucursal_id);
+        return encontrada ? encontrada.nombre : "Sucursal asignada";
     }
 
-    // ACCIÓN DE DISEÑO: ABRIR Y EDITAR EMPLEADO EN ESTADO LOCAL
+    function obtenerSalario(emp) {
+        return Number(emp.salario_base ?? emp.salarioBase ?? 0);
+    }
+
+    const hoy = new Date();
+    const numeroQuincena = hoy.getDate() <= 15 ? "1." : "2.";
+    const mesActual = hoy.toLocaleString("es-SV", { month: "long" });
+
+    const empleadosActivos = empleados.filter((e) => e.activo).length;
+    const empleadosInactivos = empleados.filter((e) => !e.activo).length;
+
+    const empleadosFiltrados = empleados.filter((emp) => {
+        const sucursalTexto = obtenerNombreSucursal(emp).toLowerCase();
+        const termino = busqueda.toLowerCase();
+        return (
+            emp.nombre?.toLowerCase().includes(termino) ||
+            emp.cargo?.toLowerCase().includes(termino) ||
+            sucursalTexto.includes(termino)
+        );
+    });
+
+    // ==========================================
+    // ACCIÓN 1: CREAR EMPLEADO (POST)
+    // ==========================================
+    function abrirModalAgregar() {
+        const idPorDefecto = sucursalActivaId || sucursales[0]?.id || "";
+        setNombreNuevo("");
+        setEmailNuevo("");
+        setPasswordNuevo("");
+        setCargoNuevo("BARISTA");
+        setRolNuevo("EMPLEADO");
+        setSucursalNuevoId(String(idPorDefecto));
+        setSalarioNuevo("");
+        setErrorModal("");
+        setModalAgregar(true);
+    }
+
+    function handleCambioRolNuevo(nuevoRol) {
+        setRolNuevo(nuevoRol);
+        if (nuevoRol === "ADMIN") {
+            setCargoNuevo("GERENTE");
+        } else if (nuevoRol === "RRHH") {
+            setCargoNuevo("RRHH");
+        } else if (nuevoRol === "EMPLEADO" && (cargoNuevo === "GERENTE" || cargoNuevo === "RRHH") && !esAdminGlobal) {
+            setCargoNuevo("BARISTA");
+        }
+    }
+
+    async function handleAgregarEmpleado() {
+        if (!nombreNuevo.trim() || !emailNuevo.trim() || !passwordNuevo || !salarioNuevo) {
+            setErrorModal("Completa todos los campos obligatorios.");
+            return;
+        }
+
+        if (passwordNuevo.length < 8 || passwordNuevo.length > 72) {
+            setErrorModal("La contraseña debe tener entre 8 y 72 caracteres.");
+            return;
+        }
+
+        const sucursalFinalId = esAdminGlobal
+            ? Number(sucursalNuevoId)
+            : Number(sucursalActivaId);
+
+        if (!sucursalFinalId || sucursalFinalId <= 0) {
+            setErrorModal("Debes seleccionar una sucursal válida.");
+            return;
+        }
+
+        try {
+            setGuardando(true);
+            setErrorModal("");
+
+            const payload = {
+                nombre: nombreNuevo.trim(),
+                email: emailNuevo.trim().toLowerCase(),
+                password: passwordNuevo,
+                rol: esAdminGlobal ? rolNuevo : "EMPLEADO",
+                cargo: cargoNuevo,
+                sucursal_id: sucursalFinalId,
+                salario_base: parseFloat(salarioNuevo),
+            };
+
+            await crearEmpleado(payload);
+            await cargarEmpleados();
+            setModalAgregar(false);
+        } catch (err) {
+            setErrorModal(err.message || "No se pudo registrar el empleado.");
+        } finally {
+            setGuardando(false);
+        }
+    }
+
+    // ==========================================
+    // ACCIÓN 2: EDITAR EMPLEADO (PUT)
+    // ==========================================
     function abrirModalEditar(item) {
         setEmpleadoSeleccionado(item);
         setNombreEdit(item.nombre);
         setCargoEdit(item.cargo);
-        setSucursalEdit(item.sucursal);
-        setSalarioEdit(item.salarioBase);
+        setSucursalEditId(String(item.sucursal_id || sucursalActivaId || ""));
+        setSalarioEdit(obtenerSalario(item));
+        setErrorModal("");
         setModalEditar(true);
     }
 
-    function handleGuardarEdicion() {
+    async function handleGuardarEdicion() {
         if (!empleadoSeleccionado) return;
-        setEmpleados((anteriores) =>
-            anteriores.map((emp) =>
-                emp.id === empleadoSeleccionado.id
-                    ? {
-                        ...emp,
-                        nombre: nombreEdit,
-                        cargo: cargoEdit,
-                        sucursal: sucursalEdit,
-                        salarioBase: Number(salarioEdit),
-                        iniciales: obtenerIniciales(nombreEdit),
-                    }
-                    : emp
-            )
-        );
-        setModalEditar(false);
+
+        try {
+            setGuardando(true);
+            setErrorModal("");
+
+            const payload = {
+                nombre: nombreEdit.trim(),
+                cargo: cargoEdit,
+                salario_base: Number(salarioEdit),
+            };
+
+            if (esAdminGlobal && sucursalEditId) {
+                payload.sucursal_id = Number(sucursalEditId);
+            }
+
+            await actualizarEmpleado(empleadoSeleccionado.id, payload, sucursalActivaId);
+            await cargarEmpleados();
+            setModalEditar(false);
+        } catch (err) {
+            setErrorModal(err.message || "Error al actualizar los datos del empleado.");
+        } finally {
+            setGuardando(false);
+        }
     }
 
-    // ACCIÓN DE DISEÑO: DESHABILITAR EMPLEADO EN ESTADO LOCAL
-    function abrirModalDeshabilitar(item) {
+    // ==========================================
+    // ACCIÓN 3: CAMBIAR CONTRASEÑA (PATCH)
+    // ==========================================
+    function abrirModalPassword(item) {
         setEmpleadoSeleccionado(item);
-        setModalDeshabilitar(true);
+        setNuevaPassword("");
+        setConfirmarPassword("");
+        setErrorModal("");
+        setModalPassword(true);
     }
 
-    function handleConfirmarDeshabilitar() {
+    async function handleGuardarPassword() {
         if (!empleadoSeleccionado) return;
-        setEmpleados((anteriores) =>
-            anteriores.map((emp) =>
-                emp.id === empleadoSeleccionado.id ? { ...emp, activo: false } : emp
-            )
-        );
-        setModalDeshabilitar(false);
+
+        if (nuevaPassword.length < 8 || nuevaPassword.length > 72) {
+            setErrorModal("La nueva contraseña debe tener entre 8 y 72 caracteres.");
+            return;
+        }
+
+        if (nuevaPassword !== confirmarPassword) {
+            setErrorModal("Las contraseñas no coinciden.");
+            return;
+        }
+
+        try {
+            setGuardando(true);
+            setErrorModal("");
+            await cambiarPasswordEmpleado(empleadoSeleccionado.id, nuevaPassword, sucursalActivaId);
+            setModalPassword(false);
+        } catch (err) {
+            setErrorModal(err.message || "No se pudo actualizar la contraseña.");
+        } finally {
+            setGuardando(false);
+        }
+    }
+
+    // ==========================================
+    // ACCIÓN 4: HABILITAR O DESHABILITAR EMPLEADO
+    // ==========================================
+    function abrirModalEstado(item) {
+        setEmpleadoSeleccionado(item);
+        setErrorModal("");
+        setModalEstado(true);
+    }
+
+    async function handleConfirmarCambioEstado() {
+        if (!empleadoSeleccionado) return;
+
+        try {
+            setGuardando(true);
+            setErrorModal("");
+
+            if (empleadoSeleccionado.activo) {
+                // Deshabilitar usando DELETE /empleados/desactivar/:id
+                await desactivarEmpleado(empleadoSeleccionado.id, sucursalActivaId);
+            } else {
+                // Volver a habilitar usando PUT /empleados/:id con { activo: true }
+                await actualizarEmpleado(empleadoSeleccionado.id, { activo: true }, sucursalActivaId);
+            }
+
+            await cargarEmpleados();
+            setModalEstado(false);
+        } catch (err) {
+            setErrorModal(
+                err.message ||
+                (empleadoSeleccionado.activo
+                    ? "No se pudo deshabilitar al empleado."
+                    : "No se pudo habilitar al empleado.")
+            );
+        } finally {
+            setGuardando(false);
+        }
     }
 
     return (
@@ -181,7 +347,7 @@ export default function EmpleadosPage() {
             {/* ENCABEZADO SUPERIOR */}
             <header className="inventario-header">
                 <div>
-                   <h1 className="inventario-titulo">Equipo de Orígenes</h1>
+                    <h1 className="inventario-titulo">Equipo de Orígenes</h1>
                     <p className="inventario-subtitulo">
                         Gestiona personal, cargos y asignaciones por sucursal.
                     </p>
@@ -191,14 +357,16 @@ export default function EmpleadosPage() {
                     text="+ Agregar empleado"
                     variant="secondary"
                     className="text-white"
-                    onClick={() => {
-                        setNombreNuevo("");
-                        setEmailNuevo("");
-                        setSalarioNuevo("");
-                        setModalAgregar(true);
-                    }}
+                    onClick={abrirModalAgregar}
                 />
             </header>
+
+            {/* ALERTA DE ERROR GENERAL */}
+            {errorGeneral && (
+                <div className="alert alert-danger mb-4" role="alert">
+                    {errorGeneral}
+                </div>
+            )}
 
             {/* TARJETAS KPI SUPERIORES */}
             <div className="row g-3 mb-4 w-100 mx-0">
@@ -212,7 +380,9 @@ export default function EmpleadosPage() {
                         </div>
                         <div>
                             <h2 className="h3 kpi-value mb-1">{empleadosActivos}</h2>
-                            <span className="kpi-subtext">{empleadosInactivos} empleado inactivo</span>
+                            <span className="kpi-subtext">
+                                {empleadosInactivos} {empleadosInactivos === 1 ? "empleado inactivo" : "empleados inactivos"}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -226,8 +396,12 @@ export default function EmpleadosPage() {
                             </div>
                         </div>
                         <div>
-                            <h2 className="h3 kpi-value mb-1">3</h2>
-                            <span className="kpi-subtext">Más oficina central</span>
+                            <h2 className="h3 kpi-value mb-1">{esAdminGlobal ? sucursales.length : 1}</h2>
+                            <span className="kpi-subtext">
+                                {esAdminGlobal
+                                    ? sucursalSeleccionada?.nombre || "Todas las sedes"
+                                    : sucursalSeleccionada?.nombre || "Sucursal asignada"}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -242,9 +416,10 @@ export default function EmpleadosPage() {
                         </div>
                         <div>
                             <h2 className="h3 kpi-value mb-1">
-                                1.<sup>a</sup>
+                                {numeroQuincena}
+                                <sup>a</sup>
                             </h2>
-                            <span className="kpi-subtext">Quincena de junio</span>
+                            <span className="kpi-subtext">Quincena de {mesActual}</span>
                         </div>
                     </div>
                 </div>
@@ -277,7 +452,13 @@ export default function EmpleadosPage() {
                         </tr>
                         </thead>
                         <tbody>
-                        {empleadosFiltrados.length === 0 ? (
+                        {cargando ? (
+                            <tr>
+                                <td colSpan={6} className="inventario-mensaje text-center">
+                                    Cargando personal de la sucursal...
+                                </td>
+                            </tr>
+                        ) : empleadosFiltrados.length === 0 ? (
                             <tr>
                                 <td colSpan={6} className="inventario-mensaje text-center">
                                     No se encontraron empleados que coincidan con la búsqueda.
@@ -288,7 +469,7 @@ export default function EmpleadosPage() {
                                 <tr key={item.id}>
                                     <td>
                                         <div className="d-flex align-items-center gap-3">
-                                            <div className="employee-avatar">{item.iniciales}</div>
+                                            <div className="employee-avatar">{obtenerIniciales(item.nombre)}</div>
                                             <div>
                                                 <div className="inventario-nombre">{item.nombre}</div>
                                                 <span className="employee-role">Rol: {item.rol}</span>
@@ -298,8 +479,8 @@ export default function EmpleadosPage() {
                                     <td>
                                         <span className="cargo-badge">{item.cargo}</span>
                                     </td>
-                                    <td>{item.sucursal}</td>
-                                    <td className="inventario-nombre">${item.salarioBase.toFixed(2)}</td>
+                                    <td>{obtenerNombreSucursal(item)}</td>
+                                    <td className="inventario-nombre">${obtenerSalario(item).toFixed(2)}</td>
                                     <td>
                                         <StatusBadge
                                             text={item.activo ? "Activo" : "Inactivo"}
@@ -308,6 +489,7 @@ export default function EmpleadosPage() {
                                     </td>
                                     <td>
                                         <div className="inventario-acciones">
+                                            {/* 1. EDITAR DATOS */}
                                             <button
                                                 type="button"
                                                 className="inventario-icono inventario-icono--editar"
@@ -317,16 +499,42 @@ export default function EmpleadosPage() {
                                             >
                                                 <Pencil size={18} />
                                             </button>
+
+                                            {/* 2. CAMBIAR CONTRASEÑA */}
                                             <button
                                                 type="button"
-                                                className="inventario-icono inventario-icono--eliminar"
-                                                title="Deshabilitar empleado"
-                                                aria-label={`Deshabilitar ${item.nombre}`}
-                                                onClick={() => abrirModalDeshabilitar(item)}
-                                                disabled={!item.activo}
+                                                className="inventario-icono inventario-icono--editar"
+                                                title="Cambiar contraseña"
+                                                aria-label={`Cambiar contraseña de ${item.nombre}`}
+                                                onClick={() => abrirModalPassword(item)}
                                             >
-                                                <Ban size={18} />
+                                                <KeyRound size={18} />
                                             </button>
+
+                                            {/* 3. HABILITAR / DESHABILITAR DINÁMICO */}
+                                            {item.activo ? (
+                                                <button
+                                                    type="button"
+                                                    className="inventario-icono inventario-icono--eliminar"
+                                                    title="Deshabilitar empleado"
+                                                    aria-label={`Deshabilitar ${item.nombre}`}
+                                                    onClick={() => abrirModalEstado(item)}
+                                                    disabled={item.id === usuario?.id}
+                                                >
+                                                    <Ban size={18} />
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    className="inventario-icono inventario-icono--editar"
+                                                    style={{ color: "#198754" }}
+                                                    title="Volver a habilitar empleado"
+                                                    aria-label={`Habilitar ${item.nombre}`}
+                                                    onClick={() => abrirModalEstado(item)}
+                                                >
+                                                    <CheckCircle2 size={18} />
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -337,22 +545,31 @@ export default function EmpleadosPage() {
                 </div>
             </main>
 
-            {/* MODAL 1: CREAR EMPLEADO (DISEÑO Y FORMULARIO) */}
+            {/* MODAL 1: CREAR EMPLEADO */}
             <Modal
                 show={modalAgregar}
                 title="Agregar nuevo empleado"
-                onClose={() => setModalAgregar(false)}
+                onClose={() => {
+                    if (!guardando) setModalAgregar(false);
+                }}
                 footer={
                     <>
                         <Button
                             text="Cancelar"
                             variant="outline-secondary"
+                            disabled={guardando}
                             onClick={() => setModalAgregar(false)}
                         />
                         <Button
-                            text="Registrar empleado"
+                            text={guardando ? "Registrando..." : "Registrar empleado"}
                             variant="secondary"
-                            disabled={!nombreNuevo.trim() || !emailNuevo.trim() || !salarioNuevo}
+                            disabled={
+                                guardando ||
+                                !nombreNuevo.trim() ||
+                                !emailNuevo.trim() ||
+                                !passwordNuevo ||
+                                !salarioNuevo
+                            }
                             onClick={handleAgregarEmpleado}
                         />
                     </>
@@ -369,15 +586,28 @@ export default function EmpleadosPage() {
                     />
                 </div>
 
-                <div className="mb-3">
-                    <label className="form-label fw-bold">Correo electrónico *</label>
-                    <input
-                        type="email"
-                        className="form-control"
-                        placeholder="ejemplo@origenes.sv"
-                        value={emailNuevo}
-                        onChange={(e) => setEmailNuevo(e.target.value)}
-                    />
+                <div className="row g-2 mb-3">
+                    <div className="col-12 col-md-6">
+                        <label className="form-label fw-bold">Correo electrónico *</label>
+                        <input
+                            type="email"
+                            className="form-control"
+                            placeholder="ejemplo@origenes.sv"
+                            value={emailNuevo}
+                            onChange={(e) => setEmailNuevo(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="col-12 col-md-6">
+                        <label className="form-label fw-bold">Contraseña inicial *</label>
+                        <input
+                            type="password"
+                            className="form-control"
+                            placeholder="Mínimo 8 caracteres"
+                            value={passwordNuevo}
+                            onChange={(e) => setPasswordNuevo(e.target.value)}
+                        />
+                    </div>
                 </div>
 
                 <div className="row g-2 mb-3">
@@ -390,8 +620,8 @@ export default function EmpleadosPage() {
                         >
                             <option value="BARISTA">BARISTA</option>
                             <option value="CAJERO">CAJERO</option>
-                            <option value="GERENTE">GERENTE</option>
-                            <option value="RRHH">RRHH</option>
+                            {esAdminGlobal && <option value="GERENTE">GERENTE</option>}
+                            {esAdminGlobal && <option value="RRHH">RRHH</option>}
                         </select>
                     </div>
 
@@ -400,11 +630,12 @@ export default function EmpleadosPage() {
                         <select
                             className="form-select"
                             value={rolNuevo}
-                            onChange={(e) => setRolNuevo(e.target.value)}
+                            onChange={(e) => handleCambioRolNuevo(e.target.value)}
+                            disabled={!esAdminGlobal}
                         >
                             <option value="EMPLEADO">EMPLEADO</option>
-                            <option value="RRHH">RRHH</option>
-                            <option value="ADMIN">ADMIN</option>
+                            {esAdminGlobal && <option value="RRHH">RRHH</option>}
+                            {esAdminGlobal && <option value="ADMIN">ADMIN</option>}
                         </select>
                     </div>
                 </div>
@@ -414,13 +645,15 @@ export default function EmpleadosPage() {
                         <label className="form-label fw-bold">Sucursal asignada *</label>
                         <select
                             className="form-select"
-                            value={sucursalNuevo}
-                            onChange={(e) => setSucursalNuevo(e.target.value)}
+                            value={sucursalNuevoId}
+                            onChange={(e) => setSucursalNuevoId(e.target.value)}
+                            disabled={!esAdminGlobal}
                         >
-                            <option value="Escalón">Escalón</option>
-                            <option value="Santa Elena">Santa Elena</option>
-                            <option value="San Benito">San Benito</option>
-                            <option value="Oficina central">Oficina central</option>
+                            {sucursales.map((suc) => (
+                                <option key={suc.id} value={suc.id}>
+                                    {suc.nombre}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -437,23 +670,33 @@ export default function EmpleadosPage() {
                         />
                     </div>
                 </div>
+
+                {errorModal && (
+                    <div className="alert alert-danger mb-0" role="alert">
+                        {errorModal}
+                    </div>
+                )}
             </Modal>
 
             {/* MODAL 2: EDITAR EMPLEADO */}
             <Modal
                 show={modalEditar}
                 title="Editar empleado"
-                onClose={() => setModalEditar(false)}
+                onClose={() => {
+                    if (!guardando) setModalEditar(false);
+                }}
                 footer={
                     <>
                         <Button
                             text="Cancelar"
                             variant="outline-secondary"
+                            disabled={guardando}
                             onClick={() => setModalEditar(false)}
                         />
                         <Button
-                            text="Guardar cambios"
+                            text={guardando ? "Guardando..." : "Guardar cambios"}
                             variant="secondary"
+                            disabled={guardando}
                             onClick={handleGuardarEdicion}
                         />
                     </>
@@ -468,6 +711,7 @@ export default function EmpleadosPage() {
                         onChange={(e) => setNombreEdit(e.target.value)}
                     />
                 </div>
+
                 <div className="mb-3">
                     <label className="form-label">Cargo</label>
                     <select
@@ -477,73 +721,156 @@ export default function EmpleadosPage() {
                     >
                         <option value="CAJERO">CAJERO</option>
                         <option value="BARISTA">BARISTA</option>
-                        <option value="GERENTE">GERENTE</option>
-                        <option value="RRHH">RRHH</option>
+                        {esAdminGlobal && <option value="GERENTE">GERENTE</option>}
+                        {esAdminGlobal && <option value="RRHH">RRHH</option>}
                     </select>
                 </div>
+
                 <div className="mb-3">
                     <label className="form-label">Sucursal</label>
                     <select
                         className="form-select"
-                        value={sucursalEdit}
-                        onChange={(e) => setSucursalEdit(e.target.value)}
+                        value={sucursalEditId}
+                        onChange={(e) => setSucursalEditId(e.target.value)}
+                        disabled={!esAdminGlobal}
                     >
-                        <option value="Escalón">Escalón</option>
-                        <option value="Santa Elena">Santa Elena</option>
-                        <option value="San Benito">San Benito</option>
-                        <option value="Oficina central">Oficina central</option>
+                        {sucursales.map((suc) => (
+                            <option key={suc.id} value={suc.id}>
+                                {suc.nombre}
+                            </option>
+                        ))}
                     </select>
                 </div>
+
                 <div className="mb-3">
                     <label className="form-label">Salario Base ($)</label>
                     <input
                         type="number"
                         className="form-control"
                         step="0.01"
+                        min="0"
                         value={salarioEdit}
                         onChange={(e) => setSalarioEdit(e.target.value)}
                     />
                 </div>
-                <div className="mb-3">
-                    <label className="form-label">Estado</label>
-                    <select
-                        className="form-select"
-                        value={sucursalEdit}
-                        onChange={(e) => setSucursalEdit(e.target.value)}
-                    >
-                        <option value="Escalón">Activo</option>
-                        <option value="Santa Elena">Inactivo</option>
-                    </select>
-                </div>
+
+                {errorModal && (
+                    <div className="alert alert-danger mb-0" role="alert">
+                        {errorModal}
+                    </div>
+                )}
             </Modal>
 
-            {/* MODAL 3: DESHABILITAR EMPLEADO */}
+            {/* MODAL 3: CAMBIAR CONTRASEÑA */}
             <Modal
-                show={modalDeshabilitar}
-                title="Deshabilitar empleado"
-                onClose={() => setModalDeshabilitar(false)}
+                show={modalPassword}
+                title={`Cambiar contraseña — ${empleadoSeleccionado?.nombre || ""}`}
+                onClose={() => {
+                    if (!guardando) setModalPassword(false);
+                }}
                 footer={
                     <>
                         <Button
                             text="Cancelar"
                             variant="outline-secondary"
-                            onClick={() => setModalDeshabilitar(false)}
+                            disabled={guardando}
+                            onClick={() => setModalPassword(false)}
                         />
                         <Button
-                            text="Deshabilitar"
-                            variant="danger"
-                            onClick={handleConfirmarDeshabilitar}
+                            text={guardando ? "Actualizando..." : "Actualizar contraseña"}
+                            variant="secondary"
+                            disabled={guardando || !nuevaPassword || !confirmarPassword}
+                            onClick={handleGuardarPassword}
                         />
                     </>
                 }
             >
-                <p>
-                    ¿Estás seguro de que deseas deshabilitar al empleado{" "}
-                    <strong>{empleadoSeleccionado?.nombre}</strong>?
-                </p>
-                <div className="alert alert-warning mb-0">
-                    El empleado pasará a estado <strong>Inactivo</strong>, pero conservará su historial de registros en el sistema.
+                <div className="mb-3">
+                    <label className="form-label fw-bold">Nueva contraseña *</label>
+                    <input
+                        type="password"
+                        className="form-control"
+                        placeholder="Mínimo 8 caracteres"
+                        value={nuevaPassword}
+                        onChange={(e) => setNuevaPassword(e.target.value)}
+                    />
                 </div>
+
+                <div className="mb-3">
+                    <label className="form-label fw-bold">Confirmar nueva contraseña *</label>
+                    <input
+                        type="password"
+                        className="form-control"
+                        placeholder="Repite la contraseña"
+                        value={confirmarPassword}
+                        onChange={(e) => setConfirmarPassword(e.target.value)}
+                    />
+                </div>
+
+                {errorModal && (
+                    <div className="alert alert-danger mb-0" role="alert">
+                        {errorModal}
+                    </div>
+                )}
+            </Modal>
+
+            {/* MODAL 4: HABILITAR / DESHABILITAR EMPLEADO */}
+            <Modal
+                show={modalEstado}
+                title={empleadoSeleccionado?.activo ? "Deshabilitar empleado" : "Habilitar empleado"}
+                onClose={() => {
+                    if (!guardando) setModalEstado(false);
+                }}
+                footer={
+                    <>
+                        <Button
+                            text="Cancelar"
+                            variant="outline-secondary"
+                            disabled={guardando}
+                            onClick={() => setModalEstado(false)}
+                        />
+                        <Button
+                            text={
+                                guardando
+                                    ? "Procesando..."
+                                    : empleadoSeleccionado?.activo
+                                        ? "Deshabilitar"
+                                        : "Habilitar"
+                            }
+                            variant={empleadoSeleccionado?.activo ? "danger" : "success"}
+                            disabled={guardando}
+                            onClick={handleConfirmarCambioEstado}
+                        />
+                    </>
+                }
+            >
+                {empleadoSeleccionado?.activo ? (
+                    <>
+                        <p>
+                            ¿Estás seguro de que deseas deshabilitar al empleado{" "}
+                            <strong>{empleadoSeleccionado?.nombre}</strong>?
+                        </p>
+                        <div className="alert alert-warning mb-0">
+                            El empleado pasará a estado <strong>Inactivo</strong> y no podrá iniciar sesión, pero conservará su historial en el sistema.
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <p>
+                            ¿Deseas volver a habilitar al empleado{" "}
+                            <strong>{empleadoSeleccionado?.nombre}</strong>?
+                        </p>
+                        <div className="alert alert-success mb-0">
+                            El empleado pasará a estado <strong>Activo</strong> y podrá volver a acceder al sistema e incluirse en planillas.
+                        </div>
+                    </>
+                )}
+
+                {errorModal && (
+                    <div className="alert alert-danger mt-3 mb-0" role="alert">
+                        {errorModal}
+                    </div>
+                )}
             </Modal>
         </div>
     );
