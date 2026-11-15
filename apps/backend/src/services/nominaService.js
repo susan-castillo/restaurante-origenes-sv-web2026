@@ -74,6 +74,8 @@ async function calcularPlanilla({ anio, mes, quincena }, sucursalId) {
 
         return {
             usuario_id: emp.id,
+            nombre: emp.nombre,
+            cargo: emp.cargo,
             anio, mes, quincena,
             salario_bruto: bruto,
             isss, afp, renta,
@@ -102,12 +104,13 @@ export async function generarPlanilla(periodo, sucursalId) {
     const pagos = await calcularPlanilla(periodo, sucursalId);
     if (!pagos.length) throw errorNegocio('No hay empleados activos con salario en esta sucursal.', 400);
 
-    await prisma.pagos_planilla.createMany({ data: pagos });
+    // Extraemos solo las columnas reales de pagos_planilla para createMany
+    const datosBD = pagos.map(({ nombre, cargo, ...filaBD }) => filaBD);
+    await prisma.pagos_planilla.createMany({ data: datosBD });
     return { pagos, totalNeto: sumarNeto(pagos) };
 }
 
 //Consultar planilla.
-
 export async function obtenerPlanilla(periodo, sucursalId) {
     const pagos = await prisma.pagos_planilla.findMany({
         where: { ...periodo, usuarios: { sucursal_id: sucursalId } },

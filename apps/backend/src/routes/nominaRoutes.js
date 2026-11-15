@@ -11,8 +11,8 @@ router.use(verifyToken);
 router.use(requireRole('RRHH', 'ADMIN'));
 
 // /api/nomina
-router.post('/simular', soloAdmin, verifyToken, nomina.simularPlanilla);                           // RRHH y ADMIN
-router.post('/generar',soloAdmin, verifyToken, requireRole('ADMIN'), nomina.generarPlanilla);     // solo ADMIN guarda
-router.get('/:anio/:mes/:quincena', soloAdmin, verifyToken, nomina.obtenerPlanilla);               // RRHH y ADMIN
+router.post('/simular', nomina.simularPlanilla);                           // RRHH y ADMIN
+router.post('/generar',soloAdmin, requireRole('ADMIN'), nomina.generarPlanilla);     // solo ADMIN guarda
+router.get('/:anio/:mes/:quincena', nomina.obtenerPlanilla);               // RRHH y ADMIN
 
 export default router;
