@@ -1,5 +1,6 @@
-// Estilos del dashboard. Los colores van como variables locales porque esta hoja
-// se importa desde la página y NO debe volver a importar custom.scss (duplicaría Bootstrap).
+// Estilos del dashboard. Colores como variables locales: esta hoja NO debe volver a
+// importar custom.scss (duplicaría Bootstrap). Todo va bajo .dashboard-page para ganarle
+// a .app-card sin depender del orden de los CSS.
 $d-oscuro: #261C14;
 $d-marron: #613001;
 $d-crema: #FDFBF7;
@@ -9,6 +10,7 @@ $d-rosa: #FA8597;
 $d-naranja: #DE8332;
 $d-verde: #4CAF86;
 $d-rojo: #e83f56;
+$d-borde: #eadbd0;
 
 .dashboard-page {
   &__encabezado {
@@ -19,16 +21,8 @@ $d-rojo: #e83f56;
     margin-bottom: 24px;
   }
 
-  &__titulo {
-    font-size: 2.2rem;
-    color: $d-oscuro;
-    margin: 0;
-  }
-
-  &__subtitulo {
-    color: $d-marron;
-    margin: 0;
-  }
+  &__titulo { font-size: 2.2rem; color: $d-oscuro; margin: 0; }
+  &__subtitulo { color: $d-marron; margin: 0; }
 
   &__acumulado {
     display: inline-flex;
@@ -42,64 +36,225 @@ $d-rojo: #e83f56;
     font-weight: 600;
   }
 
-  // Estado vacío
+  // Título de las tarjetas grandes (Poppins, no el serif de .card-title)
+  &__subtitulo-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: $d-oscuro;
+
+    svg { color: $d-marron; font-size: 1.2rem; }
+  }
+
   &__vacio {
     text-align: center;
     padding: 48px 16px;
     color: $d-marron;
 
-    svg {
-      font-size: 3rem;
-      color: $d-cielo;
-      margin-bottom: 12px;
-    }
+    svg { font-size: 3rem; color: $d-cielo; margin-bottom: 12px; }
   }
 
-  // Tarjeta de KPI (prefijo .dashboard-page para ganarle a .app-card sin depender del orden)
+  // ---------- KPI ----------
   .kpi-card {
-    background-color: $d-crema;
-    box-shadow: 0 2px 10px rgba($d-oscuro, 0.06);
+    border-color: transparent;
+    box-shadow: 0 2px 10px rgba($d-oscuro, 0.08);
 
-    &__icono {
-      flex-shrink: 0;
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+    &--cielo   { background-color: rgba($d-cielo, 0.22);   --kpi-acento: #{darken($d-cielo, 28%)}; }
+    &--rosa    { background-color: rgba($d-rosa, 0.22);    --kpi-acento: #{darken($d-rosa, 18%)}; }
+    &--naranja { background-color: rgba($d-naranja, 0.2);  --kpi-acento: #{$d-naranja}; }
+    &--verde   { background-color: rgba($d-verde, 0.2);    --kpi-acento: #{darken($d-verde, 12%)}; }
+
+    &__cabecera {
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 1.3rem;
-
-      &--cielo    { background-color: rgba($d-cielo, 0.25);    color: darken($d-cielo, 25%); }
-      &--rosa     { background-color: rgba($d-rosa, 0.25);     color: darken($d-rosa, 15%); }
-      &--naranja  { background-color: rgba($d-naranja, 0.22);  color: $d-naranja; }
-      &--verde    { background-color: rgba($d-verde, 0.2);     color: darken($d-verde, 10%); }
+      gap: 8px;
+      margin-bottom: 8px;
+      color: var(--kpi-acento);
     }
 
-    &__texto {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    &__etiqueta {
-      font-size: 13px;
-      color: $d-marron;
-    }
+    &__icono { font-size: 1.3rem; flex-shrink: 0; }
+    &__etiqueta { font-size: 13px; font-weight: 600; color: var(--kpi-acento); }
 
     &__valor {
-      font-size: 1.5rem;
+      display: block;
+      font-size: 1.6rem;
       line-height: 1.2;
-      color: $d-oscuro;
-
-      &--positivo { color: darken($d-verde, 8%); }
-      &--negativo { color: $d-rojo; }
+      color: var(--kpi-acento);
+      white-space: nowrap;
     }
 
     &__auxiliar {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--kpi-acento);
+      opacity: 0.85;
+
+      &--positivo { color: darken($d-verde, 15%); opacity: 1; }
+      &--negativo { color: $d-rojo; opacity: 1; }
+    }
+  }
+
+  // ---------- Rendimiento ----------
+  .rendimiento-card {
+    background-color: $d-crema;
+    box-shadow: 0 2px 10px rgba($d-oscuro, 0.06);
+    min-height: 340px;
+
+    &__encabezado {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    &__leyenda {
+      display: flex;
+      gap: 14px;
       font-size: 12px;
       color: $d-marron;
-      opacity: 0.8;
+    }
+  }
+
+  .leyenda-punto {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 4px;
+    vertical-align: -1px;
+
+    &--ventas { background-color: $d-rosa; }
+    &--compras { background-color: $d-naranja; }
+  }
+
+  .rendimiento-fila {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+
+    &__nombre { width: 84px; flex-shrink: 0; font-size: 13px; font-weight: 600; color: $d-oscuro; }
+    &__barras { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+
+    &__linea {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: $d-oscuro;
+
+      .progress { flex: 1; }
+      span { min-width: 78px; text-align: right; }
+    }
+  }
+
+  // Dos barras del mismo grosor
+  .rendimiento-barra {
+    height: 8px;
+    background-color: #efe6df;
+    border-radius: 10px;
+
+    &--ventas   { background-color: $d-rosa; }
+    &--compras  { background-color: $d-naranja; }
+  }
+
+  // ---------- Detalle (la tabla copia la altura de la gráfica) ----------
+  .detalle-sucursales {
+    height: 100%;
+    position: relative;
+
+    &__card {
+      background-color: $d-crema;
+      box-shadow: 0 2px 10px rgba($d-oscuro, 0.06);
+      max-height: 440px; // en pantallas chicas: altura propia con scroll
+
+      @media (min-width: 992px) {
+        position: absolute; // no aporta altura: la fila mide lo que mide la gráfica
+        inset: 0;
+        max-height: none;
+      }
+    }
+
+    &__cuerpo {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    &__encabezado {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    &__scroll {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+    }
+  }
+
+  .detalle-tabla {
+    font-size: 13px;
+    --bs-table-bg: transparent;
+
+    th, td { white-space: nowrap; vertical-align: middle; }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background-color: $d-crema-suave;
+      color: $d-marron;
+      font-size: 12px;
+    }
+
+    tfoot td {
+      position: sticky;
+      bottom: 0;
+      background-color: $d-crema-suave;
+      font-weight: 700;
+    }
+
+    &__fila--clic {
+      cursor: pointer;
+
+      &:hover > *, &:focus > * { background-color: $d-crema-suave; }
+    }
+  }
+
+  // ---------- Franja inferior ----------
+  .resumen-cadena {
+    background-color: $d-crema;
+    box-shadow: 0 2px 10px rgba($d-oscuro, 0.06);
+
+    &__cuerpo {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      gap: 20px;
+    }
+
+    &__dato {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+
+      > svg { font-size: 2.2rem; flex-shrink: 0; }
+      span { display: block; font-size: 13px; font-weight: 600; }
+      strong { display: block; font-size: 1.6rem; }
+
+      &--cielo   { color: darken($d-cielo, 28%); }
+      &--naranja { color: $d-naranja; }
     }
   }
 }

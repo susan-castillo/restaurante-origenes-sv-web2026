@@ -167,6 +167,9 @@ function AppRoutes() {
                     {/* Administración: solo ADMIN */}
                     <Route element={<ProtectedRoute roles={['ADMIN']} />}>
                         <Route path="/admin" element={<Navigate replace to="/admin/inventario" />} />
+                        <Route element={<ProtectedRoute roles={['ADMIN']} soloCentral />}>
+                            <Route path="/admin/dashboard" element={<DashboardPage />} />
+                        </Route>
                         <Route path="/admin/inventario" element={<InventarioPage />} />
                         <Route path="/admin/sucursales" element={<SucursalesPage />} />
                         <Route path="/admin/sucursales/:id" element={<SucursalDetallePage />} />

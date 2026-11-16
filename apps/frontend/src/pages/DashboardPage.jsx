@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Alert, Col, Row } from 'reactstrap';
-import { FaArrowDown, FaArrowUp, FaChartLine, FaCoins, FaLayerGroup, FaShoppingCart, FaStore } from 'react-icons/fa';
+import { FaChartLine, FaCoins, FaLayerGroup, FaShoppingCart, FaStore } from 'react-icons/fa';
 import Button from '../components/Common/Button.jsx';
 import Card from '../components/Common/Card.jsx';
-import StatusBadge from '../components/Common/StatusBadge.jsx';
 import KpiCard from '../components/dashboard/KpiCard.jsx';
+import RendimientoSucursales from '../components/dashboard/RendimientoSucursales.jsx';
+import DetalleSucursales from '../components/dashboard/DetalleSucursales.jsx';
+import ResumenCadena from '../components/dashboard/ResumenCadena.jsx';
 import { getEstadisticasDashboard } from '../services/dashboardService.js';
 import { calcularMargen, formatearDolares, formatearMargen } from '../utils/dashboardFormato.js';
 import '../styles/dashboard.scss';
@@ -57,33 +59,33 @@ export default function DashboardPage() {
         setIntento((anterior) => anterior + 1);
     };
 
-    // ---- Cálculos a partir de la respuesta (los números pueden llegar como texto: Number()) ----
+    // ---- Cálculos a partir de la respuesta ----
     const tarjetas = datos?.tarjetas_superiores;
     const sucursales = datos?.grafico_rendimiento ?? [];
     const ingresos = Number(tarjetas?.ingresos_totales ?? 0);
     const gastos = Number(tarjetas?.gastos_totales ?? 0);
     const ganancia = Number(tarjetas?.ganancia_neta ?? 0);
     const margen = calcularMargen(ganancia, ingresos);
-    const gananciaPositiva = ganancia >= 0;
+
+    // Sumas y máximo sobre el arreglo de sucursales (reduce).
+    const empleadosTotal = sucursales.reduce((suma, s) => suma + Number(s.empleados_asignados), 0);
+    const ventasHoyTotal = sucursales.reduce((suma, s) => suma + Number(s.ventas_del_dia), 0);
+    const mejor = sucursales.reduce(
+        (actual, s) => (actual === null || Number(s.rentabilidad) > Number(actual.rentabilidad) ? s : actual),
+        null,
+    );
 
     // Cada KPI es un objeto; luego se dibujan con map().
     const kpis = [
         { clave: 'sucursales', icono: FaStore, tono: 'cielo', etiqueta: 'Sucursales activas',
-          valor: Number(tarjetas?.sucursales_activas ?? 0), auxiliar: 'En operación' },
+          valor: Number(tarjetas?.sucursales_activas ?? 0), auxiliar: `${empleadosTotal} empleados en total` },
         { clave: 'ingresos', icono: FaCoins, tono: 'rosa', etiqueta: 'Ingresos totales',
           valor: formatearDolares(ingresos), auxiliar: 'Ventas con IVA incluido' },
         { clave: 'gastos', icono: FaShoppingCart, tono: 'naranja', etiqueta: 'Gastos totales',
           valor: formatearDolares(gastos), auxiliar: 'Compras a proveedores' },
         { clave: 'ganancia', icono: FaChartLine, tono: 'verde', etiqueta: 'Ganancia neta',
-          valor: formatearDolares(ganancia),
-          valorClase: gananciaPositiva ? 'kpi-card__valor--positivo' : 'kpi-card__valor--negativo',
-          extra: (
-              <StatusBadge
-                  variant={gananciaPositiva ? 'success' : 'danger'}
-                  text={<>{gananciaPositiva ? <FaArrowUp className="me-1" /> : <FaArrowDown className="me-1" />}
-                      {formatearMargen(margen)} de margen</>}
-              />
-          ) },
+          valor: formatearDolares(ganancia), auxiliar: `${formatearMargen(margen)} de margen`,
+          auxiliarClase: ganancia >= 0 ? 'kpi-card__auxiliar--positivo' : 'kpi-card__auxiliar--negativo' },
     ];
 
     // ---- Qué se muestra debajo del encabezado, según el estado ----
@@ -124,8 +126,14 @@ export default function DashboardPage() {
                         </Col>
                     ))}
                 </Row>
-                {/* PIEZA 4: aquí van "Rendimiento por sucursal" y "Detalle por sucursal" */}
-                {/* PIEZA 5: aquí van la tarjeta extra y el modal de la fila */}
+
+                <Row className="g-3 mb-4">
+                    <Col xs="12" lg="5"><RendimientoSucursales sucursales={sucursales} /></Col>
+                    <Col xs="12" lg="7"><DetalleSucursales sucursales={sucursales} /></Col>
+                </Row>
+
+                <ResumenCadena ventasHoy={ventasHoyTotal} mejor={mejor} />
+                {/* PIEZA 5: modal al hacer clic en una fila (onSeleccionar en DetalleSucursales) */}
             </>
         );
     };
