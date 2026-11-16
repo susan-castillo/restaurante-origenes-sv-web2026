@@ -139,7 +139,7 @@ $d-borde: #eadbd0;
     gap: 12px;
     margin-bottom: 18px;
 
-    &__nombre { width: 84px; flex-shrink: 0; font-size: 13px; font-weight: 600; color: $d-oscuro; }
+    &__nombre { width: 120px; flex-shrink: 0; font-size: 13px; font-weight: 600; color: $d-oscuro; }
     &__barras { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 
     &__linea {
@@ -165,20 +165,15 @@ $d-borde: #eadbd0;
   }
 
   // ---------- Detalle (la tabla copia la altura de la gráfica) ----------
+   // ---------- Detalle ----------
+  // La tarjeta mide lo mismo que la gráfica porque ambas son columnas de la misma fila.
+  // Si la tabla crece más que max-height, solo el cuerpo hace scroll.
   .detalle-sucursales {
     height: 100%;
-    position: relative;
 
     &__card {
       background-color: $d-crema;
       box-shadow: 0 2px 10px rgba($d-oscuro, 0.06);
-      max-height: 440px; // en pantallas chicas: altura propia con scroll
-
-      @media (min-width: 992px) {
-        position: absolute; // no aporta altura: la fila mide lo que mide la gráfica
-        inset: 0;
-        max-height: none;
-      }
     }
 
     &__cuerpo {
@@ -197,8 +192,7 @@ $d-borde: #eadbd0;
     }
 
     &__scroll {
-      flex: 1 1 auto;
-      min-height: 0;
+      max-height: 300px;
       overflow: auto;
     }
   }
