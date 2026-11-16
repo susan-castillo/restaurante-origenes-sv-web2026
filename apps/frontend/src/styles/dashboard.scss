@@ -1,0 +1,105 @@
+// Estilos del dashboard. Los colores van como variables locales porque esta hoja
+// se importa desde la página y NO debe volver a importar custom.scss (duplicaría Bootstrap).
+$d-oscuro: #261C14;
+$d-marron: #613001;
+$d-crema: #FDFBF7;
+$d-crema-suave: #FAEADB;
+$d-cielo: #82BCC7;
+$d-rosa: #FA8597;
+$d-naranja: #DE8332;
+$d-verde: #4CAF86;
+$d-rojo: #e83f56;
+
+.dashboard-page {
+  &__encabezado {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+    margin-bottom: 24px;
+  }
+
+  &__titulo {
+    font-size: 2.2rem;
+    color: $d-oscuro;
+    margin: 0;
+  }
+
+  &__subtitulo {
+    color: $d-marron;
+    margin: 0;
+  }
+
+  &__acumulado {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: $d-crema-suave;
+    color: $d-marron;
+    border-radius: 50px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  // Estado vacío
+  &__vacio {
+    text-align: center;
+    padding: 48px 16px;
+    color: $d-marron;
+
+    svg {
+      font-size: 3rem;
+      color: $d-cielo;
+      margin-bottom: 12px;
+    }
+  }
+
+  // Tarjeta de KPI (prefijo .dashboard-page para ganarle a .app-card sin depender del orden)
+  .kpi-card {
+    background-color: $d-crema;
+    box-shadow: 0 2px 10px rgba($d-oscuro, 0.06);
+
+    &__icono {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+
+      &--cielo    { background-color: rgba($d-cielo, 0.25);    color: darken($d-cielo, 25%); }
+      &--rosa     { background-color: rgba($d-rosa, 0.25);     color: darken($d-rosa, 15%); }
+      &--naranja  { background-color: rgba($d-naranja, 0.22);  color: $d-naranja; }
+      &--verde    { background-color: rgba($d-verde, 0.2);     color: darken($d-verde, 10%); }
+    }
+
+    &__texto {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    &__etiqueta {
+      font-size: 13px;
+      color: $d-marron;
+    }
+
+    &__valor {
+      font-size: 1.5rem;
+      line-height: 1.2;
+      color: $d-oscuro;
+
+      &--positivo { color: darken($d-verde, 8%); }
+      &--negativo { color: $d-rojo; }
+    }
+
+    &__auxiliar {
+      font-size: 12px;
+      color: $d-marron;
+      opacity: 0.8;
+    }
+  }
+}
