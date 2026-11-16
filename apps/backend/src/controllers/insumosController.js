@@ -2,6 +2,10 @@
 import * as insumosService from '../services/insumosService.js';
 import { idValido, filtroActivo, filtroBuscar } from '../utils/validaciones.js';
 
+// Unidades permitidas (el esquema de la base del equipo solo admite estas tres).
+const UNIDADES_INSUMO = ['g', 'ml', 'unidad'];
+const MENSAJE_UNIDAD = 'La unidad debe ser g, ml o unidad.';
+
 export const listarInsumos = async (req, res) => {
     try {
         const { valor: activo, error: errorActivo } = filtroActivo(req.query.activo);
@@ -19,6 +23,11 @@ export const listarInsumos = async (req, res) => {
             if (!sucursalId) {
                 return res.status(400).json({ error: 'El filtro sucursal_id no es válido.' });
             }
+            // Un usuario con sucursal fija no puede consultar otra
+            const propia = idValido(req.usuario.sucursal_id);
+            if (propia && propia !== sucursalId) {
+                return res.status(403).json({ error: 'Solo puedes consultar la sucursal asignada a tu usuario.' });
+            }
         }
 
         const insumos = await insumosService.listarInsumos({ activo, buscar, sucursalId });
@@ -34,8 +43,9 @@ export const listarInsumos = async (req, res) => {
 
 export const crearInsumo = async (req, res) => {
     try {
-        const nombre = String(req.body.nombre ?? '').trim();
-        const unidad = String(req.body.unidad ?? '').trim();
+        const body = req.body ?? {};
+        const nombre = String(body.nombre ?? '').trim();
+        const unidad = String(body.unidad ?? '').trim().toLowerCase();
 
         if (!nombre || !unidad) {
             return res.status(400).json({ error: 'Nombre y unidad son requeridos.' });
@@ -43,8 +53,8 @@ export const crearInsumo = async (req, res) => {
         if (nombre.length > 100) {
             return res.status(400).json({ error: 'El nombre no puede superar 100 caracteres.' });
         }
-        if (unidad.length > 10) {
-            return res.status(400).json({ error: 'La unidad no puede superar 10 caracteres.' });
+        if (!UNIDADES_INSUMO.includes(unidad)) {
+            return res.status(400).json({ error: MENSAJE_UNIDAD });
         }
 
         const insumo = await insumosService.crearInsumo({ nombre, unidad });
@@ -65,9 +75,10 @@ export const actualizarInsumo = async (req, res) => {
             return res.status(400).json({ error: 'El id del insumo no es válido.' });
         }
 
+        const body = req.body ?? {};
         const datos = {};
-        if (req.body.nombre !== undefined) datos.nombre = String(req.body.nombre).trim();
-        if (req.body.unidad !== undefined) datos.unidad = String(req.body.unidad).trim();
+        if (body.nombre !== undefined) datos.nombre = String(body.nombre).trim();
+        if (body.unidad !== undefined) datos.unidad = String(body.unidad).trim().toLowerCase();
 
         if (Object.keys(datos).length === 0) {
             return res.status(400).json({ error: 'Envía al menos nombre o unidad.' });
@@ -78,8 +89,8 @@ export const actualizarInsumo = async (req, res) => {
         if (datos.nombre && datos.nombre.length > 100) {
             return res.status(400).json({ error: 'El nombre no puede superar 100 caracteres.' });
         }
-        if (datos.unidad && datos.unidad.length > 10) {
-            return res.status(400).json({ error: 'La unidad no puede superar 10 caracteres.' });
+        if (datos.unidad && !UNIDADES_INSUMO.includes(datos.unidad)) {
+            return res.status(400).json({ error: MENSAJE_UNIDAD });
         }
 
         const insumo = await insumosService.actualizarInsumo(id, datos);
