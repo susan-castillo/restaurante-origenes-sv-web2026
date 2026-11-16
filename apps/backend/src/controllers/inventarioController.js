@@ -82,6 +82,9 @@ export const ajustarInventario = async (req, res) => {
         if (error.message === 'SUCURSAL_NO_ENCONTRADA') {
             return res.status(404).json({ error: 'Sucursal no encontrada.' });
         }
+        if (error.message === 'SUCURSAL_INACTIVA') {
+            return res.status(409).json({ error: 'La sucursal está desactivada.' });
+        }
         if (error.message === 'INSUMO_NO_ENCONTRADO') {
             return res.status(404).json({ error: 'Insumo no encontrado.' });
         }

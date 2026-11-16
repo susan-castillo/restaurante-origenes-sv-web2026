@@ -53,8 +53,10 @@ export const ajustarInventario = async (sucursalId, insumoId, datos) => {
         prisma.sucursales.findUnique({ where: { id: sucursalId } }),
         prisma.insumos.findUnique({ where: { id: insumoId } }),
     ]);
+
     if (!sucursal) throw new Error('SUCURSAL_NO_ENCONTRADA');
     if (!insumo) throw new Error('INSUMO_NO_ENCONTRADO');
+    if (!sucursal.activa) throw new Error('SUCURSAL_INACTIVA');
 
     const fila = await prisma.inventario_sucursal.upsert({
         where: { sucursal_id_insumo_id: { sucursal_id: sucursalId, insumo_id: insumoId } },
@@ -69,6 +71,7 @@ export const ajustarInventario = async (sucursalId, insumoId, datos) => {
         stock_actual: fila.stock_actual,
         stock_minimo: fila.stock_minimo,
     };
+    
 };
 
 // Error con código estable (message) y texto legible para mostrar en el POS (mensaje).
@@ -105,6 +108,13 @@ const agruparItemsVenta = (items) => {
 export const descontarInventario = async (client, sucursalId, items) => {
     if (!idValido(sucursalId)) {
         throw errorInventario('SUCURSAL_INVALIDA', 'La sucursal no es válida.');
+    }
+    const sucursal = await client.sucursales.findUnique({ where: { id: sucursalId } });
+    if (!sucursal) {
+        throw errorInventario('SUCURSAL_INVALIDA', 'La sucursal no existe.');
+    }
+    if (!sucursal.activa) {
+        throw errorInventario('SUCURSAL_INACTIVA', 'La sucursal está desactivada.');
     }
     const porPlatillo = agruparItemsVenta(items);
     const platilloIds = [...porPlatillo.keys()];
