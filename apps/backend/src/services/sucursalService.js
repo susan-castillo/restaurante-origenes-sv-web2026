@@ -148,6 +148,8 @@ export async function obtenerEstadisticasDashboard() {
   );
 
   return {
+      id: sucursal.id,
+      nombre: sucursal.nombre,
     tarjetas_superiores: {
       sucursales_activas: sucursales.length,
       ingresos_totales: totalGlobalVentas,
