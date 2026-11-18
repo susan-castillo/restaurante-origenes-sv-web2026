@@ -15,3 +15,14 @@ export async function registrarCompra(datos) {
     avisarCambioInventario();
     return resultado;
 }
+
+export async function getCompras(sucursalId) {
+    const query = sucursalId ? `?sucursal_id=${encodeURIComponent(sucursalId)}` : "";
+    return await apiFetch(`/compras${query}`);
+}
+
+export async function pagarCompra(compraId) {
+    return await apiFetch(`/compras/${compraId}/pagar`, {
+        method: "PATCH",
+    });
+}

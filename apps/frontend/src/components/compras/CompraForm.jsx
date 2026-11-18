@@ -68,6 +68,7 @@ export default function CompraForm({ usuario, onCancel, onSaved }) {
         setError('');
         try {
             const { compra } = await registrarCompra({
+                sucursal_id: usuario.sucursal_id,
                 proveedor_id: Number(proveedor),
                 numero_factura: numeroFactura,
                 fecha_vencimiento: vencimiento || null,

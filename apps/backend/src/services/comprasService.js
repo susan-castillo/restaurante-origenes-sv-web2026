@@ -108,3 +108,54 @@ export async function obtenerResumenCostos(fechaInicio, fechaFinal, sucursalId) 
     cantidad_transacciones: compras.length,
   };
 }
+
+// Listar facturas de compra (filtradas por sucursal si aplica)
+export async function listarCompras(sucursalId = null) {
+  return prisma.compras.findMany({
+    where: {
+      ...(sucursalId ? {sucursal_id: Number(sucursalId)} : {}),
+    },
+    include: {
+      proveedores: {select: {id: true, nombre: true, nit: true}},
+      sucursales: {select: {id: true, nombre: true}},
+    },
+    orderBy: [
+      {estado_pago: "desc"}, // Muestra primero las 'PENDIENTE' antes que 'PAGADA'
+      {creado_en: "desc"},
+    ],
+  });
+}
+
+// Marcar una factura como PAGADA
+export async function pagarCompra(compraId, sucursalId = null) {
+  const compra = await prisma.compras.findUnique({
+    where: { id: Number(compraId) },
+  });
+
+  if (!compra) {
+    const err = new Error("La factura de compra no existe.");
+    err.status = 404;
+    throw err;
+  }
+
+  // Si es usuario de sucursal fija, validar que la factura pertenezca a su sucursal
+  if (sucursalId && compra.sucursal_id !== Number(sucursalId)) {
+    const err = new Error("No tienes permiso para pagar facturas de otra sucursal.");
+    err.status = 403;
+    throw err;
+  }
+
+  if (compra.estado_pago === "PAGADA") {
+    const err = new Error("Esta factura ya se encuentra pagada.");
+    err.status = 400;
+    throw err;
+  }
+
+  return prisma.compras.update({
+    where: {id: Number(compraId)},
+    data: {
+      estado_pago: "PAGADA",
+      fecha_pago: new Date(),
+    },
+  });
+}
