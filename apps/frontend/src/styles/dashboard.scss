@@ -257,3 +257,17 @@ $d-borde: #eadbd0;
     }
   }
 }
+
+// El modal de Reactstrap se dibuja en un "portal" (fuera de .dashboard-page, directo en <body>),
+// por eso sus estilos NO pueden ir anidados dentro de .dashboard-page.
+.detalle-modal {
+  &__dato {
+    background-color: $d-crema-suave;
+    border-radius: 12px;
+    padding: 12px 14px;
+    height: 100%;
+
+    span { display: block; font-size: 12px; color: $d-marron; margin-bottom: 4px; }
+    strong { font-size: 1.15rem; color: $d-oscuro; }
+  }
+}

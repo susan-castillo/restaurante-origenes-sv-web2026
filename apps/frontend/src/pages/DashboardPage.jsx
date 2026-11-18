@@ -10,6 +10,8 @@ import ResumenCadena from '../components/dashboard/ResumenCadena.jsx';
 import { getEstadisticasDashboard } from '../services/dashboardService.js';
 import { calcularMargen, formatearDolares, formatearMargen } from '../utils/dashboardFormato.js';
 import '../styles/dashboard.scss';
+import { useAuth } from '../context/AuthContext.jsx';
+import SucursalDetalleModal from '../components/dashboard/SucursalDetalleModal.jsx';
 
 // Esqueleto que se ve mientras llegan los datos (clases "placeholder" de Bootstrap 5).
 function KpisCargando() {
@@ -28,12 +30,23 @@ function KpisCargando() {
     );
 }
 
+// Saludo según la hora local del navegador.
+const saludoSegunHora = () => {
+    const hora = new Date().getHours();
+    if (hora < 12) return 'Buenos días';
+    if (hora < 19) return 'Buenas tardes';
+    return 'Buenas noches';
+};
+
 export default function DashboardPage() {
     // Estado: lo que la pantalla necesita recordar entre renders.
     const [datos, setDatos] = useState(null);       // respuesta del backend
     const [error, setError] = useState(null);       // ApiError si algo falló
     const [cargando, setCargando] = useState(true);
     const [intento, setIntento] = useState(0);      // cambiar este número vuelve a ejecutar el efecto
+    const { usuario } = useAuth();
+    const primerNombre = usuario?.nombre?.split(' ')[0] ?? '';
+    const [seleccionada, setSeleccionada] = useState(null); // fila abierta en el modal
 
     useEffect(() => {
         let vigente = true; // evita actualizar el estado si el componente ya se desmontó
@@ -129,27 +142,31 @@ export default function DashboardPage() {
 
                 <Row className="g-3 mb-4">
                     <Col xs="12" lg="5"><RendimientoSucursales sucursales={sucursales} /></Col>
-                    <Col xs="12" lg="7"><DetalleSucursales sucursales={sucursales} /></Col>
+                      <Col xs="12" lg="7">
+                        <DetalleSucursales sucursales={sucursales} onSeleccionar={setSeleccionada} />
+                     </Col>
                 </Row>
 
+            
                 <ResumenCadena ventasHoy={ventasHoyTotal} mejor={mejor} />
-                {/* PIEZA 5: modal al hacer clic en una fila (onSeleccionar en DetalleSucursales) */}
+                <SucursalDetalleModal sucursal={seleccionada} onCerrar={() => setSeleccionada(null)} />
             </>
         );
     };
 
     return (
         <section className="dashboard-page" aria-labelledby="dashboard-titulo">
-            <header className="dashboard-page__encabezado">
+           <header className="dashboard-page__encabezado">
                 <div>
-                    <h1 id="dashboard-titulo" className="font-origenes dashboard-page__titulo">Dashboard</h1>
-                    <p className="dashboard-page__subtitulo">Resumen global de la cadena</p>
+                    <h1 id="dashboard-titulo" className="font-origenes dashboard-page__titulo">
+                        {saludoSegunHora()}{primerNombre && `, ${primerNombre}`}
+                    </h1>
+                    <p className="dashboard-page__subtitulo">Así va el pulso de tus sucursales</p>
                 </div>
                 <span className="dashboard-page__acumulado">
                     <FaLayerGroup aria-hidden="true" /> Acumulado histórico
                 </span>
             </header>
-
             {renderContenido()}
         </section>
     );
