@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import app from './app.js';
+import { prisma } from './models/db.js';
 
 // Asignación de puerto y host desde variables de entorno o valores por defecto
 const port = Number(process.env.PORT || 3000);
@@ -9,6 +10,9 @@ const host = process.env.HOST || '127.0.0.1';
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
   throw new Error('El puerto debe ser un número entero entre 1 y 65535.');
 }
+
+// Preparar la conexión a PostgreSQL antes de abrir el puerto HTTP
+await prisma.$connect();
 
 // Inicialización del servidor de Express
 app.listen(port, host, () => {
