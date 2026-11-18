@@ -97,6 +97,11 @@ $d-borde: #eadbd0;
       &--negativo { color: $d-rojo; opacity: 1; }
     }
   }
+    // Las tarjetas llenan toda su columna: sin esto el Card queda a su ancho natural
+  .rendimiento-card,
+  .detalle-sucursales__card {
+    width: 100%;
+  }
 
   // ---------- Rendimiento ----------
   .rendimiento-card {
