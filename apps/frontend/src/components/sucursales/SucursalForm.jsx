@@ -63,29 +63,29 @@ export default function SucursalForm({ sucursal, onCancel, onSaved }) {
                 <fieldset disabled={guardando}>
                     <Row className="g-3">
                         <Col md={editando ? 12 : 5}>
-                            <FormGroup>
+                            <FormGroup className={'w-100'}>
                                 <Label for={`${formId}-nombre`}>Nombre</Label>
                                 <Input id={`${formId}-nombre`} innerRef={campoNombre} required
                                     maxLength={100} value={nombre} onChange={(event) => setNombre(event.target.value)} />
                             </FormGroup>
                         </Col>
                         <Col md={editando ? 12 : 5}>
-                            <FormGroup>
+                            <FormGroup className={'w-100'}>
                                 <Label for={`${formId}-direccion`}>Dirección</Label>
                                 <Input id={`${formId}-direccion`} required maxLength={200}
                                     value={direccion} onChange={(event) => setDireccion(event.target.value)} />
                             </FormGroup>
                         </Col>
                         <Col md={editando ? 12 : 2}>
-                            <FormGroup>
+                            <FormGroup className={'w-100'}>
                                 <Label for={`${formId}-estado`}>{editando ? 'Estado actual' : 'Estado inicial'}</Label>
                                 <Input id={`${formId}-estado`} value={sucursal?.activa === false ? 'Inactiva' : 'Activa'} readOnly />
                             </FormGroup>
                         </Col>
                     </Row>
-                    <div className="d-flex flex-wrap justify-content-end gap-2">
+                    <div className="d-flex flex-wrap justify-content-end gap-2 mt-3">
                         <Button type="button" variant="outline-secondary" onClick={onCancel}>Cancelar</Button>
-                        <Button type="submit" variant="secondary">
+                        <Button type="submit" variant="secondary" className={'text-light'}>
                             {guardando ? 'Guardando…' : editando ? 'Guardar sede' : 'Crear sucursal'}
                         </Button>
                     </div>

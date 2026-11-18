@@ -54,13 +54,15 @@ export default function SucursalDetallePage() {
     };
 
     return (
-        <section className="sucursales-page" aria-labelledby="detalle-sucursal-titulo">
-            <header className="sucursales-page__encabezado">
-                <h1 id="detalle-sucursal-titulo" className="font-origenes">{sucursal?.nombre ?? 'Detalle de sede'}</h1>
+        <section className="inventario-page sucursales-page" aria-labelledby="detalle-sucursal-titulo">
+            <header className="sucursales-page__encabezado mb-4">
+                <h1 id="detalle-sucursal-titulo" className="inventario-titulo">
+                    {sucursal?.nombre ?? 'Detalle de sede'}
+                </h1>
             </header>
 
             {actual?.mensaje && !editando && !confirmandoEstado && (
-                <Alert color="success" role="status">{actual.mensaje}</Alert>
+                <Alert color="success" role="status" className="mb-3">{actual.mensaje}</Alert>
             )}
 
             {!idValido || error?.status === 404 ? (
@@ -80,19 +82,19 @@ export default function SucursalDetallePage() {
                 </div>
             ) : editando ? (
                 <SucursalForm key={id} sucursal={sucursal} onCancel={cerrarAccion}
-                    onSaved={(sede) => guardarResultado(sede, 'Se guardaron los cambios.')} />
+                              onSaved={(sede) => guardarResultado(sede, 'Se guardaron los cambios.')} />
             ) : (
                 <div className={confirmandoEstado ? 'sucursales-page__detalle-con-estado' : 'sucursales-page__detalle'}>
-                    <Card className="sucursal-card">
-                        <CardTitle tag="h2">Información de la sede</CardTitle>
-                        <dl className="sucursales-page__datos">
+                    <Card className="app-card sucursal-card">
+                        <CardTitle tag="h2" className="card-title">Información de la sede</CardTitle>
+                        <dl className="sucursales-page__datos my-3">
                             <div><dt>Nombre</dt><dd>{sucursal.nombre}</dd></div>
                             <div><dt>Dirección</dt><dd>{sucursal.direccion || 'Dirección no registrada'}</dd></div>
                             <div><dt>Estado actual</dt><dd>{sucursal.activa ? 'Activa' : 'Inactiva'}</dd></div>
                         </dl>
                         <SucursalMetricas resumen={sucursal.resumen} detalle />
                         {puedeGestionar && !confirmandoEstado && (
-                            <div className="d-flex flex-wrap gap-2 mt-3">
+                            <div className="d-flex flex-wrap gap-2 mt-4">
                                 <Button tag={Link} to="?editar=1" variant="outline-secondary">Editar sede</Button>
                                 <Button tag={Link} to="?estado=1" variant={`outline-${sucursal.activa ? 'danger' : 'secondary'}`}>
                                     {sucursal.activa ? 'Desactivar sede' : 'Activar sede'}
@@ -102,7 +104,7 @@ export default function SucursalDetallePage() {
                     </Card>
                     {confirmandoEstado && (
                         <SucursalEstadoConfirmacion key={id} sucursal={sucursal} onCancel={cerrarAccion}
-                            onSaved={(sede) => guardarResultado(sede, sede.activa ? 'Se activó la sucursal.' : 'Se desactivó la sucursal.')} />
+                                                    onSaved={(sede) => guardarResultado(sede, sede.activa ? 'Se activó la sucursal.' : 'Se desactivó la sucursal.')} />
                     )}
                 </div>
             )}
