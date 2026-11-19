@@ -163,7 +163,8 @@ CREATE TABLE compras (
         CHECK (estado_pago IN ('PENDIENTE', 'PAGADA')), -- Control de cuentas por pagar
     fecha_vencimiento DATE,                    -- Fecha límite de pago para compras a crédito
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Registro de ingreso al sistema
-    fecha_pago DATE    -- NULL mientras la compra esté pendiente
+    fecha_pago DATE,    -- NULL mientras la compra esté pendiente
+    CONSTRAINT compras_proveedor_factura_key UNIQUE (proveedor_id, numero_factura)
 );
 
 -- Tabla 12: DETALLE DE COMPRA (Insumos Ingresados)
@@ -173,7 +174,7 @@ CREATE TABLE detalle_compra (
     compra_id INT NOT NULL REFERENCES compras(id) ON DELETE CASCADE, -- Compra padre
     insumo_id INT NOT NULL REFERENCES insumos(id),                   -- Insumo recibido
     cantidad NUMERIC(12, 3) NOT NULL CHECK (cantidad > 0),          -- Cantidad ingresada al inventario
-    costo_unitario NUMERIC(10, 4) NOT NULL     -- Costo de adquisición (soporta precisión de 4 decimales)
+    costo_unitario NUMERIC(10, 4) NOT NULL CHECK (costo_unitario > 0)     -- Costo de adquisición (soporta precisión de 4 decimales)
 );
 
 -- =====================================================
