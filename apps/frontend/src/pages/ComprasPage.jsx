@@ -54,7 +54,7 @@ export default function ComprasPage() {
     const [vista, setVista] = useState("compras");
     const [formularioAbierto, setFormularioAbierto] = useState(false);
     const [confirmacion, setConfirmacion] = useState("");
-    const [fin, setFin] = useState(() => new Date().toISOString().slice(0, 10));
+    const [fin, setFin] = useState(() => new Intl.DateTimeFormat("en-CA", { timeZone: "America/El_Salvador", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()));
     const [inicio, setInicio] = useState(() => `${fin.slice(0, 7)}-01`);
     const [resultado, setResultado] = useState(null);
     const [cargando, setCargando] = useState(false);
@@ -430,7 +430,7 @@ export default function ComprasPage() {
                                     <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
                                         <span className="text-muted small" role="status">
                                             Período: <strong>{resultado.rango.inicio}</strong> al{" "}
-                                            <strong>{resultado.rango.fin}</strong> (UTC)
+                                            <strong>{resultado.rango.fin}</strong> (El Salvador)
                                         </span>
                                         <span className="badge rounded-pill bg-light text-dark border px-3 py-1">
                                             {conteo.format(resultado.cantidad_transacciones)}{" "}

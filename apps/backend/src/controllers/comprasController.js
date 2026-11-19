@@ -1,3 +1,5 @@
+import { prepararCompra } from "../utils/compraImportes.js";
+import { rangoFechasSV } from "../utils/fechaSV.js";
 import * as comprasService from "../services/comprasService.js";
 import * as sucursalService from "../services/sucursalService.js";
 import { esAdminCentral } from "../middlewares/sucursalAccess.js";
@@ -19,7 +21,7 @@ export async function crearCompra(req, res) {
 
   const idProveedor = Number(proveedor_id);
 
-  if (!Number.isInteger(idProveedor) || idProveedor <= 0 || !numero_factura) {
+  if (!Number.isInteger(idProveedor) || idProveedor <= 0 || typeof numero_factura !== 'string' || !numero_factura.trim() || numero_factura.trim().length > 30) {
     return res
         .status(400)
         .json({ error: "Datos de proveedor o factura son invalidos" });
@@ -31,17 +33,10 @@ export async function crearCompra(req, res) {
     });
   }
 
-  for (const item of detalles) {
-    if (
-        isNaN(item.insumo_id) ||
-        isNaN(item.cantidad) ||
-        isNaN(item.costo_unitario) ||
-        item.cantidad <= 0
-    ) {
-      return res.status(400).json({
-        error: "Uno de los productos tiene datos numéricos inválidos.",
-      });
-    }
+  try {
+    prepararCompra(detalles);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
   }
 
   try {
@@ -73,6 +68,7 @@ export async function crearCompra(req, res) {
       compra,
     });
   } catch (error) {
+    if (error.code === "P2002") return res.status(409).json({ error: "Esta factura ya está registrada para el proveedor." });
     console.error(error);
     return res
         .status(500)
@@ -90,11 +86,10 @@ export async function getResumenCostos(req, res) {
     });
   }
 
-  if (isNaN(Date.parse(fecha_inicio)) || isNaN(Date.parse(fecha_fin))) {
-    return res.status(400).json({
-      error:
-          "Las fechas proporcionadas no tienen un formato valido (usa YYYY-MM-DD)",
-    });
+  try {
+    rangoFechasSV(fecha_inicio, fecha_fin);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
   }
 
   // Si es Admin Central y eligió una sucursal en el Navbar, filtra por esa (o null si quiere todas)

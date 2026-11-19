@@ -55,7 +55,7 @@ export default function CompraForm({ usuario, onCancel, onSaved }) {
 
         const numeroFactura = factura.trim();
         if (!numeroFactura || !proveedor || filas.some((fila) => !fila.insumo
-            || !fila.cantidad || !fila.costo || Number(fila.cantidad) <= 0 || Number(fila.costo) < 0)) {
+            || !fila.cantidad || !fila.costo || Number(fila.cantidad) <= 0 || Number(fila.costo) <= 0)) {
             setError('Completa la factura y los datos de cada insumo.');
             return;
         }
@@ -139,7 +139,7 @@ export default function CompraForm({ usuario, onCancel, onSaved }) {
                                 </Col>
                                 <Col md={2}>
                                     <Label for={`compra-costo-${fila.id}`}>Costo unitario</Label>
-                                    <Input id={`compra-costo-${fila.id}`} type="number" required min="0" max="999999.9999" step="0.0001"
+                                    <Input id={`compra-costo-${fila.id}`} type="number" required min="0.0001" max="999999.9999" step="0.0001"
                                         value={fila.costo} onChange={(e) => actualizarFila(fila.id, 'costo', e.target.value)} />
                                 </Col>
                                 <Col md={2}><span className="d-block">Subtotal</span>{moneda.format(Number(fila.cantidad) * Number(fila.costo))}</Col>

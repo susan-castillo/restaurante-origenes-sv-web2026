@@ -20,6 +20,8 @@ model compras {
   proveedores       proveedores      @relation(fields: [proveedor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   sucursales        sucursales       @relation(fields: [sucursal_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   detalle_compra    detalle_compra[]
+
+  @@unique([proveedor_id, numero_factura], map: "compras_proveedor_factura_key")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
