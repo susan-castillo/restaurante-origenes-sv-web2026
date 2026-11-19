@@ -2,11 +2,16 @@
 import { prisma } from '../models/db.js';
 import { idValido, coincideNombre } from '../utils/validaciones.js';
 
-// Stock de una sucursal: todos los insumos activos, con 0 si aún no tienen fila de inventario.
-// buscar: texto dentro del nombre del insumo.
-export const listarInventario = async (sucursalId, { buscar } = {}) => {
+// Valores que acepta el filtro ?estado= de GET /inventario.
+export const ESTADOS_INVENTARIO = ['todos', 'bajo', 'agotados', 'deshabilitados'];
+
+// Stock de una sucursal, con 0 para los insumos que aún no tienen fila de inventario.
+//  estado: todos (insumos activos), bajo (stock por debajo del mínimo),
+//          agotados (stock en 0) o deshabilitados (insumos desactivados).
+//  buscar: texto dentro del nombre del insumo.
+export const listarInventario = async (sucursalId, { buscar, estado = 'todos' } = {}) => {
     const insumos = await prisma.insumos.findMany({
-        where: { activo: true },
+        where: { activo: estado !== 'deshabilitados' },
         orderBy: { nombre: 'asc' },
         include: { inventario_sucursal: { where: { sucursal_id: sucursalId } } },
     });
@@ -19,9 +24,15 @@ export const listarInventario = async (sucursalId, { buscar } = {}) => {
                 insumo_id: insumo.id,
                 nombre: insumo.nombre,
                 unidad: insumo.unidad,
+                activo: insumo.activo,
                 stock_actual: fila ? fila.stock_actual : '0',
                 stock_minimo: fila ? fila.stock_minimo : '0',
             };
+        })
+        .filter((fila) => {
+            if (estado === 'bajo') return Number(fila.stock_actual) < Number(fila.stock_minimo);
+            if (estado === 'agotados') return Number(fila.stock_actual) === 0;
+            return true;
         });
 };
 
@@ -53,8 +64,10 @@ export const ajustarInventario = async (sucursalId, insumoId, datos) => {
         prisma.sucursales.findUnique({ where: { id: sucursalId } }),
         prisma.insumos.findUnique({ where: { id: insumoId } }),
     ]);
+
     if (!sucursal) throw new Error('SUCURSAL_NO_ENCONTRADA');
     if (!insumo) throw new Error('INSUMO_NO_ENCONTRADO');
+    if (!sucursal.activa) throw new Error('SUCURSAL_INACTIVA');
 
     const fila = await prisma.inventario_sucursal.upsert({
         where: { sucursal_id_insumo_id: { sucursal_id: sucursalId, insumo_id: insumoId } },
@@ -69,6 +82,7 @@ export const ajustarInventario = async (sucursalId, insumoId, datos) => {
         stock_actual: fila.stock_actual,
         stock_minimo: fila.stock_minimo,
     };
+    
 };
 
 // Error con código estable (message) y texto legible para mostrar en el POS (mensaje).
@@ -105,6 +119,13 @@ const agruparItemsVenta = (items) => {
 export const descontarInventario = async (client, sucursalId, items) => {
     if (!idValido(sucursalId)) {
         throw errorInventario('SUCURSAL_INVALIDA', 'La sucursal no es válida.');
+    }
+    const sucursal = await client.sucursales.findUnique({ where: { id: sucursalId } });
+    if (!sucursal) {
+        throw errorInventario('SUCURSAL_INVALIDA', 'La sucursal no existe.');
+    }
+    if (!sucursal.activa) {
+        throw errorInventario('SUCURSAL_INACTIVA', 'La sucursal está desactivada.');
     }
     const porPlatillo = agruparItemsVenta(items);
     const platilloIds = [...porPlatillo.keys()];

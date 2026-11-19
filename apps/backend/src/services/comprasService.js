@@ -1,3 +1,6 @@
+import { Prisma } from "@prisma/client";
+import { prepararCompra } from "../utils/compraImportes.js";
+import { rangoFechasSV } from "../utils/fechaSV.js";
 import prisma from "../models/db.js";
 
 export async function registrarCompra(
@@ -7,11 +10,10 @@ export async function registrarCompra(
   fechaVencimiento,
   detalles,
 ) {
-  // Calculamos el total de la factura sumando cantidad * costo
-  const totalFactura = detalles.reduce(
-    (suma, item) => suma + item.cantidad * item.costo_unitario,
-    0,
-  );
+  const preparados = prepararCompra(detalles);
+  const totalFactura = preparados.total;
+  detalles = preparados.filas;
+  numeroFactura = numeroFactura.trim();
 
   // Ejecutamos todo dentro de una transaccion
 
@@ -41,12 +43,19 @@ export async function registrarCompra(
         },
       });
 
-      await tx.inventario_sucursal.updateMany({
+      await tx.inventario_sucursal.upsert({
         where: {
+          sucursal_id_insumo_id: {
+            sucursal_id: sucursalId,
+            insumo_id: item.insumo_id,
+          },
+        },
+        create: {
           sucursal_id: sucursalId,
           insumo_id: item.insumo_id,
+          stock_actual: item.cantidad,
         },
-        data: {
+        update: {
           stock_actual: { increment: item.cantidad },
         },
       });
@@ -57,33 +66,30 @@ export async function registrarCompra(
   return compraRegistrada;
 }
 
-export async function obtenerResumenCostos(fechaInicio, fechaFinal) {
-  // Buscamos las compras en ese rango de fechas
-  // Aseguramos que el inicio sea a las 00:00:00 y el fin a las 23:59:59
-
-  const inicio = new Date(fechaInicio);
-  const fin = new Date(`${fechaFinal}T23:59:59.999Z`);
+export async function obtenerResumenCostos(fechaInicio, fechaFinal, sucursalId) {
+  const { inicio, fin } = rangoFechasSV(fechaInicio, fechaFinal);
 
   const compras = await prisma.compras.findMany({
     where: {
+      ...(sucursalId !== null && { sucursal_id: sucursalId }),
       creado_en: {
         gte: inicio,
-        lte: fin,
+        lt: fin,
       },
     },
   });
 
-  let totalPagado = 0;
-  let totalPendiente = 0;
+  let totalPagado = new Prisma.Decimal(0);
+  let totalPendiente = new Prisma.Decimal(0);
 
   // Clasificamos y sumamos
   compras.forEach((compra) => {
-    const monto = Number(compra.total);
+    const monto = new Prisma.Decimal(compra.total);
 
     if (compra.estado_pago === "PAGADA") {
-      totalPagado += monto;
+      totalPagado = totalPagado.plus(monto);
     } else if (compra.estado_pago === "PENDIENTE") {
-      totalPendiente += monto;
+      totalPendiente = totalPendiente.plus(monto);
     }
   });
 
@@ -93,10 +99,61 @@ export async function obtenerResumenCostos(fechaInicio, fechaFinal) {
       fin: fechaFinal,
     },
     resumen: {
-      gastos_totales: totalPagado + totalPendiente,
-      total_pagado: totalPagado,
-      cuentas_por_pagar: totalPendiente,
+      gastos_totales: totalPagado.plus(totalPendiente).toNumber(),
+      total_pagado: totalPagado.toNumber(),
+      cuentas_por_pagar: totalPendiente.toNumber(),
     },
     cantidad_transacciones: compras.length,
   };
+}
+
+// Listar facturas de compra (filtradas por sucursal si aplica)
+export async function listarCompras(sucursalId = null) {
+  return prisma.compras.findMany({
+    where: {
+      ...(sucursalId ? {sucursal_id: Number(sucursalId)} : {}),
+    },
+    include: {
+      proveedores: {select: {id: true, nombre: true, nit: true}},
+      sucursales: {select: {id: true, nombre: true}},
+    },
+    orderBy: [
+      {estado_pago: "desc"}, // Muestra primero las 'PENDIENTE' antes que 'PAGADA'
+      {creado_en: "desc"},
+    ],
+  });
+}
+
+// Marcar una factura como PAGADA
+export async function pagarCompra(compraId, sucursalId = null) {
+  const compra = await prisma.compras.findUnique({
+    where: { id: Number(compraId) },
+  });
+
+  if (!compra) {
+    const err = new Error("La factura de compra no existe.");
+    err.status = 404;
+    throw err;
+  }
+
+  // Si es usuario de sucursal fija, validar que la factura pertenezca a su sucursal
+  if (sucursalId && compra.sucursal_id !== Number(sucursalId)) {
+    const err = new Error("No tienes permiso para pagar facturas de otra sucursal.");
+    err.status = 403;
+    throw err;
+  }
+
+  if (compra.estado_pago === "PAGADA") {
+    const err = new Error("Esta factura ya se encuentra pagada.");
+    err.status = 400;
+    throw err;
+  }
+
+  return prisma.compras.update({
+    where: {id: Number(compraId)},
+    data: {
+      estado_pago: "PAGADA",
+      fecha_pago: new Date(),
+    },
+  });
 }

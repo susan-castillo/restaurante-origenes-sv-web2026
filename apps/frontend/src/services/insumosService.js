@@ -41,15 +41,41 @@ async function peticion(endpoint, opciones = {}) {
 // ==========================================
 
 // GET /api/insumos
-// Obtiene el catálogo completo de insumos.
-export async function obtenerInsumos() {
-  return peticion("/insumos");
+// Permite buscar y filtrar por estado y sucursal.
+// PENDIENTE BACKEND:
+// Confirmar cómo insumosService del backend
+// utiliza el filtro sucursal_id.
+export async function obtenerInsumos({
+  activo,
+  buscar = "",
+  sucursalId = null,
+} = {}) {
+  const params = new URLSearchParams();
+
+  if (activo !== undefined) {
+    params.set("activo", String(activo));
+  }
+
+  if (buscar.trim()) {
+    params.set("buscar", buscar.trim());
+  }
+
+  if (sucursalId != null) {
+    params.set("sucursal_id", String(sucursalId));
+  }
+
+  const query = params.toString();
+
+  return peticion(`/insumos${query ? `?${query}` : ""}`);
 }
 
 // GET /api/insumos?activo=false
 // Obtiene los insumos deshabilitados.
-export async function obtenerInsumosDeshabilitados() {
-  return peticion("/insumos?activo=false");
+export async function obtenerInsumosDeshabilitados(buscar = "") {
+  return obtenerInsumos({
+    activo: false,
+    buscar,
+  });
 }
 
 // POST /api/insumos
@@ -71,7 +97,7 @@ export async function actualizarInsumo(id, datos) {
 }
 
 // PATCH /api/insumos/:id/estado
-// Activa o desactiva un insumo sin eliminarlo de PostgreSQL.
+// Activa o desactiva un insumo.
 export async function cambiarEstadoInsumo(id, activo) {
   return peticion(`/insumos/${id}/estado`, {
     method: "PATCH",
@@ -84,14 +110,31 @@ export async function cambiarEstadoInsumo(id, activo) {
 // ==========================================
 
 // GET /api/inventario
-// Obtiene las existencias de los insumos.
-export async function obtenerInventario(sucursalId = null) {
-  const endpoint =
-    sucursalId != null
-      ? `/inventario?sucursal_id=${encodeURIComponent(sucursalId)}`
-      : "/inventario";
+// Busca existencias por nombre y sucursal.
+//
+// Si sucursalId es null, el backend utiliza
+// la sucursal asignada al usuario autenticado.
+//
+// PENDIENTE BACKEND:
+// Obtener la lista de sucursales disponibles
+// para el administrador central.
+export async function obtenerInventario(
+  sucursalId = null,
+  buscar = ""
+) {
+  const params = new URLSearchParams();
 
-  return peticion(endpoint);
+  if (sucursalId != null) {
+    params.set("sucursal_id", String(sucursalId));
+  }
+
+  if (buscar.trim()) {
+    params.set("buscar", buscar.trim());
+  }
+
+  const query = params.toString();
+
+  return peticion(`/inventario${query ? `?${query}` : ""}`);
 }
 
 // PUT /api/inventario/:insumoId
@@ -104,12 +147,22 @@ export async function actualizarInventario(insumoId, datos) {
 }
 
 // GET /api/inventario/alertas
-// Obtiene alertas de insumos con existencias bajas.
-export async function obtenerAlertas(sucursalId = null) {
-  const endpoint =
-    sucursalId != null
-      ? `/inventario/alertas?sucursal_id=${encodeURIComponent(sucursalId)}`
-      : "/inventario/alertas";
+// Obtiene los insumos con existencias bajas.
+export async function obtenerAlertas(
+  sucursalId = null,
+  buscar = ""
+) {
+  const params = new URLSearchParams();
 
-  return peticion(endpoint);
+  if (sucursalId != null) {
+    params.set("sucursal_id", String(sucursalId));
+  }
+
+  if (buscar.trim()) {
+    params.set("buscar", buscar.trim());
+  }
+
+  const query = params.toString();
+
+  return peticion(`/inventario/alertas${query ? `?${query}` : ""}`);
 }

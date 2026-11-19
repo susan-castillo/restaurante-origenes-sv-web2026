@@ -11,8 +11,6 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
 
-
-
     // =====================================
     // CONFIGURACIÓN DE SASS
     // =====================================
@@ -29,7 +27,7 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    
+
     server: {
       proxy: {
         "/api": {

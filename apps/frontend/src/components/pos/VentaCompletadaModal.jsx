@@ -1,3 +1,5 @@
+import Modal from "../Common/Modal.jsx";
+import Button from "../Common/Button.jsx";
 
 const moneda = (valor) => `$${Number(valor ?? 0).toFixed(2)}`;
 
@@ -11,13 +13,8 @@ export default function VentaCompletadaModal({
   const documento = venta.tipo_doc === "CCF" ? "CCF" : "Factura";
 
   return (
-    <div className="pos-modal-overlay">
-      <div
-        className="pos-venta-completada bg-white rounded-4 shadow-lg"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="pos-venta-completada-titulo"
-      >
+    <Modal show title="¡Venta completada!" showCloseButton={false}>
+      <div className="text-center">
         <div className="pos-venta-exito-icono">
           <svg
             width="38"
@@ -34,13 +31,6 @@ export default function VentaCompletadaModal({
           </svg>
         </div>
 
-        <h2
-          id="pos-venta-completada-titulo"
-          className="font-origenes mb-2"
-        >
-          ¡Venta completada!
-        </h2>
-
         <p className="text-muted mb-4">
           La venta se registró correctamente.
         </p>
@@ -49,33 +39,30 @@ export default function VentaCompletadaModal({
           <span className="text-muted">
             {documento} #{venta.numero}
           </span>
-
           <strong className="pos-venta-completada-total">
             {moneda(venta.total)}
           </strong>
-
           <small className="text-muted">
             Pago: {venta.metodo_pago}
           </small>
         </div>
 
-        <button
-          type="button"
-          className="btn pos-venta-imprimir w-100 py-3 fw-bold mb-2"
-          onClick={() => onImprimir(venta)}
+        <Button
+          variant="outline-secondary"
+          className="w-100 py-3 fw-bold mb-2 pos-btn-volver"
+          onClick={() => onImprimir?.(venta)}
           disabled={!onImprimir}
         >
           Imprimir comprobante
-        </button>
-
-        <button
-          type="button"
-          className="btn pos-btn-cobrar w-100 py-3 fw-bold"
+        </Button>
+        <Button
+          variant="secondary"
+          className="w-100 py-3 fw-bold text-white"
           onClick={onNuevaVenta}
         >
           Nueva venta
-        </button>
+        </Button>
       </div>
-    </div>
+    </Modal>
   );
 }

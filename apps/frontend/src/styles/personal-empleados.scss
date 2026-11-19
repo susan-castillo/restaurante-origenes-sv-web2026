@@ -1,0 +1,152 @@
+/* ============================================================================ */
+/* Estilos Específicos del Módulo de Recursos Humanos / Empleados               */
+/* Restaurante Orígenes SV                                                       */
+/* ============================================================================ */
+
+// ------------------------------------------------------------------------------
+// VARIABLES DE TEMA
+// ------------------------------------------------------------------------------
+$dark-color: #261c14;
+$secondary-color: #de8332;
+$muted-color: #88685a;
+$border-color: #eadbd0;
+$card-bg: #ffffff;
+$badge-rh-bg: #dff0f3;
+$badge-rh-color: #245b65;
+$avatar-bg: #faeadb;
+$avatar-text: #613001;
+
+// ------------------------------------------------------------------------------
+// TARJETAS ESTADÍSTICAS (KPIs)
+// ------------------------------------------------------------------------------
+.kpi-card {
+  width: 100% !important;
+  box-sizing: border-box;
+  border: 1px solid #eadbd0;
+  border-radius: 16px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(38, 28, 20, 0.04);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(38, 28, 20, 0.08);
+  }
+
+  .kpi-label {
+    color: #6c757d;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap; // Evita saltos de línea extraños en títulos cortos
+  }
+
+  .kpi-value {
+    color: #261c14;
+    font-weight: 700;
+    font-size: 1.8rem;
+    line-height: 1.1;
+  }
+
+  .kpi-subtext {
+    color: #88685a;
+    font-size: 0.8rem;
+  }
+}
+
+// Iconos redondos
+.kpi-icon-wrapper {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; // Garantiza que el icono mantenga su tamaño cuadrado
+
+  &--users {
+    background-color: #e6f4f1;
+    color: #245b65;
+  }
+
+  &--stores {
+    background-color: #f9ece0;
+    color: #de8332;
+  }
+
+  &--period {
+    background-color: #fce5e3;
+    color: #a52d27;
+  }
+}
+
+// ------------------------------------------------------------------------------
+// BARRA DE BÚSQUEDA
+// ------------------------------------------------------------------------------
+.search-wrapper {
+  max-width: 320px;
+  position: relative;
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $muted-color;
+    pointer-events: none;
+  }
+
+  .search-input {
+    border-radius: 10px;
+    border-color: $border-color;
+    font-size: 13px;
+    padding-left: 36px;
+    background-color: #ffffff;
+    color: $dark-color;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &:focus {
+      border-color: $secondary-color;
+      box-shadow: 0 0 0 3px rgba(222, 131, 50, 0.2);
+    }
+  }
+}
+
+// ------------------------------------------------------------------------------
+// AVATAR DE EMPLEADO (CÍRCULO CON INICIALES)
+// ------------------------------------------------------------------------------
+.employee-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: $avatar-bg;
+  color: $avatar-text;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+// ------------------------------------------------------------------------------
+// BADGES DE CARGO
+// ------------------------------------------------------------------------------
+.cargo-badge {
+  background-color: $badge-rh-bg;
+  color: $badge-rh-color;
+  padding: 4px 10px;
+  border-radius: 50px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.employee-role {
+  color: #6c757d;
+  font-size: 11px;
+}

@@ -1,0 +1,443 @@
+// Estilos del dashboard. Colores como variables locales: esta hoja NO debe volver a
+// importar custom.scss (duplicaría Bootstrap). Todo va bajo .dashboard-page para ganarle
+// a .app-card sin depender del orden de los CSS.
+$d-oscuro: #261C14;
+$d-marron: #613001;
+$d-crema: #FFFBF5;
+$d-crema-suave: #FAEADB;
+$d-cielo: #82BCC7;
+$d-rosa: #FA8597;
+$d-naranja: #DE8332;
+$d-rojo: #e83f56;
+
+// Alto máximo del área con scroll. Lo comparten la gráfica y la tabla para que midan igual.
+$d-alto-scroll: 340px;
+
+$d-sombra: rgb(143, 84, 50);
+// ---------------------------------------------------------------------------
+// Claymorphism: tarjeta "inflada" que flota. Se logra con TRES capas de sombra:
+//   1) sombra externa grande y suave hacia abajo-derecha (la hace flotar)
+//   2) sombra interna clara arriba-izquierda (el brillo del borde)
+//   3) sombra interna oscura abajo-derecha (el volumen)
+// ---------------------------------------------------------------------------
+@mixin clay($radio: 26px) {
+  border: 0;
+  border-radius: $radio;
+  box-shadow:
+    10px 14px 28px rgba($d-sombra, 0.22),
+    inset 6px 6px 12px rgba(255, 255, 255, 0.8),
+    inset -6px -6px 12px rgba($d-sombra, 0.14);
+}
+
+main:has(> .dashboard-page),
+.dashboard-page {
+  min-width: 0;
+}
+  .rendimiento-card,
+  .detalle-sucursales,
+  .detalle-sucursales__card {
+    width: 100%;
+  }
+
+
+.dashboard-page {
+   .row > * { min-width: 0; }
+  // El <main> del layout ya trae p-4 (24px). Este padding extra iguala el margen de Sucursales.
+  padding: 20px 26px;
+
+  &__encabezado {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+    margin-bottom: 24px;
+    &__titulo { font-size: clamp(1.6rem, 1rem + 1.6vw, 2.2rem); color: $d-oscuro; margin: 0; }
+  }
+
+  // El saludo no lleva tarjeta: queda puesto directo sobre el fondo.
+  &__titulo { font-size: 2.2rem; color: $d-oscuro; margin: 0; }
+  &__subtitulo { color: $d-marron; margin: 0; }
+
+  &__acumulado {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: $d-crema-suave;
+    color: $d-marron;
+    border-radius: 50px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 4px 6px 12px rgba($d-sombra, 0.16);
+  }
+
+  // Título de las tarjetas grandes (Poppins, no el serif de .card-title)
+  &__subtitulo-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: $d-oscuro;
+
+    svg { color: $d-marron; font-size: 1.2rem; }
+  }
+
+  &__vacio {
+    text-align: center;
+    padding: 48px 16px;
+    color: $d-marron;
+
+    svg { font-size: 3rem; color: $d-cielo; margin-bottom: 12px; }
+  }
+
+  // ---------- KPI (clay) ----------
+  .kpi-card {
+    @include clay(28px);
+    transition: transform 0.2s ease;
+
+    &:hover { transform: translateY(-4px); }
+
+    &--cielo   { background-color: #D6EAFB; --kpi-acento: #1D5E96; }
+    &--rosa    { background-color: #FFCDD2; --kpi-acento: #F0546E; }
+    &--naranja { background-color: #FFE0BF; --kpi-acento: #E8872B; }
+    &--verde   { background-color: #CBF1C8; --kpi-acento: #1E9A4B; }
+
+    &__cabecera {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: var(--kpi-acento);
+    }
+
+    &__icono { font-size: 1.3rem; flex-shrink: 0; }
+    &__etiqueta { font-size: 13px; font-weight: 600; color: var(--kpi-acento); }
+
+    &__valor {
+      display: block;
+      font-size: 1.6rem;
+      line-height: 1.2;
+      color: var(--kpi-acento);
+      white-space: nowrap;
+    }
+
+    &__auxiliar {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--kpi-acento);
+      opacity: 0.9;
+
+      &--positivo { color: #1E7A45; opacity: 1; }
+      &--negativo { color: $d-rojo; opacity: 1; }
+    }
+  }
+
+  // Las tarjetas llenan toda su columna: sin esto el Card queda a su ancho natural
+  .rendimiento-card,
+  .detalle-sucursales__card {
+    width: 100%;
+  }
+
+  // ---------- Rendimiento (SIN tarjeta: puesto directo sobre el fondo) ----------
+  .rendimiento-card {
+    background-color: transparent;
+    border: 0;
+    box-shadow: none;
+    min-height: 340px;
+
+    &__encabezado {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    &__leyenda {
+      display: flex;
+      gap: 14px;
+      font-size: 12px;
+      color: $d-marron;
+    }
+
+    // Solo las filas se desplazan: el título y la leyenda quedan fijos arriba.
+    &__scroll {
+      max-height: $d-alto-scroll;
+      overflow-y: auto;
+      padding-right: 8px; // espacio para que la barra de scroll no tape los valores
+    }
+  }
+
+  .leyenda-punto {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 4px;
+    vertical-align: -1px;
+
+    &--ventas { background-color: $d-rosa; }
+    &--compras { background-color: $d-naranja; }
+  }
+
+  .rendimiento-fila {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+
+    &__nombre { width: 120px; flex-shrink: 0; font-size: 13px; font-weight: 600; color: $d-oscuro; }
+    &__barras { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+
+    &__linea {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: $d-oscuro;
+
+      .progress { flex: 1; }
+      span { min-width: 78px; text-align: right; }
+    }
+  }
+
+  // Dos barras del mismo grosor
+  .rendimiento-barra {
+    height: 8px;
+    background-color: rgba($d-sombra, 0.1);
+    border-radius: 10px;
+
+    &--ventas   { background-color: $d-rosa; }
+    &--compras  { background-color: $d-naranja; }
+  }
+
+  // ---------- Detalle (clay) ----------
+  // La tarjeta mide lo mismo que la gráfica porque ambas son columnas de la misma fila.
+  // Si la tabla crece más que el alto máximo, solo el cuerpo hace scroll.
+  .detalle-sucursales {
+    height: 100%;
+    min-width: 0;
+
+    &__card {
+      @include clay(28px);
+      background-color: $d-crema;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    &__cuerpo {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    &__encabezado {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    // Si la tabla no cabe, el scroll ocurre AQUÍ dentro y no en la página.
+    &__scroll {
+      max-height: $d-alto-scroll;
+      max-width: 100%;
+      overflow: auto;
+      border-radius: 14px;
+    }
+  }
+
+  .detalle-tabla {
+    font-size: 12.5px;
+    --bs-table-bg: transparent;
+    margin-bottom: 0;
+
+    // Celdas más compactas. Los encabezados pueden partirse en dos líneas
+    // (ej. "Ventas de hoy") y el nombre de la sucursal también, para ahorrar ancho.
+    th, td { white-space: nowrap; vertical-align: middle; padding: 10px 8px; }
+    th { white-space: normal; line-height: 1.2; }
+    td:first-child, th:first-child { white-space: normal; min-width: 110px; }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background-color: $d-crema-suave;
+      color: $d-marron;
+      font-size: 12px;
+    }
+
+    tfoot td {
+      position: sticky;
+      bottom: 0;
+      background-color: $d-crema-suave;
+      font-weight: 700;
+    }
+
+    &__fila--clic {
+      cursor: pointer;
+
+      &:hover > *, &:focus > * { background-color: $d-crema-suave; }
+    }
+  }
+
+  // ---------- Franja inferior (clay) ----------
+  .resumen-cadena {
+    @include clay(30px);
+    background-color: $d-crema;
+
+    &__cuerpo {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      gap: 20px;
+    }
+
+    &__dato {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+
+      > svg { font-size: 2.2rem; flex-shrink: 0; }
+      span { display: block; font-size: 13px; font-weight: 600; }
+      strong { display: block; font-size: 1.6rem; }
+
+      &--cielo   { color: #3A8FA3; }
+      &--naranja { color: $d-naranja; }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Modal. Reactstrap lo dibuja en un "portal" (directo en <body>), fuera de
+// .dashboard-page, por eso sus estilos NO pueden ir anidados ahí.
+// Se usa .detalle-modal .algo (dos clases) para ganarle a las reglas de Bootstrap
+// sin depender del orden en que se carguen los CSS.
+// ---------------------------------------------------------------------------
+.detalle-modal {
+  .detalle-modal__contenido {
+    @include clay(32px);
+    background-color: #FDEEEA;
+    padding: 8px;
+  }
+
+  // Cabecera: ícono inflado + título con barra
+  .detalle-modal__cabecera {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .detalle-modal__icono {
+    @include clay(22px);
+    flex-shrink: 0;
+    width: 68px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.9rem;
+    color: #C8602E;
+    background: linear-gradient(145deg, #FCE8DA, #F4CBAA);
+  }
+
+  .detalle-modal__titulo-bloque {
+    flex: 1;
+    min-width: 0;
+    padding-left: 16px;
+    border-left: 2px solid rgba($d-sombra, 0.2);
+  }
+
+  .detalle-modal__titulo {
+    margin: 0 0 8px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: $d-oscuro;
+  }
+
+  // Barra del margen: riel claro con la parte llena en naranja
+  .detalle-modal__barra {
+    height: 12px;
+    border-radius: 10px;
+    background-color: #F9D9BE;
+    box-shadow: inset 2px 2px 4px rgba($d-sombra, 0.18);
+  }
+
+  .detalle-modal__barra-relleno {
+    background-color: #EE9D5A;
+    border-radius: 10px;
+  }
+
+  // Cuadrícula de 2 columnas con los 6 datos
+  .detalle-modal__rejilla {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .detalle-modal__dato {
+    @include clay(20px);
+    padding: 14px 18px;
+
+    span { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--dato-color); opacity: 0.85; }
+    strong { display: block; font-size: 1.2rem; color: var(--dato-color); }
+
+    &--cielo    { background-color: #E3EAF6; --dato-color: #2F5C8F; }
+    &--rosa     { background-color: #FFE0E3; --dato-color: #C23A56; }
+    &--durazno  { background-color: #FFE4DC; --dato-color: #B4562E; }
+    &--naranja  { background-color: #FFE3BF; --dato-color: #B86A18; }
+    &--verde    { background-color: #E6F3DC; --dato-color: #3E7D2E; }
+    &--morado   { background-color: #E7D9F1; --dato-color: #6B3F8C; }
+    &--negativo strong { color: $d-rojo; }
+  }
+
+  // Pie con los dos botones
+  .detalle-modal__pie {
+    display: flex;
+    justify-content: flex-end;
+    gap: 14px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid rgba($d-sombra, 0.15);
+  }
+
+  .detalle-modal__boton {
+    border-radius: 14px;
+    font-weight: 600;
+    padding: 11px 22px;
+
+    &--principal {
+      border: 0;
+      color: #fff;
+      background: linear-gradient(145deg, #F2A45F, #DE8332);
+      box-shadow:
+        6px 8px 14px rgba($d-sombra, 0.3),
+        inset 3px 3px 6px rgba(255, 255, 255, 0.35),
+        inset -3px -3px 6px rgba(0, 0, 0, 0.12);
+
+      &:hover { color: #fff; filter: brightness(1.05); }
+    }
+
+    &--secundario {
+      color: $d-naranja;
+      background-color: #fff;
+      border: 1.5px solid $d-naranja;
+      box-shadow: 4px 6px 10px rgba($d-sombra, 0.18);
+
+      &:hover { color: $d-naranja; background-color: #FFF6EE; }
+    }
+  }
+
+    @media (max-width: 575px) {
+    .detalle-modal__rejilla { grid-template-columns: 1fr; }
+    .detalle-modal__pie { flex-direction: column-reverse; }
+  }
+}

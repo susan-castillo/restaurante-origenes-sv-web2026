@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const phpCommand = process.env.PHP_BIN || "php";
+const gatewayPort = process.env.GATEWAY_PORT || "8085";
 const npmCli =
     process.env.npm_execpath ||
     resolve(dirname(process.execPath), "node_modules/npm/bin/npm-cli.js");
@@ -27,7 +28,7 @@ function ensureEnv(directory) {
   if (!existsSync(examplePath)) {
     const defaultContent =
         directory === "apps/gateway"
-            ? "GATEWAY_PORT=8080\nBACKEND_INTERNAL_URL=http://127.0.0.1:3000\n"
+            ? `GATEWAY_PORT=${gatewayPort}\nBACKEND_INTERNAL_URL=http://127.0.0.1:3000\nINTERNAL_GATEWAY_TOKEN=origenes_gateway_secret_2026\n`
             : "# Auto-generated template\n";
     writeFileSync(examplePath, defaultContent, "utf-8");
     console.log(`Created template ${directory}/.env.example`);
@@ -106,7 +107,9 @@ try {
 
   const frontendEnv = {
     ...process.env,
-    VITE_BACKEND_URL: hasPhp ? "http://127.0.0.1:8080" : "http://127.0.0.1:3000",
+    VITE_BACKEND_URL: hasPhp
+        ? `http://127.0.0.1:${gatewayPort}`
+        : "http://127.0.0.1:3000",
   };
 
   startService(
@@ -120,7 +123,7 @@ try {
     startService(
         "PHP gateway",
         phpCommand,
-        ["-S", "127.0.0.1:8080", "index.php"],
+        ["-S", `127.0.0.1:${gatewayPort}`, "index.php"],
         resolve(root, "apps/gateway")
     );
   }

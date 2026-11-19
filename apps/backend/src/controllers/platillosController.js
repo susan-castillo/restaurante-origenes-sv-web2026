@@ -119,7 +119,8 @@ export const obtenerPlatillo = async (req, res) => {
 
 export const crearPlatillo = async (req, res) => {
     try {
-        const { datos, error } = validarPlatillo(req.body);
+        // Express 5 deja req.body en undefined si el request no trae cuerpo
+        const { datos, error } = validarPlatillo(req.body ?? {});
         if (error) {
             return res.status(400).json({ error });
         }
@@ -137,7 +138,7 @@ export const actualizarPlatillo = async (req, res) => {
         if (!id) {
             return res.status(400).json({ error: 'El id del platillo no es válido.' });
         }
-        const { datos, error } = validarPlatillo(req.body, { parcial: true });
+        const { datos, error } = validarPlatillo(req.body ?? {}, { parcial: true });
         if (error) {
             return res.status(400).json({ error });
         }
@@ -159,7 +160,7 @@ export const cambiarEstadoPlatillo = async (req, res) => {
         if (!id) {
             return res.status(400).json({ error: 'El id del platillo no es válido.' });
         }
-        if (typeof req.body.activo !== 'boolean') {
+        if (typeof req.body?.activo !== 'boolean') {
             return res.status(400).json({ error: 'El campo activo debe ser true o false.' });
         }
         const platillo = await platillosService.cambiarEstadoPlatillo(id, req.body.activo);

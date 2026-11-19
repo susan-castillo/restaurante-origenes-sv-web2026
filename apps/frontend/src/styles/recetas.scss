@@ -305,3 +305,31 @@
     outline-offset: 2px;
   }
 }
+
+.receta-card-imagen {
+  display: block;
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.receta-card .receta-card-sin-foto {
+  display: grid;
+  place-items: center;
+  background: var(--bs-cream);
+}
+
+.receta-card-inicial {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 80px;
+  height: 80px;
+  border: 12px solid var(--bs-primary);
+  border-radius: 50%;
+  background: var(--bs-cream);
+  color: var(--bs-brown);
+  font: 30px Georgia, serif;
+}

@@ -1,5 +1,7 @@
+import Button from '../Common/Button.jsx';
+import Card from '../Common/Card.jsx';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Card, CardBody, CardTitle } from 'reactstrap';
+import { Alert, CardTitle } from 'reactstrap';
 import { actualizarSucursal } from '../../services/sucursales.js';
 
 export default function SucursalEstadoConfirmacion({ sucursal, onCancel, onSaved }) {
@@ -32,22 +34,20 @@ export default function SucursalEstadoConfirmacion({ sucursal, onCancel, onSaved
 
     return (
         <Card tag="section" className="sucursal-card" aria-labelledby="confirmar-estado-titulo" aria-busy={guardando}>
-            <CardBody>
-                <CardTitle tag="h2" id="confirmar-estado-titulo">¿{accion} {sucursal.nombre}?</CardTitle>
-                <p>{activa
-                    ? 'La sede volverá a aparecer en el selector de sucursales activas.'
-                    : 'La sede dejará de aparecer en el selector de sucursales activas.'}</p>
-                {!activa && <Alert color="warning">Los registros históricos de la sede se conservarán.</Alert>}
-                {error && <Alert color="danger" role="alert">{error}</Alert>}
-                <div className="d-flex flex-wrap gap-2">
-                    <Button type="button" color="secondary" outline innerRef={cancelar} disabled={guardando} onClick={onCancel}>
-                        Cancelar
-                    </Button>
-                    <Button type="button" color={activa ? 'primary' : 'danger'} disabled={guardando} onClick={confirmar}>
-                        {guardando ? 'Guardando…' : `Confirmar ${activa ? 'activación' : 'desactivación'}`}
-                    </Button>
-                </div>
-            </CardBody>
+            <CardTitle tag="h2" id="confirmar-estado-titulo">¿{accion} {sucursal.nombre}?</CardTitle>
+            <p>{activa
+                ? 'La sede volverá a aparecer en el selector de sucursales activas.'
+                : 'La sede dejará de aparecer en el selector de sucursales activas.'}</p>
+            {!activa && <Alert color="warning">Los registros históricos de la sede se conservarán.</Alert>}
+            {error && <Alert color="danger" role="alert">{error}</Alert>}
+            <div className="d-flex flex-wrap gap-2">
+                <Button type="button" variant="outline-secondary" ref={cancelar} disabled={guardando} onClick={onCancel}>
+                    Cancelar
+                </Button>
+                <Button type="button" variant={activa ? 'secondary' : 'danger'} disabled={guardando} onClick={confirmar}>
+                    {guardando ? 'Guardando…' : `Confirmar ${activa ? 'activación' : 'desactivación'}`}
+                </Button>
+            </div>
         </Card>
     );
 }

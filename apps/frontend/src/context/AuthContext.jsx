@@ -5,51 +5,84 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { authService } from '../services/authService.js';
 import { clearToken, getToken, setToken } from '../services/api.js';
 
+const USER_KEY = 'usuario';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [usuario, setUsuario] = useState(null);
+  // 1) Leemos el usuario guardado en localStorage al instante (evita parpadeos y expulsiones)
+  const [usuario, setUsuario] = useState(() => {
+    try {
+      const guardado = localStorage.getItem(USER_KEY);
+      return guardado ? JSON.parse(guardado) : null;
+    } catch {
+      return null;
+    }
+  });
 
-  // Solo "cargando" si hay un token que verificar. Sin token no hay nada que esperar.
-  const [cargando, setCargando] = useState(() => Boolean(getToken()));
+  // Solo esperamos si hay token pero todavía no tenemos los datos cacheados del usuario
+  const [cargando, setCargando] = useState(() => Boolean(getToken()) && !localStorage.getItem(USER_KEY));
 
-  // 1) Al abrir o recargar la página: si hay token guardado, pedimos al backend quién es.
+  // 2) Al abrir o recargar la página: validamos el token en segundo plano con /me
   useEffect(() => {
-    if (!getToken()) return;
+    if (!getToken()) {
+      localStorage.removeItem(USER_KEY);
+      setUsuario(null);
+      setCargando(false);
+      return;
+    }
 
     authService
         .me()
-        // El backend responde { usuario }: se desestructura.
-        .then(({ usuario }) => setUsuario(usuario))
-        .catch(() => clearToken()) // token vencido o falso: se descarta
+        .then((res) => {
+          // Acepta tanto { usuario } como el objeto de usuario directo
+          const userActual = res?.usuario || res;
+          if (userActual) {
+            localStorage.setItem(USER_KEY, JSON.stringify(userActual));
+            setUsuario(userActual);
+          }
+        })
+        .catch((err) => {
+          // Solo cerramos sesión si el backend respondió explícitamente 401 (token vencido/inválido).
+          // Si status es 0 o 502/504 (backend reiniciando por --watch), conservamos la sesión local.
+          if (err?.status === 401) {
+            clearToken();
+            localStorage.removeItem(USER_KEY);
+            setUsuario(null);
+          }
+        })
         .finally(() => setCargando(false));
   }, []);
 
-  // 2) Si cualquier petición recibe un 401, api.js lanza este evento: sacamos al usuario
-  //    y ProtectedRoute lo manda al login automáticamente.
+  // 3) Si cualquier petición posterior recibe un 401, api.js lanza este evento:
+  //    limpiamos memoria y ProtectedRoute manda al login automáticamente.
   useEffect(() => {
-    const alExpirar = () => setUsuario(null);
+    const alExpirar = () => {
+      localStorage.removeItem(USER_KEY);
+      setUsuario(null);
+    };
     window.addEventListener('auth:expirada', alExpirar);
     return () => window.removeEventListener('auth:expirada', alExpirar);
   }, []);
 
-  // 3) Iniciar sesión. Devuelve el USUARIO (un solo contrato claro para quien la llame).
+  // 4) Iniciar sesión. Devuelve el USUARIO (un solo contrato claro para quien la llame).
   const login = async (email, password) => {
-    const { token, usuario } = await authService.login(email, password);
+    const res = await authService.login(email, password);
+    const userObj = res?.usuario || res?.user;
 
-    if (!token || !usuario) {
+    if (!res?.token || !userObj) {
       throw new Error('Respuesta del servidor no válida.');
     }
 
-    setToken(token); // solo se guarda el token; el usuario siempre se pide al backend
-    setUsuario(usuario);
-    return usuario;
+    setToken(res.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(userObj));
+    setUsuario(userObj);
+    return userObj;
   };
 
-  // 4) Cerrar sesión: borra el token Y el estado en memoria (antes el Sidebar solo
-  //    borraba el token y la app seguía creyendo que había sesión).
+  // 5) Cerrar sesión: borra token, caché local y estado en memoria.
   const logout = () => {
     clearToken();
+    localStorage.removeItem(USER_KEY);
     setUsuario(null);
   };
 
@@ -61,7 +94,6 @@ export const AuthProvider = ({ children }) => {
 };
 
 // Atajo para usar el contexto. Avisa claro si se olvidaron de envolver con <AuthProvider>
-// (sin este aviso el error sería "Cannot destructure property of undefined").
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth debe usarse dentro de <AuthProvider>');
