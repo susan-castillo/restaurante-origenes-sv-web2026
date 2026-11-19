@@ -2,6 +2,7 @@
 // con bcrypt y firmar el JWT.
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../utils/jwt.js';
 import { prisma } from '../models/db.js';
 
 //Autentica las credenciales del usuario y genera un token JWT.
@@ -33,8 +34,8 @@ export const login = async (email, password) => {
 
     const token = jwt.sign(
         tokenData,
-        process.env.JWT_SECRET || 'clave_secreta_origenes_2026',
-        { expiresIn: '8h' }
+        getJwtSecret(),
+        { expiresIn: '1h' }
     );
 
     return {
