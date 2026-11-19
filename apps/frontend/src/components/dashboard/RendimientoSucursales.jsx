@@ -24,27 +24,30 @@ export default function RendimientoSucursales({ sucursales }) {
                 </div>
             </div>
 
-            {sucursales.map((s) => {
-                const ventas = Number(s.ventas);
-                const compras = Number(s.compras);
-                return (
-                    <div key={s.id ?? s.nombre} className="rendimiento-fila">
-                        <span className="rendimiento-fila__nombre">{s.nombre}</span>
-                        <div className="rendimiento-fila__barras">
-                            <div className="rendimiento-fila__linea">
-                                <Progress value={porcentaje(ventas, maximo)} className="rendimiento-barra"
-                                          barClassName="rendimiento-barra--ventas" aria-label={`Ventas de ${s.nombre}`} />
-                                <span>{formatearDolares(ventas)}</span>
-                            </div>
-                            <div className="rendimiento-fila__linea">
-                                <Progress value={porcentaje(compras, maximo)} className="rendimiento-barra"
-                                          barClassName="rendimiento-barra--compras" aria-label={`Compras de ${s.nombre}`} />
-                                <span>{formatearDolares(compras)}</span>
+            {/* Solo este contenedor hace scroll: el título y la leyenda quedan fijos */}
+            <div className="rendimiento-card__scroll">
+                {sucursales.map((s) => {
+                    const ventas = Number(s.ventas);
+                    const compras = Number(s.compras);
+                    return (
+                        <div key={s.id ?? s.nombre} className="rendimiento-fila">
+                            <span className="rendimiento-fila__nombre">{s.nombre}</span>
+                            <div className="rendimiento-fila__barras">
+                                <div className="rendimiento-fila__linea">
+                                    <Progress value={porcentaje(ventas, maximo)} className="rendimiento-barra"
+                                              barClassName="rendimiento-barra--ventas" aria-label={`Ventas de ${s.nombre}`} />
+                                    <span>{formatearDolares(ventas)}</span>
+                                </div>
+                                <div className="rendimiento-fila__linea">
+                                    <Progress value={porcentaje(compras, maximo)} className="rendimiento-barra"
+                                              barClassName="rendimiento-barra--compras" aria-label={`Compras de ${s.nombre}`} />
+                                    <span>{formatearDolares(compras)}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                );
-            })}
+                    );
+                })}
+            </div>
         </Card>
     );
 }

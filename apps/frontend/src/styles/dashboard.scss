@@ -8,14 +8,17 @@ $d-crema-suave: #FAEADB;
 $d-cielo: #82BCC7;
 $d-rosa: #FA8597;
 $d-naranja: #DE8332;
-$d-verde: #4CAF86;
 $d-rojo: #e83f56;
 
-// Sombra de color cálido: se usa en todas las tarjetas "claymorphism".
-$d-sombra: #8F5432;
+// Alto máximo del área con scroll. Lo comparten la gráfica y la tabla para que midan igual.
+$d-alto-scroll: 340px;
 
+$d-sombra: rgb(143, 84, 50);
 // ---------------------------------------------------------------------------
-// Claymorphism
+// Claymorphism: tarjeta "inflada" que flota. Se logra con TRES capas de sombra:
+//   1) sombra externa grande y suave hacia abajo-derecha (la hace flotar)
+//   2) sombra interna clara arriba-izquierda (el brillo del borde)
+//   3) sombra interna oscura abajo-derecha (el volumen)
 // ---------------------------------------------------------------------------
 @mixin clay($radio: 26px) {
   border: 0;
@@ -25,58 +28,6 @@ $d-sombra: #8F5432;
     inset 6px 6px 12px rgba(255, 255, 255, 0.8),
     inset -6px -6px 12px rgba($d-sombra, 0.14);
 }
-
-/* ---------------------------------------------------------------------------
-// Fondo del dashboard.
-// ---------------------------------------------------------------------------
-main:has(> .dashboard-page) {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 12% 8%, #FFF4EA 0, transparent 42%),
-    linear-gradient(135deg, #FFE9DB 0%, #FFD6C8 55%, #FFC6C0 100%) !important;
-}
-
-// Círculos decorativos: viven en los pseudo-elementos de la página (no ocupan HTML),
-// quedan detrás del contenido (z-index -1) y se mueven muy despacio.
-.dashboard-page::before,
-.dashboard-page::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.dashboard-page::before {
-  width: 460px;
-  height: 460px;
-  top: -140px;
-  right: -120px;
-  background: rgba(255, 255, 255, 0.35);
-  animation: dashboard-deriva 28s ease-in-out infinite alternate;
-}
-
-.dashboard-page::after {
-  width: 380px;
-  height: 380px;
-  bottom: -130px;
-  left: -110px;
-  background: rgba(250, 133, 151, 0.28);
-  animation: dashboard-deriva 34s ease-in-out infinite alternate-reverse;
-}
-
-@keyframes dashboard-deriva {
-  from { transform: translate(0, 0) scale(1); }
-  to   { transform: translate(-40px, 30px) scale(1.08); }
-}
-
-// Quien tiene reducida la animación en su sistema no la ve.
-@media (prefers-reduced-motion: reduce) {
-  .dashboard-page::before,
-  .dashboard-page::after { animation: none; }
-}*/
 
 .dashboard-page {
   &__encabezado {
@@ -95,7 +46,7 @@ main:has(> .dashboard-page) {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background-color: rgba(255, 255, 255, 0.6);
+    background-color: $d-crema-suave;
     color: $d-marron;
     border-radius: 50px;
     padding: 6px 14px;
@@ -132,7 +83,6 @@ main:has(> .dashboard-page) {
 
     &:hover { transform: translateY(-4px); }
 
-    // Colores estimados a partir del diseño de Figma.
     &--cielo   { background-color: #D6EAFB; --kpi-acento: #1D5E96; }
     &--rosa    { background-color: #FFCDD2; --kpi-acento: #F0546E; }
     &--naranja { background-color: #FFE0BF; --kpi-acento: #E8872B; }
@@ -197,6 +147,13 @@ main:has(> .dashboard-page) {
       font-size: 12px;
       color: $d-marron;
     }
+
+    // Solo las filas se desplazan: el título y la leyenda quedan fijos arriba.
+    &__scroll {
+      max-height: $d-alto-scroll;
+      overflow-y: auto;
+      padding-right: 8px; // espacio para que la barra de scroll no tape los valores
+    }
   }
 
   .leyenda-punto {
@@ -232,10 +189,10 @@ main:has(> .dashboard-page) {
     }
   }
 
-  // Dos barras del mismo grosor. El riel es blanco translúcido para leerse sobre el degradado.
+  // Dos barras del mismo grosor
   .rendimiento-barra {
     height: 8px;
-    background-color: rgba(255, 255, 255, 0.6);
+    background-color: rgba($d-sombra, 0.1);
     border-radius: 10px;
 
     &--ventas   { background-color: $d-rosa; }
@@ -243,6 +200,8 @@ main:has(> .dashboard-page) {
   }
 
   // ---------- Detalle (clay) ----------
+  // La tarjeta mide lo mismo que la gráfica porque ambas son columnas de la misma fila.
+  // Si la tabla crece más que el alto máximo, solo el cuerpo hace scroll.
   .detalle-sucursales {
     height: 100%;
 
@@ -267,7 +226,7 @@ main:has(> .dashboard-page) {
     }
 
     &__scroll {
-      max-height: 300px;
+      max-height: $d-alto-scroll;
       overflow: auto;
       border-radius: 14px;
     }
@@ -329,16 +288,124 @@ main:has(> .dashboard-page) {
   }
 }
 
-// El modal de Reactstrap se dibuja en un "portal" (fuera de .dashboard-page, directo en <body>),
-// por eso sus estilos NO pueden ir anidados dentro de .dashboard-page.
+// ---------------------------------------------------------------------------
+// Modal. Reactstrap lo dibuja en un "portal" (directo en <body>), fuera de
+// .dashboard-page, por eso sus estilos NO pueden ir anidados ahí.
+// Se usa .detalle-modal .algo (dos clases) para ganarle a las reglas de Bootstrap
+// sin depender del orden en que se carguen los CSS.
+// ---------------------------------------------------------------------------
 .detalle-modal {
-  &__dato {
-    background-color: $d-crema-suave;
-    border-radius: 12px;
-    padding: 12px 14px;
-    height: 100%;
+  .detalle-modal__contenido {
+    @include clay(32px);
+    background-color: #FDEEEA;
+    padding: 8px;
+  }
 
-    span { display: block; font-size: 12px; color: $d-marron; margin-bottom: 4px; }
-    strong { font-size: 1.15rem; color: $d-oscuro; }
+  // Cabecera: ícono inflado + título con barra
+  .detalle-modal__cabecera {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .detalle-modal__icono {
+    @include clay(22px);
+    flex-shrink: 0;
+    width: 68px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.9rem;
+    color: #C8602E;
+    background: linear-gradient(145deg, #FCE8DA, #F4CBAA);
+  }
+
+  .detalle-modal__titulo-bloque {
+    flex: 1;
+    min-width: 0;
+    padding-left: 16px;
+    border-left: 2px solid rgba($d-sombra, 0.2);
+  }
+
+  .detalle-modal__titulo {
+    margin: 0 0 8px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: $d-oscuro;
+  }
+
+  // Barra del margen: riel claro con la parte llena en naranja
+  .detalle-modal__barra {
+    height: 12px;
+    border-radius: 10px;
+    background-color: #F9D9BE;
+    box-shadow: inset 2px 2px 4px rgba($d-sombra, 0.18);
+  }
+
+  .detalle-modal__barra-relleno {
+    background-color: #EE9D5A;
+    border-radius: 10px;
+  }
+
+  // Cuadrícula de 2 columnas con los 6 datos
+  .detalle-modal__rejilla {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .detalle-modal__dato {
+    @include clay(20px);
+    padding: 14px 18px;
+
+    span { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--dato-color); opacity: 0.85; }
+    strong { display: block; font-size: 1.2rem; color: var(--dato-color); }
+
+    &--cielo    { background-color: #E3EAF6; --dato-color: #2F5C8F; }
+    &--rosa     { background-color: #FFE0E3; --dato-color: #C23A56; }
+    &--durazno  { background-color: #FFE4DC; --dato-color: #B4562E; }
+    &--naranja  { background-color: #FFE3BF; --dato-color: #B86A18; }
+    &--verde    { background-color: #E6F3DC; --dato-color: #3E7D2E; }
+    &--morado   { background-color: #E7D9F1; --dato-color: #6B3F8C; }
+    &--negativo strong { color: $d-rojo; }
+  }
+
+  // Pie con los dos botones
+  .detalle-modal__pie {
+    display: flex;
+    justify-content: flex-end;
+    gap: 14px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid rgba($d-sombra, 0.15);
+  }
+
+  .detalle-modal__boton {
+    border-radius: 14px;
+    font-weight: 600;
+    padding: 11px 22px;
+
+    &--principal {
+      border: 0;
+      color: #fff;
+      background: linear-gradient(145deg, #F2A45F, #DE8332);
+      box-shadow:
+        6px 8px 14px rgba($d-sombra, 0.3),
+        inset 3px 3px 6px rgba(255, 255, 255, 0.35),
+        inset -3px -3px 6px rgba(0, 0, 0, 0.12);
+
+      &:hover { color: #fff; filter: brightness(1.05); }
+    }
+
+    &--secundario {
+      color: $d-naranja;
+      background-color: #fff;
+      border: 1.5px solid $d-naranja;
+      box-shadow: 4px 6px 10px rgba($d-sombra, 0.18);
+
+      &:hover { color: $d-naranja; background-color: #FFF6EE; }
+    }
   }
 }
