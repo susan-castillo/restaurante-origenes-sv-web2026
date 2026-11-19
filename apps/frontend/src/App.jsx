@@ -2,7 +2,7 @@
 // App.jsx — mapa de rutas de TODA la aplicación.
 // =====================================================================
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/Sidebar.jsx';
@@ -124,6 +124,20 @@ function DashboardLayout() {
     );
 }
 
+// Guardián de ruta para pantallas operativas (como /pos):
+// impide que el Admin Global (sucursal_id === null) entre escribiendo la URL manualmente,
+// y retransmite el Outlet context hacia las rutas hijas.
+function RutaSoloConSucursal() {
+    const { usuario } = useAuth();
+    const context = useOutletContext();
+
+    if (!usuario?.sucursal_id) {
+        return <Navigate replace to="/admin/inventario" />;
+    }
+
+    return <Outlet context={context} />;
+}
+
 // "/" redirige según el rol del usuario logged-in
 function Inicio() {
     const { usuario } = useAuth();
@@ -142,9 +156,11 @@ function AppRoutes() {
                 <Route path="/" element={<Inicio />} />
 
                 <Route element={<DashboardLayout />}>
-                    {/* Punto de venta: EMPLEADO y ADMIN */}
+                    {/* Punto de venta: solo EMPLEADO y ADMIN con sucursal asignada (NO Admin Global) */}
                     <Route element={<ProtectedRoute roles={['EMPLEADO', 'ADMIN']} />}>
-                        <Route path="/pos" element={<PosPage titulo="Punto de venta" responsable="Frontend 1" />} />
+                        <Route element={<RutaSoloConSucursal />}>
+                            <Route path="/pos" element={<PosPage titulo="Punto de venta" responsable="Frontend 1" />} />
+                        </Route>
                     </Route>
 
                     {/* Administración: solo ADMIN */}

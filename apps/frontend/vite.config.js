@@ -5,7 +5,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const backendUrl =
     process.env.VITE_BACKEND_URL ||
-    env.VITE_BACKEND_URL ||
+      'http://127.0.0.1:8085' ||
     "http://127.0.0.1:3000";
 
   return {
