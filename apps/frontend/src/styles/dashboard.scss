@@ -33,6 +33,11 @@ main:has(> .dashboard-page),
 .dashboard-page {
   min-width: 0;
 }
+  .rendimiento-card,
+  .detalle-sucursales,
+  .detalle-sucursales__card {
+    width: 100%;
+  }
 
 
 .dashboard-page {
