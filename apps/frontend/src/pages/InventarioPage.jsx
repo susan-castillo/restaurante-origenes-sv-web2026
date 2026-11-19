@@ -13,6 +13,7 @@ import {
   obtenerProductos,
   obtenerReceta,
   crearProducto,
+  editarProducto,
   guardarReceta,
 } from "../services/recetasService";
 import Button from "../components/Common/Button.jsx";
@@ -24,6 +25,53 @@ import InsumoEstadoConfirmacion from "../components/insumos/InsumoEstadoConfirma
 import RecetasListado from "../components/recetas/RecetasListado.jsx";
 import ProductoForm from "../components/recetas/ProductoForm.jsx";
 import RecetaForm from "../components/recetas/RecetaForm.jsx";
+
+async function prepararImagen(valor, archivo) {
+  let ruta = valor?.trim() || "";
+
+  if (archivo) {
+    const nube = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME?.trim();
+    const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET?.trim();
+    if (!nube || !preset) {
+      throw new Error("Configura Cloudinary en el .env del frontend y reinicia Vite.");
+    }
+
+    const datos = new FormData();
+    datos.append("file", archivo);
+    datos.append("upload_preset", preset);
+
+    let respuesta;
+    try {
+      respuesta = await fetch(
+        "https://api.cloudinary.com/v1_1/" + encodeURIComponent(nube) + "/image/upload",
+        { method: "POST", body: datos },
+      );
+    } catch {
+      throw new Error("No se pudo conectar con Cloudinary. Revisa tu conexión e intenta de nuevo.");
+    }
+
+    const resultado = await respuesta.json().catch(() => null);
+    if (!respuesta.ok || typeof resultado?.secure_url !== "string" || !resultado.secure_url.startsWith("https://")) {
+      throw new Error(resultado?.error?.message || "No se pudo subir la foto.");
+    }
+    ruta = resultado.secure_url;
+  }
+  if (!ruta) return null;
+  if (ruta.length > 255) {
+    throw new Error("El enlace de la imagen debe tener como máximo 255 caracteres.");
+  }
+
+  if (archivo) return ruta;
+
+  const foto = new Image();
+  foto.src = ruta;
+  try {
+    await foto.decode();
+    return ruta;
+  } catch {
+    throw new Error("No se pudo abrir la foto. Pega el enlace directo de la imagen.");
+  }
+}
 
 const vistas = [
   { value: "existencias", label: "Existencias" },
@@ -201,6 +249,16 @@ export default function InventarioPage() {
   const [cargandoDatosReceta, setCargandoDatosReceta] = useState(false);
   const [guardandoReceta, setGuardandoReceta] = useState(false);
   const [errorRecetaModal, setErrorRecetaModal] = useState("");
+  const [productoEditado, setProductoEditado] = useState(null);
+  const [imagenProducto, setImagenProducto] = useState("");
+  const [archivoProducto, setArchivoProducto] = useState(null);
+  const [archivoReceta, setArchivoReceta] = useState(null);
+  const [imagenReceta, setImagenReceta] = useState("");
+  const [errorImagen, setErrorImagen] = useState("");
+  const [errorCargaReceta, setErrorCargaReceta] = useState("");
+  const ingredientesGuardadosRef = useRef(null);
+  const aperturaRecetaRef = useRef(0);
+
   // Evita peticiones repetidas al cambiar entre pestañas.
   const productosCargaRef = useRef(null);
   const catalogoCargaRef = useRef(null);
@@ -251,28 +309,36 @@ export default function InventarioPage() {
   }
 
   async function abrirModalReceta(producto, nueva = false) {
+    const apertura = ++aperturaRecetaRef.current;
     setProductoReceta(producto);
+    setImagenReceta(producto.imagen ?? "");
+    setArchivoReceta(null);
     setIngredientesFormulario([]);
+    setErrorImagen("");
+    setErrorCargaReceta("");
     setErrorRecetaModal("");
     setModalReceta(true);
     setCargandoDatosReceta(true);
     try {
-      const insumos = await consultarCatalogoInsumos();
+      const id = Number(producto.id ?? producto.platillo_id);
+      const [insumos, items] = await Promise.all([
+        consultarCatalogoInsumos(),
+        nueva ? [] : consultarReceta(id),
+      ]);
+      if (apertura !== aperturaRecetaRef.current) return;
+      const filas = items.map((item) => ({
+        insumo_id: String(item.insumo_id),
+        cantidad: String(item.cantidad),
+      }));
       setCatalogoInsumos(insumos);
-      if (!nueva) {
-        const id = Number(producto.id ?? producto.platillo_id);
-        const items = await consultarReceta(id);
-        setIngredientesFormulario(
-          items.map((item) => ({
-            insumo_id: String(item.insumo_id),
-            cantidad: String(item.cantidad),
-          })),
-        );
-      }
+      ingredientesGuardadosRef.current = filas;
+      setIngredientesFormulario(filas);
     } catch (err) {
-      setErrorRecetaModal(err.message || "No se pudo cargar la receta.");
+      if (apertura === aperturaRecetaRef.current) {
+        setErrorCargaReceta(err.message || "No se pudo cargar la receta.");
+      }
     } finally {
-      setCargandoDatosReceta(false);
+      if (apertura === aperturaRecetaRef.current) setCargandoDatosReceta(false);
     }
   }
 
@@ -294,7 +360,7 @@ export default function InventarioPage() {
   }
 
   async function guardarCambiosReceta() {
-    if (!productoReceta || guardandoReceta) return;
+    if (!productoReceta || guardandoReceta || cargandoDatosReceta || errorCargaReceta) return;
     const id = Number(productoReceta.id ?? productoReceta.platillo_id);
     if (!Number.isInteger(id) || id <= 0) {
       setErrorRecetaModal("El producto no tiene un ID válido.");
@@ -307,7 +373,7 @@ export default function InventarioPage() {
     // Validar ingredientes y cantidades
     for (let i = 0; i < items.length; i++) {
       if (!Number.isInteger(items[i].insumo_id) || items[i].insumo_id <= 0) {
-        setErrorRecetaModal(`Selecciona un insumo para el ingrediente ${i + 1}.`);
+        setErrorRecetaModal("Selecciona un insumo para el ingrediente " + (i + 1) + ".");
         return;
       }
       if (
@@ -315,7 +381,7 @@ export default function InventarioPage() {
         !Number.isFinite(items[i].cantidad) ||
         items[i].cantidad <= 0
       ) {
-        setErrorRecetaModal(`Ingresa una cantidad válida para el ingrediente ${i + 1}.`);
+        setErrorRecetaModal("Ingresa una cantidad válida para el ingrediente " + (i + 1) + ".");
         return;
       }
     }
@@ -328,16 +394,49 @@ export default function InventarioPage() {
     try {
       setGuardandoReceta(true);
       setErrorRecetaModal("");
-      // Guardar y refrescar solo esta receta, no todas las tarjetas.
-      await guardarReceta(id, items);
-      recetasVersionRef.current.set(id, (recetasVersionRef.current.get(id) ?? 0) + 1);
-      recetasCacheRef.current.delete(id);
-      recetasErroresCacheRef.current.delete(id);
-      // Si había una lectura anterior pendiente, no la reutilizamos.
-      recetasPendientesRef.current.delete(id);
-      const ingredientes = await consultarReceta(id, { forzar: true });
-      setRecetas((actuales) => ({ ...actuales, [id]: ingredientes }));
-      setErroresRecetas((actuales) => ({ ...actuales, [id]: "" }));
+      setErrorImagen("");
+      let imagen = productoReceta.imagen || null;
+      if (archivoReceta || imagenReceta.trim() !== (imagen ?? "")) {
+        try {
+          imagen = await prepararImagen(imagenReceta, archivoReceta);
+          if (archivoReceta) {
+            setImagenReceta(imagen);
+            setArchivoReceta(null);
+          }
+        } catch (err) {
+          setErrorImagen(err.message || "No se pudo leer la imagen.");
+          return;
+        }
+      }
+      if (ingredientesFormulario !== ingredientesGuardadosRef.current) {
+        await guardarReceta(id, items);
+        ingredientesGuardadosRef.current = ingredientesFormulario;
+
+        const ingredientes = items.map((item) => ({
+          ...item,
+          insumo: catalogoInsumos.find((insumo) => Number(insumo.id) === item.insumo_id),
+        }));
+        recetasVersionRef.current.set(id, (recetasVersionRef.current.get(id) ?? 0) + 1);
+        recetasCacheRef.current.set(id, ingredientes);
+        recetasPendientesRef.current.delete(id);
+        recetasErroresCacheRef.current.delete(id);
+        setRecetas((actuales) => ({ ...actuales, [id]: ingredientes }));
+        setErroresRecetas((actuales) => ({ ...actuales, [id]: "" }));
+      }
+
+      if (imagen !== (productoReceta.imagen || null)) {
+        try {
+          await editarProducto(id, { imagen });
+        } catch (err) {
+          setErrorImagen(err.message || "No se pudo guardar la imagen. Intenta de nuevo.");
+          return;
+        }
+        const actualizados = productos.map((producto) =>
+          Number(producto.id ?? producto.platillo_id) === id ? { ...producto, imagen } : producto,
+        );
+        productosCargaRef.current = Promise.resolve(actualizados);
+        setProductos(actualizados);
+      }
       setModalReceta(false);
       setProductoReceta(null);
     } catch (err) {
@@ -667,7 +766,23 @@ export default function InventarioPage() {
     }
   }
 
+  function abrirEdicion(producto) {
+    if (producto.tipo === "ELABORADO") return abrirModalReceta(producto);
+    setProductoEditado(producto);
+    setNombreProducto(producto.nombre ?? "");
+    setCategoriaProducto(producto.categoria ?? "");
+    setPrecioProducto(String(producto.precio ?? ""));
+    setTipoProducto("REVENTA");
+    setImagenProducto(producto.imagen ?? "");
+    setArchivoProducto(null);
+    setErrorProductoModal("");
+    setModalAgregarProducto(true);
+  }
+
   function abrirAgregarProducto() {
+    setProductoEditado(null);
+    setImagenProducto("");
+    setArchivoProducto(null);
     setNombreProducto("");
     setCategoriaProducto("");
     setPrecioProducto("");
@@ -676,7 +791,8 @@ export default function InventarioPage() {
     setModalAgregarProducto(true);
   }
 
-  async function guardarNuevoProducto() {
+  async function guardarDatosProducto() {
+    if (guardandoProducto) return;
     const nombre = nombreProducto.trim();
     const categoria = categoriaProducto.trim();
     const precio = Number(precioProducto);
@@ -696,25 +812,29 @@ export default function InventarioPage() {
     try {
       setGuardandoProducto(true);
       setErrorProductoModal("");
-      const nuevoProducto = await crearProducto({
-        nombre,
-        categoria,
-        precio,
-        tipo: tipoProducto,
-        activo: true,
-      });
+      const imagen = productoEditado && !archivoProducto && imagenProducto === (productoEditado.imagen ?? "")
+        ? productoEditado.imagen || null
+        : await prepararImagen(imagenProducto, archivoProducto);
+      if (archivoProducto) {
+        setImagenProducto(imagen);
+        setArchivoProducto(null);
+      }
+      const datos = { nombre, categoria, precio, imagen };
+      if (productoEditado) {
+        const id = Number(productoEditado.id ?? productoEditado.platillo_id);
+        const guardado = await editarProducto(id, datos);
+        const actualizados = productos.map((producto) =>
+          Number(producto.id ?? producto.platillo_id) === id ? { ...producto, ...datos, ...guardado } : producto,
+        );
+        productosCargaRef.current = Promise.resolve(actualizados);
+        setProductos(actualizados);
+        setModalAgregarProducto(false);
+        return;
+      }
+      const nuevoProducto = await crearProducto({ ...datos, tipo: tipoProducto, activo: true });
       setModalAgregarProducto(false);
       setFiltroProductos("todos");
-      // Actualizar catálogo local sin otro GET de /platillos.
-      // Mantener la promesa en caché sincronizada con la creación.
-      const anteriores = await (productosCargaRef.current ?? Promise.resolve(productos));
-      const actualizados = [
-        nuevoProducto,
-        ...anteriores.filter(
-          (p) =>
-            Number(p.id ?? p.platillo_id) !== Number(nuevoProducto.id ?? nuevoProducto.platillo_id),
-        ),
-      ];
+      const actualizados = [nuevoProducto, ...productos];
       productosCargaRef.current = Promise.resolve(actualizados);
       setProductos(actualizados);
       if (tipoProducto === "ELABORADO") {
@@ -734,7 +854,7 @@ export default function InventarioPage() {
         }
       }
     } catch (err) {
-      setErrorProductoModal(err.message || "No se pudo crear el producto.");
+      setErrorProductoModal(err.message || "No se pudo guardar el producto.");
     } finally {
       setGuardandoProducto(false);
     }
@@ -808,7 +928,7 @@ export default function InventarioPage() {
             recetas={recetas}
             erroresRecetas={erroresRecetas}
             cargandoReceta={cargandoReceta}
-            onEditarReceta={abrirModalReceta}
+            onEditarReceta={abrirEdicion}
             onReintentar={verReceta}
           />
         )}
@@ -836,6 +956,14 @@ export default function InventarioPage() {
       />
       <ProductoForm
         show={modalAgregarProducto}
+        editando={Boolean(productoEditado)}
+        imagen={archivoProducto?.name ?? imagenProducto}
+        archivo={archivoProducto}
+        onCambiarImagen={(valor, archivo) => {
+          setImagenProducto(valor);
+          setArchivoProducto(archivo);
+          setErrorProductoModal("");
+        }}
         nombre={nombreProducto}
         categoria={categoriaProducto}
         precio={precioProducto}
@@ -847,11 +975,20 @@ export default function InventarioPage() {
         onCambiarPrecio={setPrecioProducto}
         onCambiarTipo={setTipoProducto}
         onClose={() => setModalAgregarProducto(false)}
-        onGuardar={guardarNuevoProducto}
+        onGuardar={guardarDatosProducto}
       />
       <RecetaForm
         show={modalReceta}
         producto={productoReceta}
+        imagen={archivoReceta?.name ?? imagenReceta}
+        archivo={archivoReceta}
+        onCambiarImagen={(valor, archivo) => {
+          setArchivoReceta(archivo);
+          setImagenReceta(valor);
+          setErrorImagen("");
+        }}
+        errorImagen={errorImagen}
+        errorCarga={errorCargaReceta}
         catalogoInsumos={catalogoInsumos}
         ingredientes={ingredientesFormulario}
         cargando={cargandoDatosReceta}
@@ -863,7 +1000,10 @@ export default function InventarioPage() {
         }}
         onCambiarIngrediente={cambiarIngrediente}
         onQuitarIngrediente={quitarIngrediente}
-        onClose={() => setModalReceta(false)}
+        onClose={() => {
+          aperturaRecetaRef.current += 1;
+          setModalReceta(false);
+        }}
         onGuardar={guardarCambiosReceta}
       />
     </div>

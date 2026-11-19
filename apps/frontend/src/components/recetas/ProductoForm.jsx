@@ -1,8 +1,13 @@
+import CampoImagen from "./CampoImagen.jsx";
 import Button from "../Common/Button.jsx";
 import Modal from "../Common/Modal.jsx";
 
 export default function ProductoForm({
   show,
+  editando,
+  imagen,
+  archivo,
+  onCambiarImagen,
   nombre,
   categoria,
   precio,
@@ -19,7 +24,7 @@ export default function ProductoForm({
   return (
     <Modal
       show={show}
-      title="Agregar producto"
+      title={editando ? nombre.trim() || "Editar producto" : "Agregar producto"}
       onClose={() => {
         if (!guardando) {
           onClose();
@@ -34,9 +39,9 @@ export default function ProductoForm({
             onClick={onClose}
           />
           <Button
-            text={guardando ? "Guardando..." : "Agregar producto"}
+            text={guardando ? "Guardando..." : editando ? "Guardar cambios" : "Agregar producto"}
             variant="secondary"
-            disabled={guardando || !nombre.trim() || precio.trim() === ""}
+            disabled={guardando}
             onClick={onGuardar}
           />
         </>
@@ -49,6 +54,7 @@ export default function ProductoForm({
         </label>
         <input
           id="producto-nombre"
+          disabled={guardando}
           type="text"
           className="form-control"
           placeholder="Ej. Cappuccino"
@@ -64,6 +70,7 @@ export default function ProductoForm({
         </label>
         <input
           id="producto-categoria"
+          disabled={guardando}
           type="text"
           className="form-control"
           placeholder="Ej. Bebidas calientes"
@@ -79,6 +86,7 @@ export default function ProductoForm({
         </label>
         <input
           id="producto-precio"
+          disabled={guardando}
           type="number"
           className="form-control"
           placeholder="Ej. 2.75"
@@ -97,6 +105,7 @@ export default function ProductoForm({
         <select
           id="producto-tipo"
           className="form-select"
+          disabled={guardando || editando}
           value={tipo}
           onChange={(e) => onCambiarTipo(e.target.value)}
         >
@@ -104,6 +113,7 @@ export default function ProductoForm({
           <option value="REVENTA">Reventa (sin receta)</option>
         </select>
       </div>
+      <CampoImagen valor={imagen} archivo={archivo} onCambiar={onCambiarImagen} disabled={guardando} />
       {/* MENSAJE DE ERROR */}
       {error && (
         <div className="alert alert-danger" role="alert">

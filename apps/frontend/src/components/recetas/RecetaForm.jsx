@@ -1,3 +1,4 @@
+import CampoImagen from "./CampoImagen.jsx";
 import { Trash2 } from "lucide-react";
 import Button from "../Common/Button.jsx";
 import Modal from "../Common/Modal.jsx";
@@ -5,11 +6,16 @@ import Modal from "../Common/Modal.jsx";
 export default function RecetaForm({
   show,
   producto,
+  imagen,
+  archivo,
+  onCambiarImagen,
+  errorImagen,
   catalogoInsumos,
   ingredientes,
   cargando,
   guardando,
   error,
+  errorCarga,
   onAgregarIngrediente,
   onCambiarIngrediente,
   onQuitarIngrediente,
@@ -35,65 +41,75 @@ export default function RecetaForm({
           <Button
             text={guardando ? "Guardando..." : "Guardar receta"}
             variant="secondary"
-            disabled={guardando || cargando || Boolean(error)}
+            disabled={guardando || cargando || Boolean(errorCarga)}
             onClick={onGuardar}
           />
         </>
       }
     >
+      <CampoImagen
+        valor={imagen}
+        archivo={archivo}
+        onCambiar={onCambiarImagen}
+        disabled={guardando || cargando || Boolean(errorCarga)}
+      />
+      {errorImagen && <p className="text-danger" role="alert">{errorImagen}</p>}
       <p className="text-muted mb-3">
-        Selecciona los ingredientes y las cantidades necesarias para preparar una unidad del
-        producto.
+        Selecciona los ingredientes y las cantidades necesarias para preparar una unidad del producto.
       </p>
+
       {cargando ? (
         <p role="status">Cargando ingredientes...</p>
+      ) : errorCarga ? (
+        <div className="alert alert-danger" role="alert">{errorCarga}</div>
       ) : (
         <>
           {ingredientes.map((item, index) => {
             const insumoSeleccionado = catalogoInsumos.find(
-              (insumo) => insumo.id === Number(item.insumo_id),
+              (insumo) => Number(insumo.id) === Number(item.insumo_id),
             );
             return (
               <div key={index} className="row g-2 align-items-end mb-3">
-                {/* INSUMO */}
                 <div className="col-12 col-md-6">
-                  <label className="form-label">Ingrediente {index + 1}</label>
+                  <label htmlFor={`receta-insumo-${index}`} className="form-label">
+                    Ingrediente {index + 1}
+                  </label>
                   <select
+                    id={`receta-insumo-${index}`}
                     className="form-select"
                     value={item.insumo_id}
+                    disabled={guardando}
                     onChange={(e) => onCambiarIngrediente(index, "insumo_id", e.target.value)}
                   >
                     <option value="">Seleccionar insumo</option>
                     {catalogoInsumos.map((insumo) => (
-                      <option key={insumo.id} value={insumo.id}>
-                        {insumo.nombre}
-                      </option>
+                      <option key={insumo.id} value={insumo.id}>{insumo.nombre}</option>
                     ))}
                   </select>
                 </div>
-                {/* CANTIDAD */}
                 <div className="col-8 col-md-4">
-                  <label className="form-label">
-                    Cantidad
-                    {insumoSeleccionado ? ` (${insumoSeleccionado.unidad})` : ""}
+                  <label htmlFor={`receta-cantidad-${index}`} className="form-label">
+                    Cantidad{insumoSeleccionado ? ` (${insumoSeleccionado.unidad})` : ""}
                   </label>
                   <input
+                    id={`receta-cantidad-${index}`}
                     type="number"
                     className="form-control"
                     min="0.001"
                     step="0.001"
                     value={item.cantidad}
                     placeholder="Ej. 18"
+                    disabled={guardando}
                     onChange={(e) => onCambiarIngrediente(index, "cantidad", e.target.value)}
                   />
                 </div>
-                {/* ELIMINAR INGREDIENTE */}
                 <div className="col-4 col-md-2">
                   <button
                     type="button"
                     className="btn btn-outline-danger w-100"
                     title="Quitar ingrediente"
                     aria-label={`Quitar ingrediente ${index + 1}`}
+                    disabled={guardando}
                     onClick={() => onQuitarIngrediente(index)}
                   >
                     <Trash2 size={18} />
@@ -105,7 +121,7 @@ export default function RecetaForm({
           <Button
             text="+ Añadir ingrediente"
             variant="outline-secondary"
-            disabled={ingredientes.length >= 50}
+            disabled={guardando || ingredientes.length >= 50}
             onClick={onAgregarIngrediente}
           />
           {ingredientes.length === 0 && (
@@ -113,11 +129,8 @@ export default function RecetaForm({
           )}
         </>
       )}
-      {error && (
-        <div className="alert alert-danger mt-3" role="alert">
-          {error}
-        </div>
-      )}
+
+      {error && <div className="alert alert-danger mt-3" role="alert">{error}</div>}
     </Modal>
   );
 }
