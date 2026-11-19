@@ -5,13 +5,11 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const backendUrl =
     process.env.VITE_BACKEND_URL ||
-      'http://127.0.0.1:8085' ||
+    env.VITE_BACKEND_URL ||
     "http://127.0.0.1:3000";
 
   return {
     plugins: [react()],
-
-
 
     // =====================================
     // CONFIGURACIÓN DE SASS
@@ -29,7 +27,7 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    
+
     server: {
       proxy: {
         "/api": {
