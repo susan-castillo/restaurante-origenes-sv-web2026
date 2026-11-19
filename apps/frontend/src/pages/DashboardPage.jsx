@@ -139,15 +139,13 @@ export default function DashboardPage() {
                         </Col>
                     ))}
                 </Row>
-
-                <Row className="g-3 mb-4">
-                    <Col xs="12" lg="5"><RendimientoSucursales sucursales={sucursales} /></Col>
-                      <Col xs="12" lg="7">
-                        <DetalleSucursales sucursales={sucursales} onSeleccionar={setSeleccionada} />
-                     </Col>
-                </Row>
-
-            
+              <Row className="g-3 mb-4">
+                <Col xs="12" xl="5"><RendimientoSucursales sucursales={sucursales} /></Col>
+                <Col xs="12" xl="7">
+                
+                    <DetalleSucursales sucursales={sucursales} onSeleccionar={setSeleccionada} />
+                </Col>
+            </Row>
                 <ResumenCadena ventasHoy={ventasHoyTotal} mejor={mejor} />
                 <SucursalDetalleModal sucursal={seleccionada} onCerrar={() => setSeleccionada(null)} />
             </>

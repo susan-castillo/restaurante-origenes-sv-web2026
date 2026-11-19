@@ -36,6 +36,7 @@ main:has(> .dashboard-page),
 
 
 .dashboard-page {
+   .row > * { min-width: 0; }
   // El <main> del layout ya trae p-4 (24px). Este padding extra iguala el margen de Sucursales.
   padding: 20px 26px;
 
@@ -214,16 +215,20 @@ main:has(> .dashboard-page),
   // Si la tabla crece más que el alto máximo, solo el cuerpo hace scroll.
   .detalle-sucursales {
     height: 100%;
+    min-width: 0;
 
     &__card {
       @include clay(28px);
       background-color: $d-crema;
+      min-width: 0;
+      max-width: 100%;
     }
 
     &__cuerpo {
       display: flex;
       flex-direction: column;
       min-height: 0;
+      min-width: 0;
     }
 
     &__encabezado {
@@ -235,18 +240,25 @@ main:has(> .dashboard-page),
       margin-bottom: 14px;
     }
 
+    // Si la tabla no cabe, el scroll ocurre AQUÍ dentro y no en la página.
     &__scroll {
       max-height: $d-alto-scroll;
+      max-width: 100%;
       overflow: auto;
       border-radius: 14px;
     }
   }
 
   .detalle-tabla {
-    font-size: 13px;
+    font-size: 12.5px;
     --bs-table-bg: transparent;
+    margin-bottom: 0;
 
-    th, td { white-space: nowrap; vertical-align: middle; }
+    // Celdas más compactas. Los encabezados pueden partirse en dos líneas
+    // (ej. "Ventas de hoy") y el nombre de la sucursal también, para ahorrar ancho.
+    th, td { white-space: nowrap; vertical-align: middle; padding: 10px 8px; }
+    th { white-space: normal; line-height: 1.2; }
+    td:first-child, th:first-child { white-space: normal; min-width: 110px; }
 
     thead th {
       position: sticky;
