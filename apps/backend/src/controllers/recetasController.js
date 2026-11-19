@@ -2,6 +2,11 @@
 import * as recetasService from '../services/recetasService.js';
 import { idValido, aNumero } from '../utils/validaciones.js';
 
+// La columna recetas.cantidad es NUMERIC(12,3): con menos de 0.001 se redondea
+// a 0 y la base la rechaza (CHECK cantidad > 0).
+const CANTIDAD_MINIMA = 0.001;
+const CANTIDAD_MAXIMA = 999999999;
+
 // Valida el arreglo de ingredientes de una receta y lo normaliza.
 const validarItemsReceta = (items) => {
     if (!Array.isArray(items)) {
@@ -25,8 +30,10 @@ const validarItemsReceta = (items) => {
         vistos.add(insumoId);
 
         const cantidad = aNumero(item.cantidad);
-        if (!Number.isFinite(cantidad) || cantidad <= 0 || cantidad > 999999999) {
-            return { error: `La cantidad del insumo ${insumoId} debe ser un número mayor que 0.` };
+        if (!Number.isFinite(cantidad) || cantidad < CANTIDAD_MINIMA || cantidad > CANTIDAD_MAXIMA) {
+            return {
+                error: `La cantidad del insumo ${insumoId} debe ser un número entre ${CANTIDAD_MINIMA} y ${CANTIDAD_MAXIMA}.`,
+            };
         }
 
         limpios.push({ insumo_id: insumoId, cantidad });
@@ -59,7 +66,8 @@ export const reemplazarReceta = async (req, res) => {
         if (!id) {
             return res.status(400).json({ error: 'El id del platillo no es válido.' });
         }
-        const { items, error } = validarItemsReceta(req.body.items);
+        // Express 5 deja req.body en undefined si el request no trae cuerpo
+        const { items, error } = validarItemsReceta(req.body?.items);
         if (error) {
             return res.status(400).json({ error });
         }

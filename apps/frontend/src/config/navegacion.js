@@ -4,6 +4,7 @@
 import {
     FaBoxes,
     FaCashRegister,
+    FaChartBar,
     FaFileInvoiceDollar,
     FaMoneyBillWave,
     FaShoppingCart,
@@ -15,7 +16,9 @@ import {
 // Cada entrada es una pantalla del sistema.
 //   roles            -> quién puede entrar
 //   requiereSucursal -> solo para quien trabaja en una sucursal (el admin global no cobra)
+//   soloCentral      -> solo el administrador central (ADMIN sin sucursal asignada)
 export const MENU = [
+    { ruta: '/admin/dashboard', etiqueta: 'Dashboard', icono: FaChartBar, roles: ['ADMIN'], soloCentral: true },
     { ruta: '/admin/sucursales', etiqueta: 'Sucursales', icono: FaStore, roles: ['ADMIN'] },
     { ruta: '/pos', etiqueta: 'Punto de venta', icono: FaCashRegister, roles: ['EMPLEADO', 'ADMIN'], requiereSucursal: true },
     { ruta: '/admin/inventario', etiqueta: 'Inventario y recetas', icono: FaBoxes, roles: ['ADMIN'] },
@@ -42,7 +45,8 @@ export const rutaInicial = (usuario) => {
 
     switch (rol) {
         case 'ADMIN':
-            return '/admin/inventario';
+            // El admin central arranca en el dashboard global; el de sucursal, en inventario.
+            return esAdminCentral(usuario) ? '/admin/dashboard' : '/admin/inventario';
         case 'RRHH':
             return '/rrhh/empleados';
         case 'EMPLEADO':
@@ -57,7 +61,10 @@ export const menuPermitido = (usuario) => {
     if (!usuario || !usuario.rol) return [];
 
     return MENU
-        .filter((item) => item.roles.includes(usuario.rol) && (!item.requiereSucursal || usuario.sucursal_id))
+        .filter((item) =>
+            item.roles.includes(usuario.rol)
+            && (!item.requiereSucursal || usuario.sucursal_id)
+            && (!item.soloCentral || esAdminCentral(usuario)))
         .map((item) => {
             // Si el ítem principal tiene subopciones, las filtramos según el rol del usuario
             if (item.hijos && item.hijos.length > 0) {

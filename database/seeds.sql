@@ -271,18 +271,22 @@ JOIN insumos i ON i.nombre = v.insumo
 CROSS JOIN sucursales s;
 
 -- Alertas de stock para la demo. El jarabe de caramelo ya queda bajo el
--- mínimo en las 3 sucursales; estos son los casos adicionales.
+-- mínimo en las 3 sucursales; estos son los casos adicionales. Cada sucursal
+-- queda con alertas distintas (para probar que cada usuario solo ve la suya)
+-- y dos insumos quedan agotados (stock 0) para probar ?estado=agotados.
 UPDATE inventario_sucursal inv
 SET stock_actual = o.stock
 FROM (VALUES
-    ('Sucursal Escalón',     'Huevo',      20),
-    ('Sucursal Santa Tecla', 'Vaso 12oz',  12),
-    ('Sucursal Santa Tecla', 'Croissant',  10)
+    ('Sucursal Central',     'Tapadera',              150),
+    ('Sucursal Escalón',     'Huevo',                  20),
+    ('Sucursal Escalón',     'Barra de chocolate',      0),
+    ('Sucursal Santa Tecla', 'Vaso 12oz',              12),
+    ('Sucursal Santa Tecla', 'Croissant',              10),
+    ('Sucursal Santa Tecla', 'Jugo de naranja 300ml',   0)
 ) AS o(sucursal, insumo, stock)
 JOIN sucursales s ON s.nombre = o.sucursal
 JOIN insumos i ON i.nombre = o.insumo
 WHERE inv.sucursal_id = s.id AND inv.insumo_id = i.id;
-
 -- ---------------------------------------------------------------
 -- 7. Proveedores
 -- ---------------------------------------------------------------

@@ -3,6 +3,7 @@
 // =====================================================================
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
+import DashboardPage from "./pages/DashboardPage.jsx";
 
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/Sidebar.jsx';
@@ -32,6 +33,14 @@ function DashboardLayout() {
     const navigate = useNavigate();
     const { pathname } = useLocation();
     const esSucursales = pathname === '/admin/sucursales' || pathname.startsWith('/admin/sucursales/');
+    const esDashboard = pathname === '/admin/dashboard';
+
+    // Título y subtítulo del Navbar según la pantalla. {} = usa los textos por defecto.
+    const textosNavbar = esSucursales
+        ? { titulo: 'Sucursales', subtitulo: 'Consulta de sedes' }
+        : esDashboard
+            ? { titulo: 'Dashboard', subtitulo: 'Resumen global de la cadena' }
+            : {};
 
     // Estados dinámicos traídos de la base de datos
     const [sucursales, setSucursales] = useState([]);
@@ -108,7 +117,7 @@ function DashboardLayout() {
     return (
         <div className="app-shell d-flex flex-column min-vh-100">
             <Navbar usuario={usuario}
-                    {...(esSucursales ? { titulo: 'Sucursales', subtitulo: 'Consulta de sedes' } : {})}
+                    {...textosNavbar}
                     sucursales={sucursales}
                     sucursalActual={sucursalSeleccionada}
                     cajaAbierta={cajaAbierta}
@@ -166,6 +175,9 @@ function AppRoutes() {
                     {/* Administración: solo ADMIN */}
                     <Route element={<ProtectedRoute roles={['ADMIN']} />}>
                         <Route path="/admin" element={<Navigate replace to="/admin/inventario" />} />
+                        <Route element={<ProtectedRoute roles={['ADMIN']} soloCentral />}>
+                            <Route path="/admin/dashboard" element={<DashboardPage />} />
+                        </Route>
                         <Route path="/admin/inventario" element={<InventarioPage />} />
                         <Route path="/admin/sucursales" element={<SucursalesPage />} />
                         <Route path="/admin/sucursales/:id" element={<SucursalDetallePage />} />

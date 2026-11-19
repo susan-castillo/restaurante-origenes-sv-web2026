@@ -2,11 +2,16 @@
 import { prisma } from '../models/db.js';
 import { idValido, coincideNombre } from '../utils/validaciones.js';
 
-// Stock de una sucursal: todos los insumos activos, con 0 si aún no tienen fila de inventario.
-// buscar: texto dentro del nombre del insumo.
-export const listarInventario = async (sucursalId, { buscar } = {}) => {
+// Valores que acepta el filtro ?estado= de GET /inventario.
+export const ESTADOS_INVENTARIO = ['todos', 'bajo', 'agotados', 'deshabilitados'];
+
+// Stock de una sucursal, con 0 para los insumos que aún no tienen fila de inventario.
+//  estado: todos (insumos activos), bajo (stock por debajo del mínimo),
+//          agotados (stock en 0) o deshabilitados (insumos desactivados).
+//  buscar: texto dentro del nombre del insumo.
+export const listarInventario = async (sucursalId, { buscar, estado = 'todos' } = {}) => {
     const insumos = await prisma.insumos.findMany({
-        where: { activo: true },
+        where: { activo: estado !== 'deshabilitados' },
         orderBy: { nombre: 'asc' },
         include: { inventario_sucursal: { where: { sucursal_id: sucursalId } } },
     });
@@ -19,9 +24,15 @@ export const listarInventario = async (sucursalId, { buscar } = {}) => {
                 insumo_id: insumo.id,
                 nombre: insumo.nombre,
                 unidad: insumo.unidad,
+                activo: insumo.activo,
                 stock_actual: fila ? fila.stock_actual : '0',
                 stock_minimo: fila ? fila.stock_minimo : '0',
             };
+        })
+        .filter((fila) => {
+            if (estado === 'bajo') return Number(fila.stock_actual) < Number(fila.stock_minimo);
+            if (estado === 'agotados') return Number(fila.stock_actual) === 0;
+            return true;
         });
 };
 
@@ -65,7 +76,7 @@ export const ajustarInventario = async (sucursalId, insumoId, datos) => {
     });
 
     return {
-        insumo_id: insumBo.id,
+        insumo_id: insumo.id,
         nombre: insumo.nombre,
         unidad: insumo.unidad,
         stock_actual: fila.stock_actual,

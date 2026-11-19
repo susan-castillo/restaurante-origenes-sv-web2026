@@ -1,0 +1,344 @@
+// Estilos del dashboard. Colores como variables locales: esta hoja NO debe volver a
+// importar custom.scss (duplicaría Bootstrap). Todo va bajo .dashboard-page para ganarle
+// a .app-card sin depender del orden de los CSS.
+$d-oscuro: #261C14;
+$d-marron: #613001;
+$d-crema: #FFFBF5;
+$d-crema-suave: #FAEADB;
+$d-cielo: #82BCC7;
+$d-rosa: #FA8597;
+$d-naranja: #DE8332;
+$d-verde: #4CAF86;
+$d-rojo: #e83f56;
+
+// Sombra de color cálido: se usa en todas las tarjetas "claymorphism".
+$d-sombra: #8F5432;
+
+// ---------------------------------------------------------------------------
+// Claymorphism
+// ---------------------------------------------------------------------------
+@mixin clay($radio: 26px) {
+  border: 0;
+  border-radius: $radio;
+  box-shadow:
+    10px 14px 28px rgba($d-sombra, 0.22),
+    inset 6px 6px 12px rgba(255, 255, 255, 0.8),
+    inset -6px -6px 12px rgba($d-sombra, 0.14);
+}
+
+/* ---------------------------------------------------------------------------
+// Fondo del dashboard.
+// ---------------------------------------------------------------------------
+main:has(> .dashboard-page) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 8%, #FFF4EA 0, transparent 42%),
+    linear-gradient(135deg, #FFE9DB 0%, #FFD6C8 55%, #FFC6C0 100%) !important;
+}
+
+// Círculos decorativos: viven en los pseudo-elementos de la página (no ocupan HTML),
+// quedan detrás del contenido (z-index -1) y se mueven muy despacio.
+.dashboard-page::before,
+.dashboard-page::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.dashboard-page::before {
+  width: 460px;
+  height: 460px;
+  top: -140px;
+  right: -120px;
+  background: rgba(255, 255, 255, 0.35);
+  animation: dashboard-deriva 28s ease-in-out infinite alternate;
+}
+
+.dashboard-page::after {
+  width: 380px;
+  height: 380px;
+  bottom: -130px;
+  left: -110px;
+  background: rgba(250, 133, 151, 0.28);
+  animation: dashboard-deriva 34s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes dashboard-deriva {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(-40px, 30px) scale(1.08); }
+}
+
+// Quien tiene reducida la animación en su sistema no la ve.
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-page::before,
+  .dashboard-page::after { animation: none; }
+}*/
+
+.dashboard-page {
+  &__encabezado {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+    margin-bottom: 24px;
+  }
+
+  // El saludo no lleva tarjeta: queda puesto directo sobre el fondo.
+  &__titulo { font-size: 2.2rem; color: $d-oscuro; margin: 0; }
+  &__subtitulo { color: $d-marron; margin: 0; }
+
+  &__acumulado {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: rgba(255, 255, 255, 0.6);
+    color: $d-marron;
+    border-radius: 50px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 4px 6px 12px rgba($d-sombra, 0.16);
+  }
+
+  // Título de las tarjetas grandes (Poppins, no el serif de .card-title)
+  &__subtitulo-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: $d-oscuro;
+
+    svg { color: $d-marron; font-size: 1.2rem; }
+  }
+
+  &__vacio {
+    text-align: center;
+    padding: 48px 16px;
+    color: $d-marron;
+
+    svg { font-size: 3rem; color: $d-cielo; margin-bottom: 12px; }
+  }
+
+  // ---------- KPI (clay) ----------
+  .kpi-card {
+    @include clay(28px);
+    transition: transform 0.2s ease;
+
+    &:hover { transform: translateY(-4px); }
+
+    // Colores estimados a partir del diseño de Figma.
+    &--cielo   { background-color: #D6EAFB; --kpi-acento: #1D5E96; }
+    &--rosa    { background-color: #FFCDD2; --kpi-acento: #F0546E; }
+    &--naranja { background-color: #FFE0BF; --kpi-acento: #E8872B; }
+    &--verde   { background-color: #CBF1C8; --kpi-acento: #1E9A4B; }
+
+    &__cabecera {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: var(--kpi-acento);
+    }
+
+    &__icono { font-size: 1.3rem; flex-shrink: 0; }
+    &__etiqueta { font-size: 13px; font-weight: 600; color: var(--kpi-acento); }
+
+    &__valor {
+      display: block;
+      font-size: 1.6rem;
+      line-height: 1.2;
+      color: var(--kpi-acento);
+      white-space: nowrap;
+    }
+
+    &__auxiliar {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--kpi-acento);
+      opacity: 0.9;
+
+      &--positivo { color: #1E7A45; opacity: 1; }
+      &--negativo { color: $d-rojo; opacity: 1; }
+    }
+  }
+
+  // Las tarjetas llenan toda su columna: sin esto el Card queda a su ancho natural
+  .rendimiento-card,
+  .detalle-sucursales__card {
+    width: 100%;
+  }
+
+  // ---------- Rendimiento (SIN tarjeta: puesto directo sobre el fondo) ----------
+  .rendimiento-card {
+    background-color: transparent;
+    border: 0;
+    box-shadow: none;
+    min-height: 340px;
+
+    &__encabezado {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    &__leyenda {
+      display: flex;
+      gap: 14px;
+      font-size: 12px;
+      color: $d-marron;
+    }
+  }
+
+  .leyenda-punto {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 4px;
+    vertical-align: -1px;
+
+    &--ventas { background-color: $d-rosa; }
+    &--compras { background-color: $d-naranja; }
+  }
+
+  .rendimiento-fila {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+
+    &__nombre { width: 120px; flex-shrink: 0; font-size: 13px; font-weight: 600; color: $d-oscuro; }
+    &__barras { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+
+    &__linea {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: $d-oscuro;
+
+      .progress { flex: 1; }
+      span { min-width: 78px; text-align: right; }
+    }
+  }
+
+  // Dos barras del mismo grosor. El riel es blanco translúcido para leerse sobre el degradado.
+  .rendimiento-barra {
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 10px;
+
+    &--ventas   { background-color: $d-rosa; }
+    &--compras  { background-color: $d-naranja; }
+  }
+
+  // ---------- Detalle (clay) ----------
+  .detalle-sucursales {
+    height: 100%;
+
+    &__card {
+      @include clay(28px);
+      background-color: $d-crema;
+    }
+
+    &__cuerpo {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    &__encabezado {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    &__scroll {
+      max-height: 300px;
+      overflow: auto;
+      border-radius: 14px;
+    }
+  }
+
+  .detalle-tabla {
+    font-size: 13px;
+    --bs-table-bg: transparent;
+
+    th, td { white-space: nowrap; vertical-align: middle; }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background-color: $d-crema-suave;
+      color: $d-marron;
+      font-size: 12px;
+    }
+
+    tfoot td {
+      position: sticky;
+      bottom: 0;
+      background-color: $d-crema-suave;
+      font-weight: 700;
+    }
+
+    &__fila--clic {
+      cursor: pointer;
+
+      &:hover > *, &:focus > * { background-color: $d-crema-suave; }
+    }
+  }
+
+  // ---------- Franja inferior (clay) ----------
+  .resumen-cadena {
+    @include clay(30px);
+    background-color: $d-crema;
+
+    &__cuerpo {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      gap: 20px;
+    }
+
+    &__dato {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+
+      > svg { font-size: 2.2rem; flex-shrink: 0; }
+      span { display: block; font-size: 13px; font-weight: 600; }
+      strong { display: block; font-size: 1.6rem; }
+
+      &--cielo   { color: #3A8FA3; }
+      &--naranja { color: $d-naranja; }
+    }
+  }
+}
+
+// El modal de Reactstrap se dibuja en un "portal" (fuera de .dashboard-page, directo en <body>),
+// por eso sus estilos NO pueden ir anidados dentro de .dashboard-page.
+.detalle-modal {
+  &__dato {
+    background-color: $d-crema-suave;
+    border-radius: 12px;
+    padding: 12px 14px;
+    height: 100%;
+
+    span { display: block; font-size: 12px; color: $d-marron; margin-bottom: 4px; }
+    strong { font-size: 1.15rem; color: $d-oscuro; }
+  }
+}

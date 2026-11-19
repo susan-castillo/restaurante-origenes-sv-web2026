@@ -137,6 +137,7 @@ export async function obtenerEstadisticasDashboard() {
       totalGlobalCompras += totalCompras;
 
       return {
+        id: sucursal.id,
         nombre: sucursal.nombre,
         empleados_asignados: empleadosAsignados,
         ventas_del_dia: totalVentasDia,
@@ -157,3 +158,4 @@ export async function obtenerEstadisticasDashboard() {
     grafico_rendimiento: rendimientoSucursales,
   };
 }
+

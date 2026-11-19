@@ -10,10 +10,17 @@ export async function cargarAccesoSucursales(req, res, next) {
     return res.status(401).json({ error: "La sesión no identifica a un usuario válido." });
   }
 
-  const usuario = await prisma.usuarios.findUnique({
-    where: { id },
-    select: { rol: true, sucursal_id: true, activo: true },
-  });
+  let usuario;
+  try {
+    usuario = await prisma.usuarios.findUnique({
+      where: { id },
+      select: { rol: true, cargo: true, sucursal_id: true, activo: true },
+    });
+  } catch (error) {
+    console.error("Error al cargar el acceso del usuario:", error);
+    return res.status(500).json({ error: "Error al verificar el acceso del usuario." });
+  }
+
   if (!usuario?.activo) {
     return res.status(401).json({ error: "La cuenta no está disponible." });
   }
