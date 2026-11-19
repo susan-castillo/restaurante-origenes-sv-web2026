@@ -3,10 +3,26 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 
-$backendUrl = 'http://127.0.0.1:3000';
-$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$requestUri = $_SERVER['REQUEST_URI'] ?? '/';
-$path = parse_url($requestUri, PHP_URL_PATH) ?: '/';
+// Cargar variables del archivo .env del gateway si existe
+$envFile = __DIR__ . '/.env';
+if (file_exists($envFile)) {
+    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+        $trimmed = trim($line);
+        if ($trimmed === '' || str_starts_with($trimmed, '#') || !str_contains($trimmed, '=')) {
+            continue;
+        }
+        [$k, $v] = explode('=', $trimmed, 2);
+        $k = trim($k);
+        $v = trim($v, " \t\n\r\0\x0B\"'");
+        $_ENV[$k] = $v;
+    }
+}
+
+$backendUrl   = rtrim($_ENV['BACKEND_INTERNAL_URL'] ?? 'http://127.0.0.1:3000', '/');
+$gatewayToken = trim($_ENV['INTERNAL_GATEWAY_TOKEN'] ?? '');
+$method       = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$requestUri   = $_SERVER['REQUEST_URI'] ?? '/';
+$path         = parse_url($requestUri, PHP_URL_PATH) ?: '/';
 
 if ($path === '/gateway/health') {
     http_response_code(200);
@@ -14,11 +30,23 @@ if ($path === '/gateway/health') {
     exit;
 }
 
-// Reenviar cabeceras clave (Authorization y Content-Type)
+// Obtener la IP real del cliente para que Express aplique el rate limit por usuario y no uno global
+$clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+$forwardedFor = !empty($_SERVER['HTTP_X_FORWARDED_FOR'])
+    ? $_SERVER['HTTP_X_FORWARDED_FOR'] . ', ' . $clientIp
+    : $clientIp;
+
+// Reenviar cabeceras clave (Authorization, Content-Type, IP del cliente y Token interno)
 $headers = [
     'Accept: application/json',
     'Connection: close',
+    'X-Real-IP: ' . $clientIp,
+    'X-Forwarded-For: ' . $forwardedFor,
 ];
+
+if ($gatewayToken !== '') {
+    $headers[] = 'X-Gateway-Token: ' . $gatewayToken;
+}
 
 if (!empty($_SERVER['CONTENT_TYPE'])) {
     $headers[] = 'Content-Type: ' . $_SERVER['CONTENT_TYPE'];
