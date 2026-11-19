@@ -3,14 +3,80 @@
 // a .app-card sin depender del orden de los CSS.
 $d-oscuro: #261C14;
 $d-marron: #613001;
-$d-crema: #FDFBF7;
+$d-crema: #FFFBF5;
 $d-crema-suave: #FAEADB;
 $d-cielo: #82BCC7;
 $d-rosa: #FA8597;
 $d-naranja: #DE8332;
 $d-verde: #4CAF86;
 $d-rojo: #e83f56;
-$d-borde: #eadbd0;
+
+// Sombra de color cálido: se usa en todas las tarjetas "claymorphism".
+$d-sombra: #8F5432;
+
+// ---------------------------------------------------------------------------
+// Claymorphism
+// ---------------------------------------------------------------------------
+@mixin clay($radio: 26px) {
+  border: 0;
+  border-radius: $radio;
+  box-shadow:
+    10px 14px 28px rgba($d-sombra, 0.22),
+    inset 6px 6px 12px rgba(255, 255, 255, 0.8),
+    inset -6px -6px 12px rgba($d-sombra, 0.14);
+}
+
+/* ---------------------------------------------------------------------------
+// Fondo del dashboard.
+// ---------------------------------------------------------------------------
+main:has(> .dashboard-page) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 8%, #FFF4EA 0, transparent 42%),
+    linear-gradient(135deg, #FFE9DB 0%, #FFD6C8 55%, #FFC6C0 100%) !important;
+}
+
+// Círculos decorativos: viven en los pseudo-elementos de la página (no ocupan HTML),
+// quedan detrás del contenido (z-index -1) y se mueven muy despacio.
+.dashboard-page::before,
+.dashboard-page::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.dashboard-page::before {
+  width: 460px;
+  height: 460px;
+  top: -140px;
+  right: -120px;
+  background: rgba(255, 255, 255, 0.35);
+  animation: dashboard-deriva 28s ease-in-out infinite alternate;
+}
+
+.dashboard-page::after {
+  width: 380px;
+  height: 380px;
+  bottom: -130px;
+  left: -110px;
+  background: rgba(250, 133, 151, 0.28);
+  animation: dashboard-deriva 34s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes dashboard-deriva {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(-40px, 30px) scale(1.08); }
+}
+
+// Quien tiene reducida la animación en su sistema no la ve.
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-page::before,
+  .dashboard-page::after { animation: none; }
+}*/
 
 .dashboard-page {
   &__encabezado {
@@ -21,6 +87,7 @@ $d-borde: #eadbd0;
     margin-bottom: 24px;
   }
 
+  // El saludo no lleva tarjeta: queda puesto directo sobre el fondo.
   &__titulo { font-size: 2.2rem; color: $d-oscuro; margin: 0; }
   &__subtitulo { color: $d-marron; margin: 0; }
 
@@ -28,12 +95,13 @@ $d-borde: #eadbd0;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background-color: $d-crema-suave;
+    background-color: rgba(255, 255, 255, 0.6);
     color: $d-marron;
     border-radius: 50px;
     padding: 6px 14px;
     font-size: 12px;
     font-weight: 600;
+    box-shadow: 4px 6px 12px rgba($d-sombra, 0.16);
   }
 
   // Título de las tarjetas grandes (Poppins, no el serif de .card-title)
@@ -57,15 +125,18 @@ $d-borde: #eadbd0;
     svg { font-size: 3rem; color: $d-cielo; margin-bottom: 12px; }
   }
 
-  // ---------- KPI ----------
+  // ---------- KPI (clay) ----------
   .kpi-card {
-    border-color: transparent;
-    box-shadow: 0 2px 10px rgba($d-oscuro, 0.08);
+    @include clay(28px);
+    transition: transform 0.2s ease;
 
-    &--cielo   { background-color: rgba($d-cielo, 0.22);   --kpi-acento: #{darken($d-cielo, 28%)}; }
-    &--rosa    { background-color: rgba($d-rosa, 0.22);    --kpi-acento: #{darken($d-rosa, 18%)}; }
-    &--naranja { background-color: rgba($d-naranja, 0.2);  --kpi-acento: #{$d-naranja}; }
-    &--verde   { background-color: rgba($d-verde, 0.2);    --kpi-acento: #{darken($d-verde, 12%)}; }
+    &:hover { transform: translateY(-4px); }
+
+    // Colores estimados a partir del diseño de Figma.
+    &--cielo   { background-color: #D6EAFB; --kpi-acento: #1D5E96; }
+    &--rosa    { background-color: #FFCDD2; --kpi-acento: #F0546E; }
+    &--naranja { background-color: #FFE0BF; --kpi-acento: #E8872B; }
+    &--verde   { background-color: #CBF1C8; --kpi-acento: #1E9A4B; }
 
     &__cabecera {
       display: flex;
@@ -91,22 +162,24 @@ $d-borde: #eadbd0;
       margin-top: 4px;
       font-size: 12px;
       color: var(--kpi-acento);
-      opacity: 0.85;
+      opacity: 0.9;
 
-      &--positivo { color: darken($d-verde, 15%); opacity: 1; }
+      &--positivo { color: #1E7A45; opacity: 1; }
       &--negativo { color: $d-rojo; opacity: 1; }
     }
   }
-    // Las tarjetas llenan toda su columna: sin esto el Card queda a su ancho natural
+
+  // Las tarjetas llenan toda su columna: sin esto el Card queda a su ancho natural
   .rendimiento-card,
   .detalle-sucursales__card {
     width: 100%;
   }
 
-  // ---------- Rendimiento ----------
+  // ---------- Rendimiento (SIN tarjeta: puesto directo sobre el fondo) ----------
   .rendimiento-card {
-    background-color: $d-crema;
-    box-shadow: 0 2px 10px rgba($d-oscuro, 0.06);
+    background-color: transparent;
+    border: 0;
+    box-shadow: none;
     min-height: 340px;
 
     &__encabezado {
@@ -159,26 +232,23 @@ $d-borde: #eadbd0;
     }
   }
 
-  // Dos barras del mismo grosor
+  // Dos barras del mismo grosor. El riel es blanco translúcido para leerse sobre el degradado.
   .rendimiento-barra {
     height: 8px;
-    background-color: #efe6df;
+    background-color: rgba(255, 255, 255, 0.6);
     border-radius: 10px;
 
     &--ventas   { background-color: $d-rosa; }
     &--compras  { background-color: $d-naranja; }
   }
 
-  // ---------- Detalle (la tabla copia la altura de la gráfica) ----------
-   // ---------- Detalle ----------
-  // La tarjeta mide lo mismo que la gráfica porque ambas son columnas de la misma fila.
-  // Si la tabla crece más que max-height, solo el cuerpo hace scroll.
+  // ---------- Detalle (clay) ----------
   .detalle-sucursales {
     height: 100%;
 
     &__card {
+      @include clay(28px);
       background-color: $d-crema;
-      box-shadow: 0 2px 10px rgba($d-oscuro, 0.06);
     }
 
     &__cuerpo {
@@ -199,6 +269,7 @@ $d-borde: #eadbd0;
     &__scroll {
       max-height: 300px;
       overflow: auto;
+      border-radius: 14px;
     }
   }
 
@@ -231,10 +302,10 @@ $d-borde: #eadbd0;
     }
   }
 
-  // ---------- Franja inferior ----------
+  // ---------- Franja inferior (clay) ----------
   .resumen-cadena {
+    @include clay(30px);
     background-color: $d-crema;
-    box-shadow: 0 2px 10px rgba($d-oscuro, 0.06);
 
     &__cuerpo {
       display: flex;
@@ -252,7 +323,7 @@ $d-borde: #eadbd0;
       span { display: block; font-size: 13px; font-weight: 600; }
       strong { display: block; font-size: 1.6rem; }
 
-      &--cielo   { color: darken($d-cielo, 28%); }
+      &--cielo   { color: #3A8FA3; }
       &--naranja { color: $d-naranja; }
     }
   }
