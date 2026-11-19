@@ -29,13 +29,23 @@ $d-sombra: rgb(143, 84, 50);
     inset -6px -6px 12px rgba($d-sombra, 0.14);
 }
 
+main:has(> .dashboard-page),
 .dashboard-page {
+  min-width: 0;
+}
+
+
+.dashboard-page {
+  // El <main> del layout ya trae p-4 (24px). Este padding extra iguala el margen de Sucursales.
+  padding: 20px 26px;
+
   &__encabezado {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 12px 16px;
     margin-bottom: 24px;
+    &__titulo { font-size: clamp(1.6rem, 1rem + 1.6vw, 2.2rem); color: $d-oscuro; margin: 0; }
   }
 
   // El saludo no lleva tarjeta: queda puesto directo sobre el fondo.
@@ -407,5 +417,10 @@ $d-sombra: rgb(143, 84, 50);
 
       &:hover { color: $d-naranja; background-color: #FFF6EE; }
     }
+  }
+
+    @media (max-width: 575px) {
+    .detalle-modal__rejilla { grid-template-columns: 1fr; }
+    .detalle-modal__pie { flex-direction: column-reverse; }
   }
 }
